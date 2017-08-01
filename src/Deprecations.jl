@@ -10,6 +10,7 @@ module Deprecations
         maxver::Base.VersionNumber
     end
 
+    include("treewalking.jl")
     include("astmatching.jl")
     include("resolutions.jl")
 
@@ -43,10 +44,15 @@ module Deprecations
         text::String
     end
 
+    function overlay_parse(text)
+        p = CSTParser.parse(text)
+        OverlayNode(nothing, p, 0:p.fullspan, p.span-1)
+    end
+
     function edit_text(text)
         replacements = collect(zip(all_templates, all_replacements))
-        parsed_replacementes = map(x->(CSTParser.parse(x[1]),CSTParser.parse(x[2])), replacements)
-        match = CSTParser.parse(text)
+        parsed_replacementes = map(x->(overlay_parse(x[1]),overlay_parse(x[2])), replacements)
+        match = overlay_parse(text)
         function find_replacements(x, results)
             for (i,(t, r)) in enumerate(parsed_replacementes)
                 if typeof(x) == typeof(t)
@@ -62,7 +68,7 @@ module Deprecations
                     f((x, text, results))
                 end
             end
-            for arg in x.args
+            for arg in children(x)
                 find_replacements(arg, results)
             end
         end
