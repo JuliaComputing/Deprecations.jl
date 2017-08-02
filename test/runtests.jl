@@ -60,3 +60,88 @@ end
 
 edit_text("@compat(Union{Int64,Float64})")[2] == "Union{Int64,Float64}"
 edit_text("@compat Union{Int64,Float64}")[2] == "Union{Int64,Float64}"
+edit_text("Compat.UTF8String")[2] == "String"
+
+edit_text("""
+jlconvert(::Type{Symbol}, file::JldFile, ptr::Ptr) = Symbol(jlconvert(Compat.UTF8String, file, ptr))
+""")[2] == """
+jlconvert(::Type{Symbol}, file::JldFile, ptr::Ptr) = Symbol(jlconvert(String, file, ptr))
+"""
+
+edit_text("""
+# Some comment
+const A = 1
+const B = Compat.UTF8String
+""")[2] == """
+# Some comment
+const A = 1
+const B = String
+"""
+
+edit_text("""
+@sprintf("%08d", id)
+Union{Type{Compat.ASCIIString},Type{Compat.UTF8String}}
+""")[2] == """
+@sprintf("%08d", id)
+Union{Type{String},Type{String}}
+"""
+
+edit_text(raw"""
+"ABC$T"
+if cset == HDF5.H5T_CSET_ASCII
+    return Compat.ASCIIString
+elseif cset == HDF5.H5T_CSET_UTF8
+    return Compat.UTF8String
+end
+""")[2] == raw"""
+"ABC$T"
+if cset == HDF5.H5T_CSET_ASCII
+    return String
+elseif cset == HDF5.H5T_CSET_UTF8
+    return String
+end
+"""
+
+edit_text(raw"""
+T.mutable && print("Ok")
+return Compat.ASCIIString
+""")[2] === """
+T.mutable && print("Ok")
+return String
+"""
+
+edit_text(raw"""
+error("$T")
+return Compat.ASCIIString
+""")[2] == raw"""
+error("$T")
+return String
+"""
+
+edit_text(raw"""
+error(\"\"\"$T is not supported\"\"\")
+Compat.ASCIIString
+""")[2] == raw"""
+error(\"\"\"$T is not supported\"\"\")
+String
+"""
+
+edit_text(raw"""
+###############################################
+## Reading and writing Julia data .jld files ##
+###############################################
+
+module JLD00
+write{T<:Union{HDF5BitsKind, String}}(parent::Union{JldFile, JldGroup}, name::String, data::Union{T, Array{T}}) =
+    write(parent, name, data, full_typename(typeof(data)))
+end
+""")[2] == raw"""
+###############################################
+## Reading and writing Julia data .jld files ##
+###############################################
+
+module JLD00
+write(parent::Union{JldFile, JldGroup}, name::String, data::Union{T, Array{T}}) where {T<:Union{HDF5BitsKind, String}} =
+    write(parent, name, data, full_typename(typeof(data)))
+end
+"""

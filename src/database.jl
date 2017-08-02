@@ -121,7 +121,27 @@ begin
         "@compat Tuple{\$A...}",
         "Tuple{\$A...}",
     )
-    end
+end
+
+begin
+    struct ObsoleteCompatString; end
+    register(ObsoleteCompatString, Deprecation(
+        "This Compat definition is deprecated",
+        "julia",
+        v"0.5.0", v"0.6.0", typemax(VersionNumber)
+    ))
+
+    match(ObsoleteCompatString,
+        "Compat.UTF8String",
+        "String",
+    )
+
+    match(ObsoleteCompatString,
+        "Compat.ASCIIString",
+        "String",
+    )
+end
+
 
 #=
 begin

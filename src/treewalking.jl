@@ -7,7 +7,7 @@ struct OverlayNode{T}
     fullspan::UnitRange{Int}
     span::UnitRange{Int}
 end
-OverlayNode(expr) = OverlayNode(nothing, expr, 0:expr.fullspan, expr.span - 1)
+OverlayNode(expr) = OverlayNode(nothing, expr, 0:(expr.fullspan-1), expr.span - 1)
 AbstractTrees.printnode(io::IO, o::OverlayNode{T}) where {T} = print(io, T, "  ", o.fullspan, " (", o.span, ")")
 Base.show(io::IO, o::OverlayNode) = AbstractTrees.print_tree(io, o)
 

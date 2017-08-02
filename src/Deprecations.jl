@@ -70,9 +70,9 @@ module Deprecations
         text::String
     end
 
-    function overlay_parse(text)
-        p = CSTParser.parse(text)
-        OverlayNode(nothing, p, 0:p.fullspan, p.span-1)
+    function overlay_parse(text, cont = true)
+        p = CSTParser.parse(text, cont)
+        OverlayNode(p)
     end
 
     function edit_text(text, deps = map(x->x(), keys(all_deprecations)))
@@ -82,7 +82,7 @@ module Deprecations
             haskey(templates, typeof(dep)) && append!(replacements, templates[typeof(dep)])
             haskey(custom_resolutions, typeof(dep)) && append!(customs, custom_resolutions[typeof(dep)])
         end
-        parsed_replacementes = map(x->(overlay_parse(x[1]),overlay_parse(x[2])), replacements)
+        parsed_replacementes = map(x->(overlay_parse(x[1],false),overlay_parse(x[2],false)), replacements)
         match = overlay_parse(text)
         function find_replacements(x, results)
             for (i,(t, r)) in enumerate(parsed_replacementes)
@@ -91,7 +91,8 @@ module Deprecations
                     match_parameters(t, x, result)[1] || continue
                     buf = IOBuffer()
                     reassemble(buf, r, result, replacements[i][2], text)
-                    push!(results, TextReplacement(x.span, String(take!(buf))))
+                    repl = String(take!(buf))
+                    push!(results, TextReplacement(x.span, repl))
                 end
             end
             for (i,(k, f)) in enumerate(customs)

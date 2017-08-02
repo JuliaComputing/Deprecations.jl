@@ -21,7 +21,7 @@ end
 
 matches_template(x::OverlayNode, y::OverlayNode) = matches_template(x.expr, y.expr)
 
-function match_parameters(template, match, result, start_offset = 0, pre_ws_offset = 0)
+function match_parameters(template, match, result, start_offset = 0, pre_ws_offset = first(match.fullspan))
     (typeof(template) != typeof(match)) && return
     offset = start_offset
     j = 1
@@ -70,7 +70,7 @@ end
 is_template_expr(x::OverlayNode) = is_template_expr(x.expr)
 leaf_is_template_expr(x::OverlayNode) = leaf_is_template_expr(x.expr)
 
-function reassemble(out::IO, replacement, matches, replacement_text, orig_text, skip_trailing_ws = false)
+function reassemble(out::IO, replacement, matches, replacement_text, orig_text, skip_trailing_ws = false, islast = true)
     if isempty(children(replacement))
         rt = replacement_text[1 + (skip_trailing_ws ? (first(replacement.fullspan):last(replacement.span)) : replacement.fullspan)]
         write(out, rt)
@@ -80,21 +80,22 @@ function reassemble(out::IO, replacement, matches, replacement_text, orig_text, 
         x = children(replacement)[i]
         ret, sym, slurp = is_template_expr(x)
         if !ret
+            new_skip_trailing_ws = false
             if i + 1 <= length(children(replacement))
                 nextx = children(replacement)[i+1]
                 r, s, sl = leaf_is_template_expr(nextx)
                 new_skip_trailing_ws = r && endswith(String(s), "!")
             end
             new_skip_trailing_ws |= (skip_trailing_ws && i == length(children(replacement)))
-            reassemble(out, x, matches, replacement_text, orig_text, new_skip_trailing_ws)
+            reassemble(out, x, matches, replacement_text, orig_text, new_skip_trailing_ws, i == length(children(replacement)))
         else
             endswith(String(sym), "!") && (sym = Symbol(String(sym)[1:end-1]))
             if !slurp
                 (pre_ws_off, off), expr = matches[sym]
-                write(out, orig_text[1+ (pre_ws_off:last(expr.fullspan))])
+                write(out, orig_text[1+ (pre_ws_off:last(islast ? expr.span : expr.fullspan))])
             else
                 ((pre_ws_off, off), exprs) = matches[sym]
-                write(out, orig_text[1+(pre_ws_off:last(last(exprs).fullspan))])
+                write(out, orig_text[1+(pre_ws_off:last(islast ? last(exprs).span : last(exprs).fullspan))])
             end
         end
         i += 1
