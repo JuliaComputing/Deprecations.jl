@@ -1,5 +1,6 @@
 using Deprecations: Deprecation
 using Compat
+using CSTParser: FunctionDef
 
 begin
     OldParametricSyntax = Deprecation(
@@ -10,17 +11,41 @@ begin
         typemax(VersionNumber)
     )
 
+    # Special purpose formatter to unindent multi-line arglists
+    function format_arglist(tree, matches)
+        nchars_moved = sum(charwidth, fullspan_text(matches[:T]))
+        if isexpr(tree, FunctionDef)
+            # We replace the call argument
+            ocall = tree.args[2]
+            call = tree.args[2] = ChildReplacementNode(tree, Any[], ocall)
+            push!(call.children, children(ocall)[1])
+            for c in children(ocall)
+                ws = trailing_ws(c)
+                if !contains(ws, '\n')
+                    push!(call.children, c)
+                    continue
+                end
+                push!(call.children, TriviaReplacementNode(call, c, leading_ws(c),
+                    unindent_ws(ws, nchars_moved)))
+            end
+            return tree
+        end
+    end
+
     match(OldParametricSyntax,
         "function \$F{\$T}(\$ARGS...)\n\$BODY...\nend",
-        "function\$F(\$ARGS...) where \$T\n\$BODY!...\nend"
+        "function\$F(\$ARGS...) where \$T\n\$BODY!...\nend",
+        format_arglist
     )
     match(OldParametricSyntax,
         "function \$F{\$T...}(\$ARGS...)\n\$BODY...\nend",
-        "function\$F(\$ARGS...) where {\$T...}\n\$BODY!...\nend"
+        "function\$F(\$ARGS...) where {\$T...}\n\$BODY!...\nend",
+        format_arglist
     )
     match(OldParametricSyntax,
         "\$F{\$T...}(\$ARGS...) = \$BODY",
-        "\$F(\$ARGS...) where {\$T...} =\$BODY"
+        "\$F(\$ARGS...) where {\$T...} =\$BODY",
+        format_arglist
     )
 end
 

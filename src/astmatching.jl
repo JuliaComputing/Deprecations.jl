@@ -21,26 +21,26 @@ end
 
 matches_template(x::OverlayNode, y::OverlayNode) = matches_template(x.expr, y.expr)
 
-function match_parameters(template, match, result, start_offset = 0, pre_ws_offset = 0)
+function match_parameters(template, match, result, start_offset = 0)
     (typeof(template) != typeof(match)) && return
     offset = start_offset
     j = 1
     for (i,x) in enumerate(children(template))
         y = children(match)[j]
         if matches_template(x, y)
-            ok, pre_ws_offset = match_parameters(x, y, result, offset, pre_ws_offset)
-            ok || return (ok, pre_ws_offset)
+            ok = match_parameters(x, y, result, offset)
+            ok || return ok
             j += 1
         else
             ret, sym, slurp = is_template_expr(x)
             if ret
                 if !slurp
-                    result[sym] = ((pre_ws_offset, offset), y)
+                    result[sym] = (y,)
                     j += 1
                 else
                     matched_exprs = Any[]
                     if i == length(children(template))
-                        result[sym] = ((pre_ws_offset, offset), children(match)[j:end])
+                        result[sym] = children(match)[j:end]
                     else
                         nextx = children(template)[i + 1]
                         startj = j
@@ -48,17 +48,15 @@ function match_parameters(template, match, result, start_offset = 0, pre_ws_offs
                             push!(matched_exprs, children(match)[j])
                             j += 1
                         end
-                        result[sym] = ((pre_ws_offset, offset), matched_exprs)
+                        result[sym] = matched_exprs
                     end
                 end
             else
-                return (false, pre_ws_offset)
+                return false
             end
         end
-        pre_ws_offset = last(y.span)+1
-        offset = last(y.fullspan)+1
     end
-    return (true, pre_ws_offset)
+    return true
 end
 
 function leaf_is_template_expr(x::EXPR)
@@ -70,9 +68,46 @@ end
 is_template_expr(x::OverlayNode) = is_template_expr(x.expr)
 leaf_is_template_expr(x::OverlayNode) = leaf_is_template_expr(x.expr)
 
-function reassemble(out::IO, replacement, matches, replacement_text, orig_text, skip_trailing_ws = false)
+function text(o::OverlayNode, leading_trivia = true, trailing_trivia = true)
+    o.buffer[1 + ((leading_trivia ? first(o.fullspan) : first(o.span)):(trailing_trivia ? last(o.fullspan) : last(o.span)))]
+end
+
+function trailing_ws(o::OverlayNode)
+    o.buffer[1 + (1+last(o.span):last(o.fullspan))]
+end
+
+function leading_ws(o::OverlayNode)
+    o.buffer[1 + (first(o.fullspan):first(o.fullspan)-1)]
+end
+
+span_text(o::OverlayNode) = text(o, false, false)
+fullspan_text(o::OverlayNode) = text(o, true, true)
+
+using AbstractTrees: prevsibling, nextsibling
+
+function prev_node_ws(node)
+    while true
+        sib = prevsibling(node)
+        sib != nothing && return trailing_ws(sib)
+        node.parent == nothing && return ""
+        node = node.parent
+    end
+end
+
+function next_is_template(node)
+    while true
+        sib = nextsibling(node)
+        sib != nothing && return leaf_is_template_expr(sib)
+        node.parent == nothing && return (false, nothing, false)
+        node = node.parent
+    end
+end
+
+function reassemble(out::IO, replacement, matches)
     if isempty(children(replacement))
-        rt = replacement_text[1 + (skip_trailing_ws ? (first(replacement.fullspan):last(replacement.span)) : replacement.fullspan)]
+        ret, sym, _ = next_is_template(replacement)
+        skip_trailing_ws = ret && endswith(String(sym), "!")
+        rt = text(replacement, true, !skip_trailing_ws)
         write(out, rt)
     end
     i = 1
@@ -80,27 +115,59 @@ function reassemble(out::IO, replacement, matches, replacement_text, orig_text, 
         x = children(replacement)[i]
         ret, sym, slurp = is_template_expr(x)
         if !ret
-            if i + 1 <= length(children(replacement))
-                nextx = children(replacement)[i+1]
-                r, s, sl = leaf_is_template_expr(nextx)
-                new_skip_trailing_ws = r && endswith(String(s), "!")
-            end
-            new_skip_trailing_ws |= (skip_trailing_ws && i == length(children(replacement)))
-            reassemble(out, x, matches, replacement_text, orig_text, new_skip_trailing_ws)
+            reassemble(out, x, matches)
         else
             endswith(String(sym), "!") && (sym = Symbol(String(sym)[1:end-1]))
-            if !slurp
-                (pre_ws_off, off), expr = matches[sym]
-                write(out, orig_text[1+ (pre_ws_off:last(expr.fullspan))])
-            else
-                ((pre_ws_off, off), exprs) = matches[sym]
-                write(out, orig_text[1+(pre_ws_off:last(last(exprs).fullspan))])
+            exprs = matches[sym]
+            write(out, prev_node_ws(first(exprs)))
+            for expr in exprs
+                write(out, fullspan_text(expr))
             end
         end
         i += 1
     end
     replacement
 end
+
+function reassemble_tree(replacement, matches, parent = nothing)
+    if isempty(children(replacement))
+        ret, sym, _ = next_is_template(replacement)
+        skip_trailing_ws = ret && endswith(String(sym), "!")
+        return skip_trailing_ws ?
+            TriviaReplacementNode(parent, replacement, leading_ws(replacement), "") :
+            replacement
+    end
+    ret = ChildReplacementNode(parent, Any[], replacement)
+    for x in children(replacement)
+        istemp, sym, slurp = is_template_expr(x)
+        if !istemp
+            push!(ret.children, reassemble_tree(x, matches, ret))
+        else
+            endswith(String(sym), "!") && (sym = Symbol(String(sym)[1:end-1]))
+            exprs = matches[sym]
+            expr = first(exprs)
+            push!(ret.children, TriviaReplacementNode(ret, expr,
+                string(prev_node_ws(expr), leading_ws(expr)), trailing_ws(expr)))
+            append!(ret.children, exprs[2:end])
+        end
+    end
+    ret
+end
+
+print_replacement(io::IO, node::OverlayNode, leading_trivia, trailing_trivia) = print(io, text(node, leading_trivia, trailing_trivia))
+function print_replacement(io::IO, node::ChildReplacementNode, leading_trivia, trailing_trivia)
+    length(node.children) == 0 && return
+    length(node.children) == 1 && return print_replacement(io, first(node.children), leading_trivia, trailing_trivia)
+    print_replacement(io, first(node.children), leading_trivia, true)
+    foreach(c->print_replacement(io, c, true, true), node.children[2:end-1])
+    print_replacement(io, last(node.children), leading_trivia, true)
+end
+function print_replacement(io::IO, node::TriviaReplacementNode, leading_trivia, trailing_trivia)
+    leading_trivia && print(io, node.leading_trivia)
+    print_replacement(io, node.onode, false, false)
+    trailing_trivia && print(io, node.trailing_trivia)
+end
+print_replacement(io::IO, node) = print_replacement(io, node, true, true)
 
 function inspect_matches(result, text)
     for (sym, ((pre_ws, offset), expr)) in result

@@ -11,6 +11,7 @@ module Deprecations
     end
 
     include("treewalking.jl")
+    include("formatting.jl")
     include("astmatching.jl")
     include("resolutions.jl")
 
@@ -20,7 +21,7 @@ module Deprecations
 
     custom_resolutions = Any[]
 
-    function match(dep::Deprecation, template::String, replacement::String)
+    function match(dep::Deprecation, template::String, replacement::String, formatter)
         push!(deprecation, dep)
         push!(all_templates, template)
         push!(all_replacements, replacement)
@@ -46,7 +47,7 @@ module Deprecations
 
     function overlay_parse(text)
         p = CSTParser.parse(text)
-        OverlayNode(nothing, p, 0:p.fullspan, p.span-1)
+        OverlayNode(nothing, text, p, 0:p.fullspan, p.span-1)
     end
 
     function edit_text(text)
@@ -59,7 +60,7 @@ module Deprecations
                     result = Dict{Any,Any}()
                     match_parameters(t, x, result)[1] || continue
                     buf = IOBuffer()
-                    reassemble(buf, r, result, replacements[i][2], text)
+                    print_replacement(buf, reassemble_tree(r, result))
                     push!(results, TextReplacement(x.span, String(take!(buf))))
                 end
             end
