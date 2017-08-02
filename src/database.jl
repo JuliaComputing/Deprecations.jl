@@ -3,13 +3,14 @@ using Compat
 using CSTParser: FunctionDef
 
 begin
-    OldParametricSyntax = Deprecation(
+    struct OldParametricSyntax; end
+    register(OldParametricSyntax, Deprecation(
         "Parameteric syntax of the form f{T}(x::T) is deprecated and needs to be written using the `where` keyword",
         "julia",
         v"0.6.0",
         v"0.7.0-DEV.1143",
         typemax(VersionNumber)
-    )
+    ))
 
     # Special purpose formatter to unindent multi-line arglists
     function format_arglist(tree, matches)
@@ -51,11 +52,12 @@ end
 
 using Tokenize.Tokens: GREATER, LESS, GREATER_EQ, GREATER_THAN_OR_EQUAL_TO, LESS_EQ, LESS_THAN_OR_EQUAL_TO
 begin
-    ObsoleteVersionCheck = Deprecation(
+    struct ObsoleteVersionCheck; end
+    register(OldParametricSyntax, Deprecation(
         "This version check is for a version of julia that is no longer supported by this package",
         "julia",
         typemin(VersionNumber), typemin(VersionNumber), typemax(VersionNumber)
-    )
+    ))
 
     const comparisons = Dict(
          GREATER                  => >,
@@ -118,11 +120,12 @@ begin
 end
 
 begin
-    ObsoleteCompatMacroTU = Deprecation(
+    struct ObsoleteCompatMacroTU; end
+    register(ObsoleteCompatMacroTU, Deprecation(
         "This compat macro is no longer required",
         "julia",
         v"0.4.0", v"0.4.0", typemax(VersionNumber)
-    )
+    ))
 
     match_macrocall(Compat, :@compat, ObsoleteCompatMacroTU,
         "@compat(Union{\$A...})",
@@ -143,7 +146,27 @@ begin
         "@compat Tuple{\$A...}",
         "Tuple{\$A...}",
     )
-    end
+end
+
+begin
+    struct ObsoleteCompatString; end
+    register(ObsoleteCompatString, Deprecation(
+        "This Compat definition is deprecated",
+        "julia",
+        v"0.5.0", v"0.6.0", typemax(VersionNumber)
+    ))
+
+    match(ObsoleteCompatString,
+        "Compat.UTF8String",
+        "String",
+    )
+
+    match(ObsoleteCompatString,
+        "Compat.ASCIIString",
+        "String",
+    )
+end
+
 
 #=
 begin

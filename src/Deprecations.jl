@@ -7,6 +7,9 @@ module Deprecations
         package::String
         minsupported::Base.VersionNumber
         minrequired::Base.VersionNumber
+        # Don't apply this deprecation if all versions are above
+        # this version - generally because this syntax is now available
+        # for re-use, and we want to avoid false positives for such syntax
         maxver::Base.VersionNumber
     end
 
@@ -19,23 +22,46 @@ module Deprecations
     all_replacements = Any[]
     deprecation = Any[]
 
-    custom_resolutions = Any[]
-
-    function match(dep::Deprecation, template::String, replacement::String, formatter)
-        push!(deprecation, dep)
-        push!(all_templates, template)
-        push!(all_replacements, replacement)
+    function applicable_dep(dep, vers)
+        i = info(dep)
+        haskey(vers, i.package) || return false
+        pvers = vers[i.package]
+        all(interval->i.minsupported <= interval.lower, pvers.intervals) || return false
+        all(interval->i.maxver <= interval.lower, pvers.intervals) && return false
+        true
     end
 
-    function match_macrocall(mod, name, dep::Deprecation, template::String, replacement::String)
+    all_deprecations = Dict()
+    templates = Dict{Any,Vector{Tuple{Any, Any, Any}}}()
+    custom_resolutions = Dict{Any, Any}()
+    register(dep, info) = all_deprecations[dep] = info
+    info(dep) = all_deprecations[dep]
+
+    dep_for_vers(dep, vers) = dep()
+
+    function applicable_deprecations(vers)
+        deps = Any[]
+        for dep in keys(all_deprecations)
+            applicable_dep(dep, vers) || continue
+            push!(deps, dep_for_vers(dep, vers))
+        end
+        deps
+    end
+
+    function match(dep, template::String, replacement::String, formatter = identity)
+        haskey(templates, dep) || (templates[dep] = Vector{Tuple{Any, Any, Any}}())
+        push!(templates[dep], (template, replacement, identity))
+    end
+
+    function match_macrocall(mod, name, dep, template::String, replacement::String)
         # TODO: Make sure the macro in the current module is actually the one from `mod`
-        push!(deprecation, dep)
-        push!(all_templates, template)
-        push!(all_replacements, replacement)
+        haskey(templates, dep) || (templates[dep] = Vector{Tuple{Any, Any, Any}}())
+        push!(templates[dep], (template, replacement, identity))
     end
 
-    function match(f::Function, dep::Deprecation, expr_kind)
-        push!(custom_resolutions, (expr_kind, f))
+    function match(f::Function, dep, expr_kind)
+        haskey(custom_resolutions, dep) || (custom_resolutions[dep] = Vector{Any}())
+        push!(custom_resolutions[dep], (expr_kind, f))
     end
 
     include("database.jl")
@@ -45,26 +71,31 @@ module Deprecations
         text::String
     end
 
-    function overlay_parse(text)
-        p = CSTParser.parse(text)
-        OverlayNode(nothing, text, p, 0:p.fullspan, p.span-1)
+    function overlay_parse(text, cont = true)
+        p = CSTParser.parse(text, cont)
+        OverlayNode(p, text)
     end
 
-    function edit_text(text)
-        replacements = collect(zip(all_templates, all_replacements))
-        parsed_replacementes = map(x->(overlay_parse(x[1]),overlay_parse(x[2])), replacements)
+    function edit_text(text, deps = map(x->x(), keys(all_deprecations)))
+        replacements = Any[]
+        customs = Any[]
+        for dep in deps
+            haskey(templates, typeof(dep)) && append!(replacements, templates[typeof(dep)])
+            haskey(custom_resolutions, typeof(dep)) && append!(customs, custom_resolutions[typeof(dep)])
+        end
+        parsed_replacementes = map(x->(overlay_parse(x[1],false),overlay_parse(x[2],false),x[3]), replacements)
         match = overlay_parse(text)
         function find_replacements(x, results)
-            for (i,(t, r)) in enumerate(parsed_replacementes)
+            for (i,(t, r, formatter)) in enumerate(parsed_replacementes)
                 if typeof(x) == typeof(t)
                     result = Dict{Any,Any}()
                     match_parameters(t, x, result)[1] || continue
                     buf = IOBuffer()
-                    print_replacement(buf, reassemble_tree(r, result))
+                    print_replacement(buf, formatter(reassemble_tree(r, result)))
                     push!(results, TextReplacement(x.span, String(take!(buf))))
                 end
             end
-            for (i,(k, f)) in enumerate(custom_resolutions)
+            for (i,(k, f)) in enumerate(customs)
                 if typeof(x) == EXPR{k}
                     f((x, text, results))
                 end
@@ -89,8 +120,18 @@ module Deprecations
             lastoffset = last(r.range)+1
         end
         write(buf, text[lastoffset+1:end])
-        String(take!(buf))
+        (length(results) != 0,String(take!(buf)))
     end
 
+    function edit_file(fname, deps)
+        text = readstring(fname)
+        any_changed, new_text = edit_text(text, deps)
+        if any_changed
+            open(fname, "w") do io
+                write(io, new_text)
+            end
+        end
+        any_changed
+    end
 
 end # module

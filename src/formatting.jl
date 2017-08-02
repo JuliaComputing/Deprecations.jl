@@ -24,8 +24,8 @@ function unindent_ws(ws, nchars)
             while remaining_chars > 0
                 c = ws[i]
                 !isspace(c) && break
-                c == ' ' && remaining_chars -= 1
-                c == '\t' && remaining_chars -= 1
+                c == ' ' && (remaining_chars -= 1)
+                c == '\t' && (remaining_chars -= 4)
                 i = nextind(ws, i)
             end
         end

@@ -21,14 +21,13 @@ end
 
 matches_template(x::OverlayNode, y::OverlayNode) = matches_template(x.expr, y.expr)
 
-function match_parameters(template, match, result, start_offset = 0)
+function match_parameters(template, match, result)
     (typeof(template) != typeof(match)) && return
-    offset = start_offset
     j = 1
     for (i,x) in enumerate(children(template))
         y = children(match)[j]
         if matches_template(x, y)
-            ok = match_parameters(x, y, result, offset)
+            ok = match_parameters(x, y, result)
             ok || return ok
             j += 1
         else
