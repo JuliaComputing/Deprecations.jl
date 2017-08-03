@@ -92,7 +92,7 @@ begin
     opcode(x::EXPR{CSTParser.OPERATOR{6,op,false}}) where {op} = op
 
     match(ObsoleteVersionCheck, CSTParser.If) do x
-        expr, orig_text, resolutions = x
+        expr, resolutions = x
         comparison = children(expr)[2]
         isexpr(comparison, CSTParser.BinaryOpCall) || return
         isexpr(children(comparison)[2], CSTParser.OPERATOR{6,op,false} where op) || return
@@ -105,8 +105,8 @@ begin
             alwaystrue = f(first(version_range), r1) && f(last(version_range), r1)
             alwaysfalse = !f(first(version_range), r1) && !f(last(version_range), r1)
             @assert !(alwaystrue && alwaysfalse)
-            alwaystrue && resolve_inline_body(resolutions, orig_text, expr)
-            alwaysfalse && resolve_delete_expr(resolutions, orig_text, expr)
+            alwaystrue && resolve_inline_body(resolutions, expr)
+            alwaysfalse && resolve_delete_expr(resolutions, expr)
             return
         end
         r2 = detect_ver_arguments(comparison.args[3], comparison.args[1])
@@ -115,8 +115,8 @@ begin
             alwaystrue = f(r2, first(version_range)) && f(r2, last(version_range))
             alwaysfalse = !f(r2, first(version_range)) && !f(r2, last(version_range))
             @assert !(alwaystrue && alwaysfalse)
-            alwaystrue && resolve_inline_body(resolutions, orig_text, expr)
-            alwaysfalse && resolve_delete_expr(resolutions, orig_text, expr)
+            alwaystrue && resolve_inline_body(resolutions, expr)
+            alwaysfalse && resolve_delete_expr(resolutions, expr)
         end
     end
 end

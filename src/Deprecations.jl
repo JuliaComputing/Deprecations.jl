@@ -100,7 +100,7 @@ module Deprecations
             end
             for (i,(k, f)) in enumerate(customs)
                 if isexpr(x, k)
-                    f((x, text, results))
+                    f((x, results))
                 end
             end
             for arg in children(x)
