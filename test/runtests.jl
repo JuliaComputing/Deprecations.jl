@@ -155,3 +155,13 @@ function foo(a::A,
              b::T) where T
 end
 """
+
+@test edit_text("""
+f{T}(a::A,
+     b::T) =
+        a
+""")[2] == """
+f(a::A,
+  b::T) where {T} =
+        a
+"""
