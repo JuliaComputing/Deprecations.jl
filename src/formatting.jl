@@ -1,3 +1,9 @@
+struct ReplacementNode{T}
+    text::String
+    leading_trivia::String
+    trailing_trivia::String
+end
+
 struct ChildReplacementNode
     parent
     children::Vector{Any}
@@ -68,4 +74,10 @@ function print_replacement(io::IO, node::TriviaReplacementNode, leading_trivia, 
     trailing_trivia && print(io, node.trailing_trivia)
 end
 print_replacement(io::IO, node::TriviaInsertionNode, leading_trivia, trailing_trivia) = print(io, node.trivia)
+function print_replacement(io::IO, node::ReplacementNode, leading_trivia, trailing_trivia)
+    leading_trivia && print(io, node.leading_trivia)
+    print(io, node.text)
+    trailing_trivia && print(io, node.trailing_trivia)
+end
+
 print_replacement(io::IO, node) = print_replacement(io, node, false, false)

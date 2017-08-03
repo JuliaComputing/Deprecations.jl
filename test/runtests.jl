@@ -165,3 +165,43 @@ f(a::A,
   b::T) where {T} =
         a
 """
+
+@test edit_text(raw"""
+using Compat: @compat
+@save f li lidict
+if VERSION > v"0.1.0"
+    true
+end
+""")[2] == """
+using Compat: @compat
+@save f li lidict
+true
+"""
+
+@test edit_text("""
+if VERSION < v"0.1.0"
+    true
+else
+    false
+end
+""")[2] == "false\n"
+
+@test edit_text("""
+if VERSION > v"0.1.0"
+    true
+else
+    false
+end
+""")[2] == "true\n"
+
+@test edit_text("""
+if VERSION < v"0.1.0"
+    true
+elseif true
+    false
+end
+""")[2] == """
+if true
+    false
+end
+"""
