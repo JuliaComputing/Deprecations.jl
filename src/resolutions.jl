@@ -18,8 +18,8 @@ function resolve_inline_body(resolutions, expr)
     indent = sum(charwidth, trailing_ws(children(expr)[2]))
     body = format_unindent_body(children(expr)[3], indent)
     buf = IOBuffer()
-    print_replacement(buf, body, false, true)
-    push!(resolutions, TextReplacement(expr.fullspan, String(take!(buf))))
+    print_replacement(buf, body)
+    push!(resolutions, TextReplacement(expr.span, String(take!(buf))))
 end
 
 function resolve_delete_expr(resolutions, expr)
