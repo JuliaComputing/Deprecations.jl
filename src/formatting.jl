@@ -37,7 +37,7 @@ function unindent_ws(ws, nchars)
         if c == '\n'
             # Skip whitespace until nchars is reached
             remaining_chars = nchars
-            while remaining_chars > 0
+            while i <= sizeof(ws) && remaining_chars > 0
                 c = ws[i]
                 !isspace(c) && break
                 c == ' ' && (remaining_chars -= 1)

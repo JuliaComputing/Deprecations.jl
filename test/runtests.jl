@@ -205,3 +205,15 @@ if true
     false
 end
 """
+
+@test edit_text("""
+if VERSION > v"0.1.0"
+    a
+    b
+    c
+end
+""")[2] == """
+a
+b
+c
+"""
