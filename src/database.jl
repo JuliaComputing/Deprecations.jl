@@ -14,15 +14,15 @@ begin
 
     # Special purpose formatter to unindent multi-line arglists
     function format_arglist(tree, matches)
-        nchars_moved = sum(charwidth, fullspan_text(matches[:T]))
+        nchars_moved = sum(charwidth, fullspan_text(first(matches[:T])))+2
         if isexpr(tree, FunctionDef)
+            wheren = children(tree)[2]
             # We replace the call argument
-            ocall = tree.args[2]
-            call = tree.args[2] = ChildReplacementNode(tree, Any[], ocall)
-            push!(call.children, children(ocall)[1])
+            ocall = children(wheren)[1]
+            call = children(wheren)[1] = ChildReplacementNode(tree, Any[], ocall)
             for c in children(ocall)
                 ws = trailing_ws(c)
-                if !contains(ws, '\n')
+                if !('\n' in ws)
                     push!(call.children, c)
                     continue
                 end
@@ -31,6 +31,7 @@ begin
             end
             return tree
         end
+        tree
     end
 
     match(OldParametricSyntax,
@@ -53,7 +54,7 @@ end
 using Tokenize.Tokens: GREATER, LESS, GREATER_EQ, GREATER_THAN_OR_EQUAL_TO, LESS_EQ, LESS_THAN_OR_EQUAL_TO
 begin
     struct ObsoleteVersionCheck; end
-    register(OldParametricSyntax, Deprecation(
+    register(ObsoleteVersionCheck, Deprecation(
         "This version check is for a version of julia that is no longer supported by this package",
         "julia",
         typemin(VersionNumber), typemin(VersionNumber), typemax(VersionNumber)
@@ -92,9 +93,10 @@ begin
 
     match(ObsoleteVersionCheck, CSTParser.If) do x
         expr, orig_text, resolutions = x
-        comparison = expr.args[2]
-        isa(comparison, EXPR{CSTParser.BinaryOpCall}) || return
-        isa(comparison.args[2], EXPR{CSTParser.OPERATOR{6,op,false}} where op) || return
+        comparison = children(expr)[2]
+        isexpr(comparison, CSTParser.BinaryOpCall) || return
+        isexpr(children(comparison)[2], CSTParser.OPERATOR{6,op,false} where op) || return
+        comparison = comparison.expr
         opc = opcode(comparison.args[2])
         haskey(comparisons, opc) || return
         r1 = detect_ver_arguments(comparison.args[1], comparison.args[3])

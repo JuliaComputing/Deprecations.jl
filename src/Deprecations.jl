@@ -48,15 +48,17 @@ module Deprecations
         deps
     end
 
-    function match(dep, template::String, replacement::String, formatter = identity)
+    identity_formatter(tree, matches) = tree
+
+    function match(dep, template::String, replacement::String, formatter = identity_formatter)
         haskey(templates, dep) || (templates[dep] = Vector{Tuple{Any, Any, Any}}())
-        push!(templates[dep], (template, replacement, identity))
+        push!(templates[dep], (template, replacement, formatter))
     end
 
     function match_macrocall(mod, name, dep, template::String, replacement::String)
         # TODO: Make sure the macro in the current module is actually the one from `mod`
         haskey(templates, dep) || (templates[dep] = Vector{Tuple{Any, Any, Any}}())
-        push!(templates[dep], (template, replacement, identity))
+        push!(templates[dep], (template, replacement, identity_formatter))
     end
 
     function match(f::Function, dep, expr_kind)
@@ -90,13 +92,14 @@ module Deprecations
                 if typeof(x) == typeof(t)
                     result = Dict{Any,Any}()
                     match_parameters(t, x, result)[1] || continue
+                    rtree = reassemble_tree(r, result)
                     buf = IOBuffer()
-                    print_replacement(buf, formatter(reassemble_tree(r, result)))
+                    print_replacement(buf, formatter(rtree, result))
                     push!(results, TextReplacement(x.span, String(take!(buf))))
                 end
             end
             for (i,(k, f)) in enumerate(customs)
-                if typeof(x) == EXPR{k}
+                if isexpr(x, k)
                     f((x, text, results))
                 end
             end

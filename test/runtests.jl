@@ -36,7 +36,7 @@ function foobar(x::S, y::T) where {S,T}
 end
 """
 
-edit_text("""
+@test edit_text("""
 module Test
     function foobar{S,T}(x::S, y::T)
         println(x, y)
@@ -44,31 +44,31 @@ module Test
 end
 """)[2] == """
 module Test
-function foobar(x::S, y::T) where {S,T}
-    println(x, y)
-end
+    function foobar(x::S, y::T) where {S,T}
+        println(x, y)
+    end
 end
 """
 
-edit_text("f{T}(x::T) = x")[2] == "f(x::T) where {T} = x"
+@test edit_text("f{T}(x::T) = x")[2] == "f(x::T) where {T} = x"
 
-edit_text("""
+@test edit_text("""
 if VERSION >= v"0.1.0"
     do_magic()
 end
-""")[2] == "do_magic()"
+""")[2] == "do_magic()\n"
 
-edit_text("@compat(Union{Int64,Float64})")[2] == "Union{Int64,Float64}"
-edit_text("@compat Union{Int64,Float64}")[2] == "Union{Int64,Float64}"
-edit_text("Compat.UTF8String")[2] == "String"
+@test edit_text("@compat(Union{Int64,Float64})")[2] == "Union{Int64,Float64}"
+@test edit_text("@compat Union{Int64,Float64}")[2] == "Union{Int64,Float64}"
+@test edit_text("Compat.UTF8String")[2] == "String"
 
-edit_text("""
+@test edit_text("""
 jlconvert(::Type{Symbol}, file::JldFile, ptr::Ptr) = Symbol(jlconvert(Compat.UTF8String, file, ptr))
 """)[2] == """
 jlconvert(::Type{Symbol}, file::JldFile, ptr::Ptr) = Symbol(jlconvert(String, file, ptr))
 """
 
-edit_text("""
+@test edit_text("""
 # Some comment
 const A = 1
 const B = Compat.UTF8String
@@ -78,7 +78,7 @@ const A = 1
 const B = String
 """
 
-edit_text("""
+@test edit_text("""
 @sprintf("%08d", id)
 Union{Type{Compat.ASCIIString},Type{Compat.UTF8String}}
 """)[2] == """
@@ -86,7 +86,7 @@ Union{Type{Compat.ASCIIString},Type{Compat.UTF8String}}
 Union{Type{String},Type{String}}
 """
 
-edit_text(raw"""
+@test edit_text(raw"""
 "ABC$T"
 if cset == HDF5.H5T_CSET_ASCII
     return Compat.ASCIIString
@@ -102,15 +102,15 @@ elseif cset == HDF5.H5T_CSET_UTF8
 end
 """
 
-edit_text(raw"""
+@test edit_text(raw"""
 T.mutable && print("Ok")
 return Compat.ASCIIString
-""")[2] === """
+""")[2] == """
 T.mutable && print("Ok")
 return String
 """
 
-edit_text(raw"""
+@test edit_text(raw"""
 error("$T")
 return Compat.ASCIIString
 """)[2] == raw"""
@@ -118,7 +118,7 @@ error("$T")
 return String
 """
 
-edit_text(raw"""
+@test edit_text(raw"""
 error(\"\"\"$T is not supported\"\"\")
 Compat.ASCIIString
 """)[2] == raw"""
@@ -126,7 +126,7 @@ error(\"\"\"$T is not supported\"\"\")
 String
 """
 
-edit_text(raw"""
+@test edit_text(raw"""
 ###############################################
 ## Reading and writing Julia data .jld files ##
 ###############################################
@@ -143,5 +143,15 @@ end
 module JLD00
 write(parent::Union{JldFile, JldGroup}, name::String, data::Union{T, Array{T}}) where {T<:Union{HDF5BitsKind, String}} =
     write(parent, name, data, full_typename(typeof(data)))
+end
+"""
+
+@test edit_text("""
+function foo{T}(a::A,
+                b::T)
+end
+""")[2] == """
+function foo(a::A,
+             b::T) where T
 end
 """

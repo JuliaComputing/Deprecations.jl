@@ -21,10 +21,21 @@ end
 
 matches_template(x::OverlayNode, y::OverlayNode) = matches_template(x.expr, y.expr)
 
+struct EmptyMatch
+    parent
+end
+
 function match_parameters(template, match, result)
     (typeof(template) != typeof(match)) && return
     j = 1
     for (i,x) in enumerate(children(template))
+        if j > length(children(match)) && i == length(children(template))
+            ret, sym, slurp = is_template_expr(x)
+            if ret
+                result[sym] = (EmptyMatch(match),)
+                break
+            end
+        end
         y = children(match)[j]
         if matches_template(x, y)
             ok = match_parameters(x, y, result)
@@ -145,6 +156,10 @@ function reassemble_tree(replacement, matches, parent = nothing)
             endswith(String(sym), "!") && (sym = Symbol(String(sym)[1:end-1]))
             exprs = matches[sym]
             expr = first(exprs)
+            if typeof(expr) == EmptyMatch
+                push!(ret.children, TriviaInsertionNode(prev_node_ws(expr.parent)))
+                continue
+            end
             push!(ret.children, TriviaReplacementNode(ret, expr,
                 string(prev_node_ws(expr), leading_ws(expr)), trailing_ws(expr)))
             append!(ret.children, exprs[2:end])
@@ -152,21 +167,6 @@ function reassemble_tree(replacement, matches, parent = nothing)
     end
     ret
 end
-
-print_replacement(io::IO, node::OverlayNode, leading_trivia, trailing_trivia) = print(io, text(node, leading_trivia, trailing_trivia))
-function print_replacement(io::IO, node::ChildReplacementNode, leading_trivia, trailing_trivia)
-    length(node.children) == 0 && return
-    length(node.children) == 1 && return print_replacement(io, first(node.children), leading_trivia, trailing_trivia)
-    print_replacement(io, first(node.children), leading_trivia, true)
-    foreach(c->print_replacement(io, c, true, true), node.children[2:end-1])
-    print_replacement(io, last(node.children), leading_trivia, true)
-end
-function print_replacement(io::IO, node::TriviaReplacementNode, leading_trivia, trailing_trivia)
-    leading_trivia && print(io, node.leading_trivia)
-    print_replacement(io, node.onode, false, false)
-    trailing_trivia && print(io, node.trailing_trivia)
-end
-print_replacement(io::IO, node) = print_replacement(io, node, true, true)
 
 function inspect_matches(result, text)
     for (sym, ((pre_ws, offset), expr)) in result
