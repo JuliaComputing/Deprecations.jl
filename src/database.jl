@@ -48,6 +48,54 @@ begin
     )
 end
 
+begin
+    struct OldStructSyntax; end
+    register(OldStructSyntax, Deprecation(
+        "The type-definition keywords (type, immutable, abstract) where changed in Julia 0.6",
+        "julia",
+        v"0.6.0",
+        v"0.7.0-DEV.198",
+        typemax(VersionNumber)
+    ))
+
+    match(OldParametricSyntax,
+        "immutable \$name\n\$BODY...\nend",
+        "struct\$name\n\$BODY!...\nend"
+    )
+    match(OldParametricSyntax,
+        "type \$name\n\$BODY...\nend",
+        "mutable struct\$name\n\$BODY!...\nend"
+    )
+    match(OldParametricSyntax,
+        "abstract \$name",
+        "abstract type\$name end"
+    )
+    match(OldParametricSyntax,
+        "bitstype \$name \$size",
+        "primitive type\$name\$size end"
+    )
+end
+
+begin
+    struct OldTypeAliasSyntax; end
+    register(OldTypeAliasSyntax, Deprecation(
+        "The `typealias` keyword is deprecated in Julia 0.6",
+        "julia",
+        v"0.6.0",
+        v"0.6.0",
+        typemax(VersionNumber)
+    ))
+
+    match(OldTypeAliasSyntax,
+        "typealias \$X{\$T...} \$B",
+        "\$X{\$T...} = \$B"
+    )
+    match(OldTypeAliasSyntax,
+        "typealias \$A \$B",
+        "const \$A = \$B"
+    )
+end
+
 using Tokenize.Tokens: GREATER, LESS, GREATER_EQ, GREATER_THAN_OR_EQUAL_TO, LESS_EQ, LESS_THAN_OR_EQUAL_TO
 begin
     struct ObsoleteVersionCheck; end
