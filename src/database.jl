@@ -14,20 +14,11 @@ begin
 
     # Special purpose formatter to unindent multi-line arglists
     function format_arglist(tree, matches)
-        nchars_moved = sum(charwidth, fullspan_text(first(matches[:T])))+2
+        nchars_moved = sum(match->sum(charwidth, fullspan_text(match)),matches[:T])+2
         wheren = isexpr(tree, FunctionDef) ? children(tree)[2] : children(tree)[1]
         # We replace the call argument
         ocall = children(wheren)[1]
-        call = children(wheren)[1] = ChildReplacementNode(tree, Any[], ocall)
-        for c in children(ocall)
-            ws = trailing_ws(c)
-            if !('\n' in ws)
-                push!(call.children, c)
-                continue
-            end
-            push!(call.children, TriviaReplacementNode(call, c, leading_ws(c),
-                unindent_ws(ws, nchars_moved)))
-        end
+        children(wheren)[1] = format_unindent_body(ocall, nchars_moved, nothing)
         tree
     end
 

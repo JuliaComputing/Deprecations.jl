@@ -49,6 +49,20 @@ function unindent_ws(ws, nchars)
     String(take!(buf))
 end
 
+function format_unindent_body(expr, nindent, parent = nothing)
+    nexpr = ChildReplacementNode(parent, Any[], expr)
+    for c in children(expr)
+        # For leaves, try to unindent
+        if isempty(children(c))
+            push!(nexpr.children, TriviaReplacementNode(next, c, leading_ws(c),
+                unindent_ws(trailing_ws(c), nindent)))
+        else
+            push!(nexpr.children, format_unindent_body(c, nindent, nexpr))
+        end
+    end
+    nexpr
+end
+
 isexpr(x::EXPR{T}, S) where {T} = T <: S
 isexpr(x::OverlayNode{T}, S) where {T} = T <: S
 isexpr(x::ChildReplacementNode, S) = isexpr(x.onode, S)
@@ -59,6 +73,9 @@ children(x::TriviaReplacementNode) = children(x.onode)
 
 trailing_ws(x::ChildReplacementNode) = trailing_ws(last(x.children))
 trailing_ws(x::TriviaReplacementNode) = x.trailing_trivia
+
+leading_ws(x::ChildReplacementNode) = leading_ws(last(x.children))
+leading_ws(x::TriviaReplacementNode) = x.leading_trivia
 
 print_replacement(io::IO, node::OverlayNode, leading_trivia, trailing_trivia) = print(io, text(node, leading_trivia, trailing_trivia))
 function print_replacement(io::IO, node::ChildReplacementNode, leading_trivia, trailing_trivia)

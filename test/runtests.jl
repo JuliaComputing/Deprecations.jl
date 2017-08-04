@@ -229,3 +229,17 @@ struct DTable{K,V}
     chunks::Vector
 end
 """
+
+@test edit_text("""
+function naturaljoin{I1, I2, D1, D2}(left::DTable{I1,D1},
+                                     right::DTable{I2,D2},
+                                     op, ascolumns=false)
+    out_subdomains = Any[]
+end
+""")[2] == """
+function naturaljoin(left::DTable{I1,D1},
+                     right::DTable{I2,D2},
+                     op, ascolumns=false) where {I1, I2, D1, D2}
+    out_subdomains = Any[]
+end
+"""
