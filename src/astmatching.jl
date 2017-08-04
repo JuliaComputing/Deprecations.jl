@@ -139,16 +139,19 @@ function reassemble(out::IO, replacement, matches)
     replacement
 end
 
+function skip_next_ws(c)
+    ret, sym, _ = next_is_template(c)
+    ret && endswith(String(sym), "!")
+end
+
 function reassemble_tree(replacement, matches, parent = nothing)
     if isempty(children(replacement))
-        ret, sym, _ = next_is_template(replacement)
-        skip_trailing_ws = ret && endswith(String(sym), "!")
-        return skip_trailing_ws ?
+        return skip_next_ws(replacement) ?
             TriviaReplacementNode(parent, replacement, leading_ws(replacement), "") :
             replacement
     end
     ret = ChildReplacementNode(parent, Any[], replacement)
-    for x in children(replacement)
+    for (i, x) in enumerate(children(replacement))
         istemp, sym, slurp = is_template_expr(x)
         if !istemp
             push!(ret.children, reassemble_tree(x, matches, ret))
@@ -161,7 +164,9 @@ function reassemble_tree(replacement, matches, parent = nothing)
                 continue
             end
             push!(ret.children, TriviaReplacementNode(ret, expr,
-                string(prev_node_ws(expr), leading_ws(expr)), trailing_ws(expr)))
+                string(prev_node_ws(expr), leading_ws(expr)),
+                    skip_next_ws(x) ? "" :
+                    trailing_ws(expr)))
             append!(ret.children, exprs[2:end])
         end
     end

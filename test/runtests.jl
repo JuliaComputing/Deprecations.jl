@@ -217,3 +217,15 @@ a
 b
 c
 """
+
+@test edit_text("""
+immutable DTable{K,V}
+    subdomains::Vector{IndexSpace{K}}
+    chunks::Vector
+end
+""")[2] == """
+struct DTable{K,V}
+    subdomains::Vector{IndexSpace{K}}
+    chunks::Vector
+end
+"""
