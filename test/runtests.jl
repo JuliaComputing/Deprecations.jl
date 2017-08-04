@@ -243,3 +243,21 @@ function naturaljoin(left::DTable{I1,D1},
     out_subdomains = Any[]
 end
 """
+
+@test edit_text("""
+function Base.getindex{K}(t::DTable{K}, idxs...)
+    if typeof(idxs) <: astuple(K)
+        _getindex_scalar(t, idxs)
+    else
+        _getindex(t, idxs)
+    end
+end
+""")[2] == """
+function Base.getindex(t::DTable{K}, idxs...) where K
+    if typeof(idxs) <: astuple(K)
+        _getindex_scalar(t, idxs)
+    else
+        _getindex(t, idxs)
+    end
+end
+"""

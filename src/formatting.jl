@@ -8,6 +8,11 @@ struct ChildReplacementNode
     parent
     children::Vector{Any}
     onode
+    function ChildReplacementNode(a,b,c)
+        # For now, always force Trivia replacement nodes to wrap child replacement nodes
+        @assert !isa(c, TriviaReplacementNode)
+        new(a,b,c)
+    end
 end
 AbstractTrees.printnode(io::IO, x::ChildReplacementNode) = AbstractTrees.printnode(io, x.onode)
 
@@ -21,6 +26,7 @@ struct TriviaReplacementNode
     leading_trivia::String
     trailing_trivia::String
 end
+TriviaReplacementNode(parent, node::TriviaReplacementNode, onode) = TriviaReplacementNode(parent, onode, node.leading_trivia, node.trailing_trivia)
 function AbstractTrees.printnode(io::IO, x::TriviaReplacementNode)
     AbstractTrees.printnode(io, x.onode)
     print(io, " [", repr(x.leading_trivia), " ", repr(x.trailing_trivia), "]")
@@ -49,8 +55,7 @@ function unindent_ws(ws, nchars)
     String(take!(buf))
 end
 
-function format_unindent_body(expr, nindent, parent = nothing)
-    nexpr = ChildReplacementNode(parent, Any[], expr)
+function _format_unindent_body(expr, nexpr, nindent)
     for c in children(expr)
         # For leaves, try to unindent
         if isempty(children(c))
@@ -60,7 +65,17 @@ function format_unindent_body(expr, nindent, parent = nothing)
             push!(nexpr.children, format_unindent_body(c, nindent, nexpr))
         end
     end
+end
+
+function format_unindent_body(expr, nindent, parent = nothing)
+    nexpr = ChildReplacementNode(parent, Any[], expr)
+    _format_unindent_body(expr, nexpr, nindent)
     nexpr
+end
+function format_unindent_body(expr::TriviaReplacementNode, nindent, parent = nothing)
+    nexpr = ChildReplacementNode(nothing, Any[], expr.onode)
+    _format_unindent_body(expr, nexpr, nindent)
+    TriviaReplacementNode(parent, expr, nexpr)
 end
 
 isexpr(x::EXPR{T}, S) where {T} = T <: S
