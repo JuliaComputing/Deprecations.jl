@@ -55,6 +55,41 @@ function unindent_ws(ws, nchars)
     String(take!(buf))
 end
 
+function setindent_ws(ws, nchars)
+    buf = IOBuffer()
+    i = start(ws)
+    while i <= sizeof(ws)
+        c = ws[i]
+        write(buf, ws[i])
+        i = nextind(ws, i)
+        if c == '\n'
+            # Skip whitespace until nchars is reached
+            counted_ws = 0
+            while i <= sizeof(ws) && counted_ws <= nchars
+                c = ws[i]
+                write(buf, c)
+                !isspace(c) && break
+                c == ' ' && (counted_ws += 1)
+                c == '\t' && (counted_ws += 4)
+                i = nextind(ws, i)
+            end
+            # Skip remaining whitespace
+            if counted_ws == nchars
+                while isspace(ws[i])
+                    i = nextind(ws, i)
+                end
+            else
+                # Add whitespace until we reach the desired indent
+                while counted_ws < nchars
+                    write(buf, ' ')
+                    counted_ws += 1
+                end
+            end
+        end
+    end
+    String(take!(buf))
+end
+
 function _format_unindent_body(expr, nexpr, nindent)
     for c in children(expr)
         # For leaves, try to unindent
@@ -63,6 +98,18 @@ function _format_unindent_body(expr, nexpr, nindent)
                 unindent_ws(trailing_ws(c), nindent)))
         else
             push!(nexpr.children, format_unindent_body(c, nindent, nexpr))
+        end
+    end
+end
+
+function _format_setindent_body(expr, nexpr, nindent)
+    for c in children(expr)
+        # For leaves, try to unindent
+        if isempty(children(c))
+            push!(nexpr.children, TriviaReplacementNode(next, c, leading_ws(c),
+                setindent_ws(trailing_ws(c), nindent)))
+        else
+            push!(nexpr.children, format_setindent_body(c, nindent, nexpr))
         end
     end
 end
@@ -77,6 +124,18 @@ function format_unindent_body(expr::TriviaReplacementNode, nindent, parent = not
     _format_unindent_body(expr, nexpr, nindent)
     TriviaReplacementNode(parent, expr, nexpr)
 end
+
+function format_setindent_body(expr, nindent, parent = nothing)
+    nexpr = ChildReplacementNode(parent, Any[], expr)
+    _format_setindent_body(expr, nexpr, nindent)
+    nexpr
+end
+function format_setindent_body(expr::TriviaReplacementNode, nindent, parent = nothing)
+    nexpr = ChildReplacementNode(nothing, Any[], expr.onode)
+    _format_setindent_body(expr, nexpr, nindent)
+    TriviaReplacementNode(parent, expr, nexpr)
+end
+
 
 isexpr(x::EXPR{T}, S) where {T} = T <: S
 isexpr(x::OverlayNode{T}, S) where {T} = T <: S
@@ -115,3 +174,4 @@ function print_replacement(io::IO, node::ReplacementNode, leading_trivia, traili
 end
 
 print_replacement(io::IO, node) = print_replacement(io, node, false, false)
+

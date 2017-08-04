@@ -1,5 +1,7 @@
 using AbstractTrees
 import AbstractTrees: children
+using CSTParser: FunctionDef, BinarySyntaxOpCall
+using Tokenize: Tokens
 
 struct OverlayNode{T}
     parent::Union{OverlayNode, Void}
@@ -33,6 +35,7 @@ function Base.getindex(node::OverlayNode, range::Range)
     map(x->node[x], range)
 end
 
+Base.setindex!(o::OverlayNode, x::OverlayNode, idx) = Base.setindex!(o.expr.args, x.expr, idx)
 
 Base.start(node::OverlayNode) = (1, first(node.fullspan))
 function Base.next(node::OverlayNode, state::Tuple{Int, Int})
@@ -41,3 +44,31 @@ function Base.next(node::OverlayNode, state::Tuple{Int, Int})
     (OverlayNode(node, node.buffer, expr, offset:(offset+expr.fullspan-1), offset - 1 + expr.span), (idx+1, offset + expr.fullspan))
 end
 Base.done(node::OverlayNode, state::Tuple{Int, Int}) = state[1] > length(node.expr.args)
+
+function function_def_call(expr)
+    if isexpr(expr, FunctionDef)
+        expr = children(expr)[2]
+    else
+        @assert isexpr(expr, BinarySyntaxOpCall) && isexpr(children(expr)[2], CSTParser.OPERATOR{1,Tokens.EQ,false})
+    end
+    while isexpr(expr, BinarySyntaxOpCall)
+        expr = children(expr)[1]
+    end
+    return expr
+end
+
+function set_function_def_call!(tree, expr)
+    if isexpr(tree, FunctionDef)
+        tree = children(tree)[2]
+    else
+        @assert isexpr(tree, BinarySyntaxOpCall) && isexpr(children(tree)[2], CSTParser.OPERATOR{1,Tokens.EQ,false})
+    end
+    lasttree = tree
+    while isexpr(tree, BinarySyntaxOpCall)
+        parent = tree
+        tree = children(tree)[1]
+        lasttree = parent
+    end
+    children(lasttree)[1] = expr
+    return tree
+end

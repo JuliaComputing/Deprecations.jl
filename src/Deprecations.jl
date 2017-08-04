@@ -78,6 +78,24 @@ module Deprecations
         OverlayNode(p, text)
     end
 
+    function changed_text(text, resolutions)
+        sort!(resolutions, by=x->first(x.range))
+        buf = IOBuffer()
+        lastoffset = 0
+        for r in resolutions
+            if lastoffset > first(r.range)
+                # Overlapping replacements. Only apply the first one for now.
+                # We'll re-run this to convergence
+                continue
+            end
+            write(buf, text[1+(lastoffset:first(r.range)-1)])
+            write(buf, r.text)
+            lastoffset = last(r.range)+1
+        end
+        write(buf, text[lastoffset+1:end])
+        (length(resolutions) != 0, String(take!(buf)))
+    end
+
     function edit_text(text, deps = map(x->x(), keys(all_deprecations)))
         replacements = Any[]
         customs = Any[]
@@ -109,21 +127,7 @@ module Deprecations
         end
         results = TextReplacement[]
         find_replacements(match, results)
-        sort!(results, by=x->first(x.range))
-        buf = IOBuffer()
-        lastoffset = 0
-        for r in results
-            if lastoffset > first(r.range)
-                # Overlapping replacements. Only apply the first one for now.
-                # We'll re-run this to convergence
-                continue
-            end
-            write(buf, text[1+(lastoffset:first(r.range)-1)])
-            write(buf, r.text)
-            lastoffset = last(r.range)+1
-        end
-        write(buf, text[lastoffset+1:end])
-        (length(results) != 0,String(take!(buf)))
+        changed_text(text, results)
     end
 
     function edit_file(fname, deps)

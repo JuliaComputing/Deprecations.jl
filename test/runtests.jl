@@ -1,5 +1,5 @@
 using Deprecations
-using Deprecations: edit_text
+using Deprecations: edit_text, overlay_parse, apply_formatter, changed_text
 using Base.Test
 
 @test edit_text("""
@@ -259,5 +259,21 @@ function Base.getindex(t::DTable{K}, idxs...) where K
     else
         _getindex(t, idxs)
     end
+end
+"""
+
+t = """
+function foobar(a,
+         b::T,
+         c::T) where T
+    (a, b, c)
+end
+"""
+x = apply_formatter(Deprecations.format_align_arguments, overlay_parse(t, false))
+@test changed_text(t, [x])[2] == """
+function foobar(a,
+                b::T,
+                c::T) where T
+    (a, b, c)
 end
 """
