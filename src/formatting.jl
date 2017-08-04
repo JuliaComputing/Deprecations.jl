@@ -88,9 +88,11 @@ children(x::TriviaReplacementNode) = children(x.onode)
 
 trailing_ws(x::ChildReplacementNode) = trailing_ws(last(x.children))
 trailing_ws(x::TriviaReplacementNode) = x.trailing_trivia
+trailing_ws(x::ReplacementNode) = x.trailing_trivia
 
 leading_ws(x::ChildReplacementNode) = leading_ws(last(x.children))
 leading_ws(x::TriviaReplacementNode) = x.leading_trivia
+leading_ws(x::ReplacementNode) = x.leading_trivia
 
 print_replacement(io::IO, node::OverlayNode, leading_trivia, trailing_trivia) = print(io, text(node, leading_trivia, trailing_trivia))
 function print_replacement(io::IO, node::ChildReplacementNode, leading_trivia, trailing_trivia)

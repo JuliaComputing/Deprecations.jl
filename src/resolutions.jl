@@ -13,8 +13,13 @@ function resolve_delete_expr(resolutions, expr)
         push!(resolutions, TextReplacement(expr.fullspan, ""))
     elseif isexpr(children(expr)[4], KEYWORD{Tokens.ELSE})
         # Inline else body
-        push!(resolutions, TextReplacement(expr.fullspan, fullspan_text(children(expr)[5])))
+        indent = sum(charwidth, trailing_ws(children(expr)[2]))
+        body = format_unindent_body(children(expr)[5], indent)
+        buf = IOBuffer()
+        print_replacement(buf, body)
+        push!(resolutions, TextReplacement(expr.span, String(take!(buf))))
     else
+        indent = sum(charwidth, trailing_ws(children(expr)[2]))
         repl = ChildReplacementNode(nothing, Any[], expr)
         eif = children(expr)[4]
         @assert isexpr(eif, KEYWORD{Tokens.ELSEIF})
