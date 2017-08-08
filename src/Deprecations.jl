@@ -101,7 +101,7 @@ module Deprecations
         customs = Any[]
         for dep in deps
             haskey(templates, typeof(dep)) && append!(replacements, templates[typeof(dep)])
-            haskey(custom_resolutions, typeof(dep)) && append!(customs, custom_resolutions[typeof(dep)])
+            haskey(custom_resolutions, typeof(dep)) && append!(customs, collect(Iterators.product((dep,), custom_resolutions[typeof(dep)])))
         end
         parsed_replacementes = map(x->(overlay_parse(x[1],false),overlay_parse(x[2],false),x[3]), replacements)
         match = overlay_parse(text)
@@ -116,9 +116,9 @@ module Deprecations
                     push!(results, TextReplacement(x.span, String(take!(buf))))
                 end
             end
-            for (i,(k, f)) in enumerate(customs)
+            for (i,(dep, (k, f))) in enumerate(customs)
                 if isexpr(x, k)
-                    f((x, results))
+                    f((dep, x, results))
                 end
             end
             for arg in children(x)

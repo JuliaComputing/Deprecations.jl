@@ -89,12 +89,13 @@ end
 
 using Tokenize.Tokens: GREATER, LESS, GREATER_EQ, GREATER_THAN_OR_EQUAL_TO, LESS_EQ, LESS_THAN_OR_EQUAL_TO
 begin
-    struct ObsoleteVersionCheck; end
+    struct ObsoleteVersionCheck; vers; end
     register(ObsoleteVersionCheck, Deprecation(
         "This version check is for a version of julia that is no longer supported by this package",
         "julia",
         typemin(VersionNumber), typemin(VersionNumber), typemax(VersionNumber)
     ))
+    ObsoleteVersionCheck() = ObsoleteVersionCheck(Pkg.Reqs.parse(IOBuffer("julia 0.6"))["julia"])
 
     const comparisons = Dict(
          GREATER                  => >,
@@ -123,12 +124,14 @@ begin
         VersionNumber(v_arg.args[2].val)
     end
 
-    version_range = (v"0.6.0",typemax(VersionNumber))
+    function dep_for_vers(::Type{ObsoleteVersionCheck}, vers)
+        ObsoleteVersionCheck(vers["julia"])
+    end
 
     opcode(x::EXPR{CSTParser.OPERATOR{6,op,false}}) where {op} = op
 
     match(ObsoleteVersionCheck, CSTParser.If) do x
-        expr, resolutions = x
+        dep, expr, resolutions = x
         comparison = children(expr)[2]
         isexpr(comparison, CSTParser.BinaryOpCall) || return
         isexpr(children(comparison)[2], CSTParser.OPERATOR{6,op,false} where op) || return
@@ -138,8 +141,8 @@ begin
         r1 = detect_ver_arguments(comparison.args[1], comparison.args[3])
         if r1 !== nothing
             f = comparisons[opc]
-            alwaystrue = f(first(version_range), r1) && f(last(version_range), r1)
-            alwaysfalse = !f(first(version_range), r1) && !f(last(version_range), r1)
+            alwaystrue = all(interval->(f(interval.lower, r1) && f(interval.upper, r1)), dep.vers.intervals)
+            alwaysfalse = all(interval->(!f(interval.lower, r1) && !f(interval.upper, r1)), dep.vers.intervals)
             @assert !(alwaystrue && alwaysfalse)
             alwaystrue && resolve_inline_body(resolutions, expr)
             alwaysfalse && resolve_delete_expr(resolutions, expr)
@@ -148,8 +151,8 @@ begin
         r2 = detect_ver_arguments(comparison.args[3], comparison.args[1])
         if r2 !== nothing
             f = comparisons[opc]
-            alwaystrue = f(r2, first(version_range)) && f(r2, last(version_range))
-            alwaysfalse = !f(r2, first(version_range)) && !f(r2, last(version_range))
+            alwaystrue = all(interval->(f(interval.lower, r2) && f(interval.upper, r2)), dep.vers.intervals)
+            alwaysfalse = all(interval->(!f(interval.lower, r2) && !f(interval.upper, r2)), dep.vers.intervals)
             @assert !(alwaystrue && alwaysfalse)
             alwaystrue && resolve_inline_body(resolutions, expr)
             alwaysfalse && resolve_delete_expr(resolutions, expr)

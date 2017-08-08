@@ -280,3 +280,25 @@ end
 
 @test edit_text("abstract FooBar")[2] == "abstract type FooBar end"
 @test edit_text("abstract type FooBar end")[2] == "abstract type FooBar end"
+
+@test edit_text("""
+if VERSION < v"0.6-"
+    true
+end
+""", [Deprecations.dep_for_vers(
+    Deprecations.ObsoleteVersionCheck,
+    Pkg.Reqs.parse(IOBuffer("julia 0.5"))
+)])[2] == """
+if VERSION < v"0.6-"
+    true
+end
+"""
+
+@test edit_text("""
+if VERSION < v"0.6-"
+    true
+end
+""", [Deprecations.dep_for_vers(
+    Deprecations.ObsoleteVersionCheck,
+    Pkg.Reqs.parse(IOBuffer("julia 0.6"))
+)])[2] == ""
