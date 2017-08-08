@@ -32,7 +32,7 @@ function match_parameters(template, match, result)
         if j > length(children(match)) && i == length(children(template))
             ret, sym, slurp = is_template_expr(x)
             if ret
-                result[sym] = (EmptyMatch(match),)
+                result[sym] = (false, (EmptyMatch(match),))
                 break
             end
         end
@@ -43,14 +43,16 @@ function match_parameters(template, match, result)
             j += 1
         else
             ret, sym, slurp = is_template_expr(x)
+            without_trailing_ws = is_last_leaf(x)
             if ret
                 if !slurp
-                    result[sym] = (y,)
+                    result[sym] =  (without_trailing_ws, (y,))
                     j += 1
                 else
                     matched_exprs = Any[]
                     if i == length(children(template))
-                        result[sym] = children(match)[j:end]
+                        result[sym] = (without_trailing_ws, children(match)[j:end])
+                        j = length(children(match))
                     else
                         nextx = children(template)[i + 1]
                         startj = j
@@ -58,13 +60,16 @@ function match_parameters(template, match, result)
                             push!(matched_exprs, children(match)[j])
                             j += 1
                         end
-                        result[sym] = matched_exprs
+                        result[sym] = (without_trailing_ws, matched_exprs)
                     end
                 end
             else
                 return false
             end
         end
+    end
+    if j < length(children(match))
+        return false
     end
     return true
 end
@@ -113,6 +118,15 @@ function next_is_template(node)
     end
 end
 
+function is_last_leaf(node)
+    while true
+        sib = nextsibling(node)
+        sib != nothing && return false
+        node.parent == nothing && return true
+        node = node.parent
+    end
+end
+
 function reassemble(out::IO, replacement, matches)
     if isempty(children(replacement))
         ret, sym, _ = next_is_template(replacement)
@@ -156,8 +170,12 @@ function reassemble_tree(replacement, matches, parent = nothing)
         if !istemp
             push!(ret.children, reassemble_tree(x, matches, ret))
         else
-            endswith(String(sym), "!") && (sym = Symbol(String(sym)[1:end-1]))
-            exprs = matches[sym]
+            use_template_trailing_ws = true
+            if endswith(String(sym), "!")
+                use_template_trailing_ws = false
+                sym = Symbol(String(sym)[1:end-1])
+            end
+            no_trailing_ws, exprs = matches[sym]
             expr = first(exprs)
             if typeof(expr) == EmptyMatch
                 push!(ret.children, TriviaInsertionNode(prev_node_ws(expr.parent)))
@@ -166,7 +184,8 @@ function reassemble_tree(replacement, matches, parent = nothing)
             push!(ret.children, TriviaReplacementNode(ret, expr,
                 string(prev_node_ws(expr), leading_ws(expr)),
                     skip_next_ws(x) ? "" :
-                    trailing_ws(expr)))
+                    string(no_trailing_ws ? "" : trailing_ws(expr),
+                          use_template_trailing_ws ? trailing_ws(x) : "")))
             append!(ret.children, exprs[2:end])
         end
     end

@@ -277,3 +277,6 @@ function foobar(a,
     (a, b, c)
 end
 """
+
+@test edit_text("abstract FooBar")[2] == "abstract type FooBar end"
+@test edit_text("abstract type FooBar end")[2] == "abstract type FooBar end"

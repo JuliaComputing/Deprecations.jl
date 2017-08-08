@@ -14,7 +14,7 @@ begin
 
     # Special purpose formatter to unindent multi-line arglists
     function format_arglist(tree, matches)
-        nchars_moved = sum(match->sum(charwidth, fullspan_text(match)),matches[:T])+2
+        nchars_moved = sum(match->sum(charwidth, fullspan_text(match)),matches[:T][2])+2
         wheren = isexpr(tree, FunctionDef) ? children(tree)[2] : children(tree)[1]
         # We replace the call argument
         ocall = children(wheren)[1]
