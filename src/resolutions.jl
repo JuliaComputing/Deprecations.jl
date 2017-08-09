@@ -7,6 +7,12 @@ function maybe_strip_newline(body)
     TriviaReplacementNode(nothing, body, "", ws[1:end-1])
 end
 
+function except_first_line(ws)
+    idx = findfirst(ws, '\n')
+    idx == 0 && return ""
+    ws[idx+1:end]
+end
+
 function resolve_inline_body(resolutions, expr, replace_expr)
     indent = sum(charwidth, trailing_ws(children(expr)[2]))
     body = format_unindent_body(children(expr)[3], indent)
@@ -18,7 +24,7 @@ end
 
 function resolve_delete_expr(resolutions, expr, replace_expr)
     if length(children(expr)) <= 4
-        push!(resolutions, TextReplacement(replace_expr.fullspan, ""))
+        push!(resolutions, TextReplacement(replace_expr.fullspan, except_first_line(trailing_ws(replace_expr))))
     elseif isexpr(children(expr)[4], KEYWORD{Tokens.ELSE})
         # Inline else body
         indent = sum(charwidth, trailing_ws(children(expr)[2]))

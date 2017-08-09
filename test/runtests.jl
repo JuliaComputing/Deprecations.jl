@@ -332,3 +332,18 @@ end
 """)[2] == """
 true # Comment A
 """
+
+@test edit_text("""
+if VERSION < v"0.6.0-dev.1632"
+    false
+end
+
+
+##### Utility functions
+true
+""")[2] == """
+
+
+##### Utility functions
+true
+"""
