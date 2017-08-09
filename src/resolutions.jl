@@ -1,10 +1,18 @@
 using CSTParser: KEYWORD
 
+"Strip a newline from the body if present."
+function maybe_strip_newline(body)
+    ws = trailing_ws(body)
+    (isempty(ws) || ws[end] != '\n') && return body
+    TriviaReplacementNode(nothing, body, "", ws[1:end-1])
+end
+
 function resolve_inline_body(resolutions, expr, replace_expr)
     indent = sum(charwidth, trailing_ws(children(expr)[2]))
     body = format_unindent_body(children(expr)[3], indent)
+    body = maybe_strip_newline(body)
     buf = IOBuffer()
-    print_replacement(buf, body)
+    print_replacement(buf, body, true, true)
     push!(resolutions, TextReplacement(replace_expr.span, String(take!(buf))))
 end
 
@@ -15,8 +23,9 @@ function resolve_delete_expr(resolutions, expr, replace_expr)
         # Inline else body
         indent = sum(charwidth, trailing_ws(children(expr)[2]))
         body = format_unindent_body(children(expr)[5], indent)
+        body = maybe_strip_newline(body)
         buf = IOBuffer()
-        print_replacement(buf, body)
+        print_replacement(buf, body, true, true)
         push!(resolutions, TextReplacement(replace_expr.span, String(take!(buf))))
     else
         indent = sum(charwidth, trailing_ws(children(expr)[2]))

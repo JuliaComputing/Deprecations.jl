@@ -312,3 +312,23 @@ end
 """)[2] == """
 nodarg = Symbol(join(Base.Iterators.drop(string(arg), 1)))
 """
+
+@test edit_text("""
+@static if VERSION < v"0.1.0"
+    true # Comment A
+else
+    true # Comment B
+end
+""")[2] == """
+true # Comment B
+"""
+
+@test edit_text("""
+@static if VERSION > v"0.1.0"
+    true # Comment A
+else
+    true # Comment B
+end
+""")[2] == """
+true # Comment A
+"""
