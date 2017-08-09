@@ -128,24 +128,37 @@ begin
         ObsoleteVersionCheck(vers["julia"])
     end
 
+    function is_identifier(x::EXPR, id)
+        isa(x, EXPR{IDENTIFIER}) || return false
+        x.val == id
+    end
+    is_identifier(x::OverlayNode, id) = is_identifier(x.expr, id)
+
     opcode(x::EXPR{CSTParser.OPERATOR{6,op,false}}) where {op} = op
 
     match(ObsoleteVersionCheck, CSTParser.If) do x
-        dep, expr, resolutions = x
+        dep, expr, resolutions, context = x
+        replace_expr = expr
         comparison = children(expr)[2]
         isexpr(comparison, CSTParser.BinaryOpCall) || return
         isexpr(children(comparison)[2], CSTParser.OPERATOR{6,op,false} where op) || return
         comparison = comparison.expr
         opc = opcode(comparison.args[2])
         haskey(comparisons, opc) || return
+        # Also applies in @static context, but not necessarily in other macro contexts
+        if context.in_macrocall
+            context.top_macrocall == parent(expr) || return
+            is_identifier(children(context.top_macrocall)[1], "@static") || return
+            replace_expr = context.top_macrocall
+        end
         r1 = detect_ver_arguments(comparison.args[1], comparison.args[3])
         if r1 !== nothing
             f = comparisons[opc]
             alwaystrue = all(interval->(f(interval.lower, r1) && f(interval.upper, r1)), dep.vers.intervals)
             alwaysfalse = all(interval->(!f(interval.lower, r1) && !f(interval.upper, r1)), dep.vers.intervals)
             @assert !(alwaystrue && alwaysfalse)
-            alwaystrue && resolve_inline_body(resolutions, expr)
-            alwaysfalse && resolve_delete_expr(resolutions, expr)
+            alwaystrue && resolve_inline_body(resolutions, expr, replace_expr)
+            alwaysfalse && resolve_delete_expr(resolutions, expr, replace_expr)
             return
         end
         r2 = detect_ver_arguments(comparison.args[3], comparison.args[1])
@@ -154,8 +167,8 @@ begin
             alwaystrue = all(interval->(f(interval.lower, r2) && f(interval.upper, r2)), dep.vers.intervals)
             alwaysfalse = all(interval->(!f(interval.lower, r2) && !f(interval.upper, r2)), dep.vers.intervals)
             @assert !(alwaystrue && alwaysfalse)
-            alwaystrue && resolve_inline_body(resolutions, expr)
-            alwaysfalse && resolve_delete_expr(resolutions, expr)
+            alwaystrue && resolve_inline_body(resolutions, expr, replace_expr)
+            alwaysfalse && resolve_delete_expr(resolutions, expr, replace_expr)
         end
     end
 end

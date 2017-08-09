@@ -1,23 +1,23 @@
 using CSTParser: KEYWORD
 
-function resolve_inline_body(resolutions, expr)
+function resolve_inline_body(resolutions, expr, replace_expr)
     indent = sum(charwidth, trailing_ws(children(expr)[2]))
     body = format_unindent_body(children(expr)[3], indent)
     buf = IOBuffer()
     print_replacement(buf, body)
-    push!(resolutions, TextReplacement(expr.span, String(take!(buf))))
+    push!(resolutions, TextReplacement(replace_expr.span, String(take!(buf))))
 end
 
-function resolve_delete_expr(resolutions, expr)
+function resolve_delete_expr(resolutions, expr, replace_expr)
     if length(children(expr)) <= 4
-        push!(resolutions, TextReplacement(expr.fullspan, ""))
+        push!(resolutions, TextReplacement(replace_expr.fullspan, ""))
     elseif isexpr(children(expr)[4], KEYWORD{Tokens.ELSE})
         # Inline else body
         indent = sum(charwidth, trailing_ws(children(expr)[2]))
         body = format_unindent_body(children(expr)[5], indent)
         buf = IOBuffer()
         print_replacement(buf, body)
-        push!(resolutions, TextReplacement(expr.span, String(take!(buf))))
+        push!(resolutions, TextReplacement(replace_expr.span, String(take!(buf))))
     else
         indent = sum(charwidth, trailing_ws(children(expr)[2]))
         repl = ChildReplacementNode(nothing, Any[], expr)
@@ -27,6 +27,8 @@ function resolve_delete_expr(resolutions, expr)
         append!(repl.children, children(expr)[5:end])
         buf = IOBuffer()
         print_replacement(buf, repl, false, true)
+        # Here we actually replace expr, rather than replace_expr, since we're not removing the
+        # expr, entirely, just removing a branch.
         push!(resolutions, TextReplacement(expr.fullspan, String(take!(buf))))
     end
 end

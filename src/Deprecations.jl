@@ -1,6 +1,6 @@
 module Deprecations
     using CSTParser
-    using CSTParser: EXPR
+    using CSTParser: EXPR, MacroCall, IDENTIFIER
 
     struct Deprecation
         description::String
@@ -68,6 +68,14 @@ module Deprecations
 
     include("database.jl")
 
+    struct Context
+        in_macrocall::Bool
+        top_macrocall
+    end
+
+    # By default, don't apply rewrites in macro context
+    applies_in_macrocall(dep, context) = false
+
     struct TextReplacement
         range::UnitRange{Int}
         text::String
@@ -100,14 +108,15 @@ module Deprecations
         replacements = Any[]
         customs = Any[]
         for dep in deps
-            haskey(templates, typeof(dep)) && append!(replacements, templates[typeof(dep)])
+            haskey(templates, typeof(dep)) && append!(replacements, collect(Iterators.product((dep,), templates[typeof(dep)])))
             haskey(custom_resolutions, typeof(dep)) && append!(customs, collect(Iterators.product((dep,), custom_resolutions[typeof(dep)])))
         end
-        parsed_replacementes = map(x->(overlay_parse(x[1],false),overlay_parse(x[2],false),x[3]), replacements)
+        parsed_replacementes = map(x->(x[1],(overlay_parse(x[2][1],false),overlay_parse(x[2][2],false),x[2][3])), replacements)
         match = overlay_parse(text)
-        function find_replacements(x, results)
-            for (i,(t, r, formatter)) in enumerate(parsed_replacementes)
+        function find_replacements(x, results, context=Context(false, nothing))
+            for (i,(dep, (t, r, formatter))) in enumerate(parsed_replacementes)
                 if typeof(x) == typeof(t)
+                    (!context.in_macrocall || applies_in_macrocall(dep, context)) || continue
                     result = Dict{Any,Any}()
                     match_parameters(t, x, result)[1] || continue
                     rtree = reassemble_tree(r, result)
@@ -118,11 +127,18 @@ module Deprecations
             end
             for (i,(dep, (k, f))) in enumerate(customs)
                 if isexpr(x, k)
-                    f((dep, x, results))
+                    f((dep, x, results, context))
+                end
+            end
+            if isexpr(x, MacroCall) && !context.in_macrocall
+                # Don't consider doc macros here. We know they don't
+                # affect the meaning of the parsed code.
+                if !isexpr(children(x)[1], CSTParser.GlobalRefDoc)
+                    context = Context(true, x)
                 end
             end
             for arg in children(x)
-                find_replacements(arg, results)
+                find_replacements(arg, results, context)
             end
         end
         results = TextReplacement[]

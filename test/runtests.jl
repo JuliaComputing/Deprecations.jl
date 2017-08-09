@@ -302,3 +302,13 @@ end
     Deprecations.ObsoleteVersionCheck,
     Pkg.Reqs.parse(IOBuffer("julia 0.6"))
 )])[2] == ""
+
+@test edit_text("""
+@static if VERSION < v"0.6.0-dev.1015"
+    nodarg = Symbol(join(drop(string(arg), 1)))
+else
+    nodarg = Symbol(join(Base.Iterators.drop(string(arg), 1)))
+end
+""")[2] == """
+nodarg = Symbol(join(Base.Iterators.drop(string(arg), 1)))
+"""
