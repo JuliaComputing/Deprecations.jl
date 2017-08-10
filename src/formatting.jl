@@ -95,7 +95,6 @@ function setindent_ws(ws, nchars)
 end
 
 function _format_addindent_body(expr, nexpr, nindent)
-    @show expr
     for c in children(expr)
         # For leaves, try to unindent
         if isempty(children(c))
@@ -127,7 +126,7 @@ end
 function format_addindent_body(expr::TriviaReplacementNode, nindent, parent = nothing)
     nexpr = ChildReplacementNode(nothing, Any[], expr.onode)
     _format_addindent_body(expr, nexpr, nindent)
-    TriviaReplacementNode(parent, expr, nexpr)
+    TriviaReplacementNode(parent, nexpr, leading_ws(expr), addindent_ws(trailing_ws(expr), nindent))
 end
 
 function format_setindent_body(expr, nindent, parent = nothing)
@@ -138,7 +137,7 @@ end
 function format_setindent_body(expr::TriviaReplacementNode, nindent, parent = nothing)
     nexpr = ChildReplacementNode(nothing, Any[], expr.onode)
     _format_setindent_body(expr, nexpr, nindent)
-    TriviaReplacementNode(parent, expr, nexpr)
+    TriviaReplacementNode(parent, nexpr, leading_ws(expr), setindent_ws(trailing_ws(expr), nindent))
 end
 
 

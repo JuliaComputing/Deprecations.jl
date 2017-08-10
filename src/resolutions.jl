@@ -15,7 +15,7 @@ end
 
 function resolve_inline_body(resolutions, expr, replace_expr)
     indent = sum(charwidth, trailing_ws(children(expr)[2]))
-    body = format_unindent_body(children(expr)[3], indent)
+    body = format_addindent_body(children(expr)[3], -indent)
     body = maybe_strip_newline(body)
     buf = IOBuffer()
     print_replacement(buf, body, true, true)
@@ -28,7 +28,7 @@ function resolve_delete_expr(resolutions, expr, replace_expr)
     elseif isexpr(children(expr)[4], KEYWORD{Tokens.ELSE})
         # Inline else body
         indent = sum(charwidth, trailing_ws(children(expr)[2]))
-        body = format_unindent_body(children(expr)[5], indent)
+        body = format_addindent_body(children(expr)[5], -indent)
         body = maybe_strip_newline(body)
         buf = IOBuffer()
         print_replacement(buf, body, true, true)
