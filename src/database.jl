@@ -18,6 +18,12 @@ begin
         wheren = isexpr(tree, FunctionDef) ? children(tree)[2] : children(tree)[1]
         # We replace the call argument
         ocall = children(wheren)[1]
+        (length(children(ocall)) == 2) && return
+        firstarg = children(ocall)[3]
+        # If the first argument is on a new line, don't try to change the indentation
+        if ('\n' in leading_ws(firstarg))
+            return tree
+        end
         children(wheren)[1] = format_addindent_body(ocall, -nchars_moved, nothing)
         tree
     end

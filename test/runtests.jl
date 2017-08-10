@@ -399,3 +399,17 @@ function Base.repeat(A::DataArray{T,N};
     nothing
 end
 """
+
+@test edit_text("""
+function foobar{S,T}(
+        a::S,
+        b::T)
+    nothing
+end
+""")[2] == """
+function foobar(
+        a::S,
+        b::T) where {S,T}
+    nothing
+end
+"""
