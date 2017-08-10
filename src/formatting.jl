@@ -33,7 +33,7 @@ function AbstractTrees.printnode(io::IO, x::TriviaReplacementNode)
 end
 Base.show(io::IO, x::Union{ChildReplacementNode, TriviaReplacementNode}) = AbstractTrees.print_tree(io, x)
 
-function unindent_ws(ws, nchars)
+function addindent_ws(ws, nchars)
     buf = IOBuffer()
     i = start(ws)
     while i <= sizeof(ws)
@@ -42,13 +42,17 @@ function unindent_ws(ws, nchars)
         i = nextind(ws, i)
         if c == '\n'
             # Skip whitespace until nchars is reached
-            remaining_chars = nchars
+            remaining_chars = -nchars
             while i <= sizeof(ws) && remaining_chars > 0
                 c = ws[i]
                 !isspace(c) && break
                 c == ' ' && (remaining_chars -= 1)
                 c == '\t' && (remaining_chars -= 4)
                 i = nextind(ws, i)
+            end
+            while remaining_chars < 0
+                write(buf, ' ')
+                remaining_chars += 1
             end
         end
     end
@@ -90,14 +94,15 @@ function setindent_ws(ws, nchars)
     String(take!(buf))
 end
 
-function _format_unindent_body(expr, nexpr, nindent)
+function _format_addindent_body(expr, nexpr, nindent)
+    @show expr
     for c in children(expr)
         # For leaves, try to unindent
         if isempty(children(c))
             push!(nexpr.children, TriviaReplacementNode(next, c, leading_ws(c),
-                unindent_ws(trailing_ws(c), nindent)))
+                addindent_ws(trailing_ws(c), nindent)))
         else
-            push!(nexpr.children, format_unindent_body(c, nindent, nexpr))
+            push!(nexpr.children, format_addindent_body(c, nindent, nexpr))
         end
     end
 end
@@ -114,14 +119,14 @@ function _format_setindent_body(expr, nexpr, nindent)
     end
 end
 
-function format_unindent_body(expr, nindent, parent = nothing)
+function format_addindent_body(expr, nindent, parent = nothing)
     nexpr = ChildReplacementNode(parent, Any[], expr)
-    _format_unindent_body(expr, nexpr, nindent)
+    _format_addindent_body(expr, nexpr, nindent)
     nexpr
 end
-function format_unindent_body(expr::TriviaReplacementNode, nindent, parent = nothing)
+function format_addindent_body(expr::TriviaReplacementNode, nindent, parent = nothing)
     nexpr = ChildReplacementNode(nothing, Any[], expr.onode)
-    _format_unindent_body(expr, nexpr, nindent)
+    _format_addindent_body(expr, nexpr, nindent)
     TriviaReplacementNode(parent, expr, nexpr)
 end
 

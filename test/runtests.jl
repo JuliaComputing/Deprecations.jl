@@ -347,3 +347,41 @@ true
 ##### Utility functions
 true
 """
+
+@test edit_text("""
+function Base.repeat{T,N}(A::DataArray{T,N};
+                          inner = ntuple(x->1, ndims(A)),
+                          outer = ntuple(x->1, ndims(A)))
+    nothing
+end
+""")[2] == """
+function Base.repeat(A::DataArray{T,N};
+                     inner = ntuple(x->1, ndims(A)),
+                     outer = ntuple(x->1, ndims(A))) where {T,N}
+    nothing
+end
+"""
+
+@test edit_text("""
+immutable Foo{A,
+              B}
+    x::Tuple{A,B}
+end
+""")[2] == """
+struct Foo{A,
+           B}
+    x::Tuple{A,B}
+emd
+"""
+
+@test edit_text("""
+type Foo{A,
+         B}
+    x::Tuple{A,B}
+end
+""")[2] == """
+mutable struct Foo{A,
+                   B}
+    x::Tuple{A,B}
+emd
+"""

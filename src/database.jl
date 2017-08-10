@@ -18,7 +18,7 @@ begin
         wheren = isexpr(tree, FunctionDef) ? children(tree)[2] : children(tree)[1]
         # We replace the call argument
         ocall = children(wheren)[1]
-        children(wheren)[1] = format_unindent_body(ocall, nchars_moved, nothing)
+        children(wheren)[1] = format_addindent_body(ocall, -nchars_moved, nothing)
         tree
     end
 
@@ -49,13 +49,25 @@ begin
         typemax(VersionNumber)
     ))
 
+    # Special purpose formatter to unindent multi-line arglists
+    function format_paramlist(tree, matches)
+        if isexpr(tree, CSTParser.Struct)
+            children(tree)[2] = format_addindent_body(children(tree)[2], -3, nothing)
+        else
+            children(tree)[3] = format_addindent_body(children(tree)[3], 10, nothing)
+        end
+        tree
+    end
+
     match(OldParametricSyntax,
         "immutable \$name\n\$BODY...\nend",
-        "struct\$name\n\$BODY!...\nend"
+        "struct\$name\n\$BODY!...\nend",
+        format_paramlist
     )
     match(OldParametricSyntax,
         "type \$name\n\$BODY...\nend",
-        "mutable struct\$name\n\$BODY!...\nend"
+        "mutable struct\$name\n\$BODY!...\nend",
+        format_paramlist
     )
     match(OldParametricSyntax,
         "abstract \$name",
