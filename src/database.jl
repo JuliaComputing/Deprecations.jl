@@ -222,6 +222,7 @@ begin
     (ex.head == :(.) && (ex.args[1] == :Compat || ex.args[1] == :Base) &&
         ex.args[2] == Expr(:quote, :IndexStyle))
     is_index_style(arg) = false
+    withincurly(ex) = isexpr(ex, :curly) ? ex.args[1] : ex
     function _compat(min_ver, ex::Expr)
         if ex.head === :call
             f = ex.args[1]
