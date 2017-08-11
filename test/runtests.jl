@@ -413,3 +413,17 @@ function foobar(
     nothing
 end
 """
+
+@test edit_text("""
+immutable KfoldState
+    i::Int      # the i-th of the subset
+    s::Int      # starting index
+    e::Int      # ending index
+end
+""")[2] == """
+struct KfoldState
+    i::Int      # the i-th of the subset
+    s::Int      # starting index
+    e::Int      # ending index
+end
+"""

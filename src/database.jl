@@ -58,8 +58,10 @@ begin
     # Special purpose formatter to unindent multi-line arglists
     function format_paramlist(tree, matches)
         if isexpr(tree, CSTParser.Struct)
+            isexpr(children(tree)[2], CSTParser.Curly) || return tree
             children(tree)[2] = format_addindent_body(children(tree)[2], -3, nothing)
         else
+            isexpr(children(tree)[3], CSTParser.Curly) || return tree
             children(tree)[3] = format_addindent_body(children(tree)[3], 10, nothing)
         end
         tree
