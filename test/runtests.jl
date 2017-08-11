@@ -427,3 +427,23 @@ struct KfoldState
     e::Int      # ending index
 end
 """
+
+function edit_text_converge(t)
+    while true
+        new_t = edit_text(t)[2]
+        t == new_t && return new_t
+        t = new_t
+    end
+end
+
+@test edit_text_converge("""
+@compat (::Type{Array{T,N}}){T,N}(a::AFArray{T,N}) = convert(Array{T,N}, a)
+""") == """
+Array{T,N}(a::AFArray{T,N}) where {T,N} = convert(Array{T,N}, a)
+"""
+
+@test edit_text_converge("""
+@compat (::Type{Array}){T,N}(a::AFArray{T,N}) = convert(Array{T,N}, a)
+""") == """
+Array(a::AFArray{T,N}) where {T,N} = convert(Array{T,N}, a)
+"""
