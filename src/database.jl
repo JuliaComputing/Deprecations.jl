@@ -214,9 +214,9 @@ begin
     istopsymbol(ex, mod, sym) = ex in (sym, Expr(:(.), mod, Expr(:quote, sym)))
     _compat(min_ver, ex) = false
     function new_style_typealias(ex::ANY)
-        isexpr(ex, :(=)) || return false
+        Base.Meta.isexpr(ex, :(=)) || return false
         ex = ex::Expr
-        return length(ex.args) == 2 && isexpr(ex.args[1], :curly)
+        return length(ex.args) == 2 && Base.Meta.isexpr(ex.args[1], :curly)
     end
     is_index_style(ex::Expr) = ex == :(Compat.IndexStyle) || ex == :(Base.IndexStyle) ||
     (ex.head == :(.) && (ex.args[1] == :Compat || ex.args[1] == :Base) &&
