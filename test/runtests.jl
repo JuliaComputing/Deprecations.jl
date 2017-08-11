@@ -463,3 +463,21 @@ Some doc
 \"\"\"
 nothing
 """
+
+@test edit_text("""
+@compat abstract type FooBar end
+""", [Deprecations.dep_for_vers(
+    Deprecations.ObsoleteCompatMacro,
+    Pkg.Reqs.parse(IOBuffer("julia 0.5"))
+)])[2] == """
+@compat abstract type FooBar end
+"""
+
+@test edit_text("""
+@compat abstract type FooBar end
+""", [Deprecations.dep_for_vers(
+    Deprecations.ObsoleteCompatMacro,
+    Pkg.Reqs.parse(IOBuffer("julia 0.6"))
+)])[2] == """
+abstract type FooBar end
+"""

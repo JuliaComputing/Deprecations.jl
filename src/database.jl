@@ -267,9 +267,8 @@ begin
     end
 
     function is_at_compat_needed(dep, expr)
-        if dep.min_ver >= v"0.6.0-dev.2746" &&
-                (isexpr(expr, CSTParser.Primitive) || isexpr(expr, CSTParser.Abstract))
-            return false
+        if isexpr(expr, CSTParser.Primitive) || isexpr(expr, CSTParser.Abstract)
+            return dep.min_ver < v"0.6.0-dev.2746"
         else
             _compat(dep.min_ver, Expr(expr.expr))
         end
