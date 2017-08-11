@@ -447,3 +447,19 @@ Array{T,N}(a::AFArray{T,N}) where {T,N} = convert(Array{T,N}, a)
 """) == """
 Array(a::AFArray{T,N}) where {T,N} = convert(Array{T,N}, a)
 """
+
+@test edit_text("""
+mean(d::MvLogNormal) = @compat(exp.(mean(d.normal) + var(d.normal)/2))
+
+\"\"\"
+Some doc
+\"\"\"
+nothing
+""")[2] == """
+mean(d::MvLogNormal) = exp.(mean(d.normal) + var(d.normal)/2)
+
+\"\"\"
+Some doc
+\"\"\"
+nothing
+"""

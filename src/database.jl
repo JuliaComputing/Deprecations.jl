@@ -285,8 +285,8 @@ begin
 
         if !is_at_compat_needed(dep, args[1])
             buf = IOBuffer()
-            print_replacement(buf, args[1], true, true)
-            push!(resolutions, TextReplacement(expr.fullspan, String(take!(buf))))
+            print_replacement(buf, args[1], false, false)
+            push!(resolutions, TextReplacement(expr.span, String(take!(buf))))
         end
     end
 end
