@@ -205,7 +205,7 @@ begin
 
     ObsoleteCompatMacro() = ObsoleteCompatMacro(v"0.6.0")
     function dep_for_vers(::Type{ObsoleteCompatMacro}, vers)
-        ObsoleteCompatMacro(minimum(map(interval->interval.lower, vers["julia"])))
+        ObsoleteCompatMacro(minimum(map(interval->interval.lower, vers["julia"].intervals)))
     end
 
 
