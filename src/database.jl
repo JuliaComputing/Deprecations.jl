@@ -232,7 +232,7 @@ begin
             end
         elseif ex.head === :curly
             f = ex.args[1]
-            if min_ver < v"0.6.0-dev.2575" && any(i->ex.args[i].head == Symbol("<:"), 2:length(ex.args)) #20414
+            if min_ver < v"0.6.0-dev.2575" && any(i->isa(ex.args[i], Expr) && ex.args[i].head == Symbol("<:"), 2:length(ex.args)) #20414
                 return true
             end
         elseif ex.head === :quote && isa(ex.args[1], Symbol)
