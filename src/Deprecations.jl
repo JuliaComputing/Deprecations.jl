@@ -32,7 +32,7 @@ module Deprecations
     end
 
     all_deprecations = Dict()
-    templates = Dict{Any,Vector{Tuple{Any, Any, Any}}}()
+    templates = Dict{Any,Vector{Tuple{Any, Any, Any, Any}}}()
     custom_resolutions = Dict{Any, Any}()
     register(dep, info) = all_deprecations[dep] = info
     info(dep) = all_deprecations[dep]
@@ -50,9 +50,9 @@ module Deprecations
 
     identity_formatter(tree, matches) = tree
 
-    function match(dep, template::String, replacement::String, formatter = identity_formatter)
+    function match(dep, template::String, replacement::String, formatter = identity_formatter; filter = (args...)->return true)
         haskey(templates, dep) || (templates[dep] = Vector{Tuple{Any, Any, Any}}())
-        push!(templates[dep], (template, replacement, formatter))
+        push!(templates[dep], (template, replacement, formatter, filter))
     end
 
     function match_macrocall(mod, name, dep, template::String, replacement::String)
@@ -111,14 +111,15 @@ module Deprecations
             haskey(templates, typeof(dep)) && append!(replacements, collect(Iterators.product((dep,), templates[typeof(dep)])))
             haskey(custom_resolutions, typeof(dep)) && append!(customs, collect(Iterators.product((dep,), custom_resolutions[typeof(dep)])))
         end
-        parsed_replacementes = map(x->(x[1],(overlay_parse(x[2][1],false),overlay_parse(x[2][2],false),x[2][3])), replacements)
+        parsed_replacementes = map(x->(x[1],(overlay_parse(x[2][1],false),overlay_parse(x[2][2],false),x[2][3:end]...)), replacements)
         match = overlay_parse(text)
         function find_replacements(x, results, context=Context(false, nothing))
-            for (i,(dep, (t, r, formatter))) in enumerate(parsed_replacementes)
+            for (i,(dep, (t, r, formatter, filter))) in enumerate(parsed_replacementes)
                 if typeof(x) == typeof(t)
                     (!context.in_macrocall || applies_in_macrocall(dep, context)) || continue
                     result = Dict{Any,Any}()
                     match_parameters(t, x, result)[1] || continue
+                    filter(x, result) || continue
                     rtree = reassemble_tree(r, result)
                     buf = IOBuffer()
                     print_replacement(buf, formatter(rtree, result))

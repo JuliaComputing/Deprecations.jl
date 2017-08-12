@@ -1,6 +1,6 @@
 using Deprecations: Deprecation
 using Compat
-using CSTParser: FunctionDef
+using CSTParser: FunctionDef, OPERATOR, PUNCTUATION
 
 begin
     struct OldParametricSyntax; end
@@ -301,9 +301,30 @@ begin
         "(::Type{\$NAME{\$T...}})(\$ARGS...)",
         "\$NAME{\$T...}(\$ARGS...)"
     )
+    function filter_params(tree, matches)
+        p = parent(tree)
+        isexpr(p, BinarySyntaxOpCall) || return true
+        isexpr(children(p)[2], OPERATOR{15,Tokens.WHERE,false}) || return true
+        # Get all the parameter names
+        names = Symbol[]
+        for expr in children(p)[3:end]
+            isexpr(expr, PUNCTUATION) && continue
+            if isexpr(expr, BinarySyntaxOpCall)
+                op = children(expr)[2]
+                isexpr(op, Union{OPERATOR{6,Tokens.ISSUBTYPE,false},
+                                 OPERATOR{6,Tokens.ISSUBTYPE,false}}) || continue
+                push!(names, Expr(children(expr)[1].expr))
+            else
+                @assert isexpr(expr, IDENTIFIER)
+                push!(names, Expr(expr.expr))
+            end
+        end
+        !(Expr(first(matches[:NAME][2]).expr) in names)
+    end
     match(OldStyleConstructor,
         "(::Type{\$NAME})(\$ARGS...)",
-        "\$NAME(\$ARGS...)"
+        "\$NAME(\$ARGS...)",
+        filter = filter_params
     )
 end
 

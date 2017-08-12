@@ -481,3 +481,15 @@ nothing
 )])[2] == """
 abstract type FooBar end
 """
+
+@test edit_text("""
+(::Type{A})(a, b) where A<:Array
+""")[2] == """
+(::Type{A})(a, b) where A<:Array
+"""
+
+@test edit_text("""
+(::Type{A})(a, b::B) where B<:Array
+""")[2] == """
+A(a, b::B) where B<:Array
+"""
