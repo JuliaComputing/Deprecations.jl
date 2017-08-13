@@ -200,7 +200,7 @@ begin
     register(ObsoleteCompatMacro, Deprecation(
         "This compat macro is no longer required",
         "julia",
-        v"0.4.0", v"0.4.0", typemax(VersionNumber)
+        v"0.5.0", v"0.5.0", typemax(VersionNumber)
     ))
 
     ObsoleteCompatMacro() = ObsoleteCompatMacro(v"0.6.0")
