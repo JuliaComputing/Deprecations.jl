@@ -82,7 +82,7 @@ begin
         "abstract type\$name end"
     )
     match(OldParametricSyntax,
-        "bitstype \$name \$size",
+        "bitstype \$size \$name",
         "primitive type\$name \$size! end"
     )
 end

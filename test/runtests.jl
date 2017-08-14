@@ -493,3 +493,19 @@ abstract type FooBar end
 """)[2] == """
 A(a, b::B) where B<:Array
 """
+
+@test edit_text("""
+immutable Foo
+    primitive::Int
+end
+""")[2] == """
+struct Foo
+    primitive::Int
+end
+"""
+
+@test edit_text("""
+bitstype 32 \$typename <: CEnum.Cenum{UInt32}
+""")[2] == """
+primitive type \$typename <: CEnum.Cenum{UInt32} 32 end
+"""
