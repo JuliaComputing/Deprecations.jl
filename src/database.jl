@@ -103,7 +103,7 @@ begin
     )
     match(OldTypeAliasSyntax,
         "typealias \$A \$B",
-        "const \$A = \$B"
+        "const\$A=\$B"
     )
 end
 

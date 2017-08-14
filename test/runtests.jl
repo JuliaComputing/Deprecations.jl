@@ -509,3 +509,9 @@ bitstype 32 \$typename <: CEnum.Cenum{UInt32}
 """)[2] == """
 primitive type \$typename <: CEnum.Cenum{UInt32} 32 end
 """
+
+@test edit_text("""
+typealias SpvId UInt32
+""")[2] == """
+const SpvId = UInt32
+"""
