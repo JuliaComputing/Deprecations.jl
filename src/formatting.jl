@@ -33,6 +33,31 @@ function AbstractTrees.printnode(io::IO, x::TriviaReplacementNode)
 end
 Base.show(io::IO, x::Union{ChildReplacementNode, TriviaReplacementNode}) = AbstractTrees.print_tree(io, x)
 
+function line_pos(node::OverlayNode, pos)
+    buffer_pos = 1+pos
+    find_pos = findprev(i->i=='\n', node.buffer, buffer_pos)
+    (buffer_pos - find_pos) - 1
+end
+
+function countindent_ws(ws, indents)
+    i = start(ws)
+    while i <= sizeof(ws)
+        c = ws[i]
+        i = nextind(ws, i)
+        if c == '\n'
+            indent = 0
+            while i <= sizeof(ws)
+                c = ws[i]
+                !isspace(c) && break
+                c == ' ' && (indent += 1)
+                c == '\t' && (indent += 4)
+                i = nextind(ws, i)
+            end
+            push!(indents, indent)
+        end
+    end
+end
+
 function addindent_ws(ws, nchars)
     buf = IOBuffer()
     i = start(ws)
@@ -92,6 +117,18 @@ function setindent_ws(ws, nchars)
         end
     end
     String(take!(buf))
+end
+
+function countindent_body(expr, indents = Int[])
+    for c in children(expr)
+        # For leaves, count indent
+        if isempty(children(c))
+            countindent_ws(trailing_ws(c), indents)
+        else
+            countindent_body(c, indents)
+        end
+    end
+    indents
 end
 
 function _format_addindent_body(expr, nexpr, nindent)

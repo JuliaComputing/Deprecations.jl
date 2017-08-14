@@ -1,6 +1,6 @@
 using Deprecations: Deprecation
 using Compat
-using CSTParser: FunctionDef, OPERATOR, PUNCTUATION
+using CSTParser: FunctionDef, OPERATOR, PUNCTUATION, Curly
 
 begin
     struct OldParametricSyntax; end
@@ -20,8 +20,18 @@ begin
         ocall = children(wheren)[1]
         (length(children(ocall)) == 2) && return
         firstarg = children(ocall)[3]
-        # If the first argument is on a new line, don't try to change the indentation
+        # Heuristic: If the first argument is on a new line, don't try to change the indentation
         if ('\n' in leading_ws(firstarg))
+            return tree
+        end
+        # Heuristic: If the arugment indents (more spefically the first indented line), is further
+        # left than the original lbrace, don't unindent, it's unlikely they were aligned to the
+        # lparen.
+        curly = parent(first(matches[:T][2]))
+        @assert isexpr(curly, Curly)
+        pos = line_pos(curly, first(curly.span))
+        indents = countindent_body(ocall)
+        if !isempty(indents) && (indents[1] < pos)
             return tree
         end
         children(wheren)[1] = format_addindent_body(ocall, -nchars_moved, nothing)

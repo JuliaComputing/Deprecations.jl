@@ -515,3 +515,33 @@ typealias SpvId UInt32
 """)[2] == """
 const SpvId = UInt32
 """
+
+@test edit_text("""
+function widget{T<:Colorant}(colormap::VecTypes{T}, window;
+        area = (300, 30),
+        slider_colors = (
+            RGBA{Float32}(0.78125,0.1796875,0.41796875),
+            RGBA{Float32}(0.41796875,0.78125,0.1796875),
+            RGBA{Float32}(0.1796875,0.41796875,0.78125),
+            RGBA{Float32}(0.9,0.9,0.9)
+        ),
+        knob_scale = 9f0,
+        kw_args...
+    )
+    nothing
+end
+""")[2] == """
+function widget(colormap::VecTypes{T}, window;
+        area = (300, 30),
+        slider_colors = (
+            RGBA{Float32}(0.78125,0.1796875,0.41796875),
+            RGBA{Float32}(0.41796875,0.78125,0.1796875),
+            RGBA{Float32}(0.1796875,0.41796875,0.78125),
+            RGBA{Float32}(0.9,0.9,0.9)
+        ),
+        knob_scale = 9f0,
+        kw_args...
+    ) where T<:Colorant
+    nothing
+end
+"""
