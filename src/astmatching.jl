@@ -60,7 +60,7 @@ function match_parameters(template, match, result)
                             push!(matched_exprs, children(match)[j])
                             j += 1
                         end
-                        result[sym] = (without_trailing_ws, matched_exprs)
+                        result[sym] = (without_trailing_ws, isempty(matched_exprs) ? (EmptyMatch(children(match)[j]),) : matched_exprs)
                     end
                 end
             else

@@ -545,3 +545,19 @@ function widget(colormap::VecTypes{T}, window;
     nothing
 end
 """
+
+edit_text("""
+function (x::FacElemMon{S}){S}()
+    z = FacElem{elem_type(S), S}()
+    z.fac = Dict{elem_type(S), fmpz}()
+    z.parent = x
+    return z
+end
+""")[2] == """
+function (x::FacElemMon{S})() where S
+    z = FacElem{elem_type(S), S}()
+    z.fac = Dict{elem_type(S), fmpz}()
+    z.parent = x
+    return z
+end
+"""
