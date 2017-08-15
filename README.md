@@ -1,7 +1,7 @@
 # Deprecations
 
-[![Build Status](https://travis-ci.org/Keno/Deprecations.jl.svg?branch=master)](https://travis-ci.org/Keno/Deprecations.jl)
-[![codecov.io](http://codecov.io/github/Keno/Deprecations.jl/coverage.svg?branch=master)](http://codecov.io/github/Keno/Deprecations.jl?branch=master)
+[![Build Status](https://travis-ci.org/JuliaComputing/Deprecations.jl.svg?branch=master)](https://travis-ci.org/JuliaComputing/Deprecations.jl)
+[![codecov.io](http://codecov.io/github/JuliaComputing/Deprecations.jl/coverage.svg?branch=master)](http://codecov.io/github/JuliaComputing/Deprecations.jl?branch=master)
 
 This package contains a database of deprecated syntax and functions and how to automatically upgrade them. This database can be found in the src/database.jl
 repository. In addition, it contains a number of utilities to aid in this task. The main user-facing entrypoints are the
