@@ -42,7 +42,7 @@ begin
         typemax(VersionNumber)
     ))
     function is_where_expr(expr)
-        isexpr(expr, BinaryOpCall) || return false
+        isexpr(expr, BinarySyntaxOpCall) || return false
         isexpr(children(expr)[2], OPERATOR{15, Tokens.WHERE, false}) || return false
         return true
     end
@@ -94,8 +94,8 @@ begin
         CSTParser.declares_function(expr) || return
         sp = get_struct_parent(expr)
         # If there's already a where expr, this is new syntax
-        is_where_expr(children(expr)[1]) && return
         call = isexpr(expr, FunctionDef) ? children(expr)[2] : children(expr)[1]
+        is_where_expr(call) && return
         length(children(call)) == 0 && return
         had_curly = isexpr(children(call)[1], Curly)
         tparams = []

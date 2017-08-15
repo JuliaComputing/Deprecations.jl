@@ -613,3 +613,14 @@ end
 @test text_not_edited("""
 function foo end
 """)
+
+@test text_not_edited("""
+struct LabelMap{K}
+    vs::Vector{K}
+    v2i::Dict{K,Int}
+
+    function LabelMap{K}(vs, v2i) where K
+        nothing
+    end
+end
+""")
