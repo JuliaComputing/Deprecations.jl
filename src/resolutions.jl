@@ -49,10 +49,11 @@ function resolve_delete_expr(resolutions, expr, replace_expr)
 end
 
 function replace_node(tree, node, replacement, current=tree, parent=nothing)
+    (current == node) && return replacement
     isempty(children(current)) && return current
     newtree = ChildReplacementNode(parent, Any[], current)
     for c in children(current)
-        if c === node
+        if c == node
             push!(newtree.children, replacement)
         else
             push!(newtree.children, replace_node(tree, node, replacement, c, newtree))

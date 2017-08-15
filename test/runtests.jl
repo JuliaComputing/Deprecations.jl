@@ -561,3 +561,39 @@ function (x::FacElemMon{S})() where S
     return z
 end
 """
+
+edit_text("""
+struct S{T}
+    foo
+    S{S}(v::Vector{S}) = 42
+end
+""")[2] == """
+struct S{T}
+    foo
+    S{T}(v::Vector{S}) where {T, S} = 42
+end
+"""
+
+edit_text("""
+struct S{T}
+    foo
+    S{S}(v::Vector{S}) = 42
+end
+""")[2] == """
+struct S{T}
+    foo
+    S{T_}(v::Vector{T}) where {T_, T} = 42
+end
+"""
+
+edit_text("""
+struct S{T}
+    foo
+    S(v::Vector{T}) = 42
+end
+""")[2] == """
+struct S{T}
+    foo
+    S{T}(v::Vector{T}) where {T} = 42
+end
+"""

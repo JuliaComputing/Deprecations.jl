@@ -56,19 +56,3 @@ function function_def_call(expr)
     end
     return expr
 end
-
-function set_function_def_call!(tree, expr)
-    if isexpr(tree, FunctionDef)
-        tree = children(tree)[2]
-    else
-        @assert isexpr(tree, BinarySyntaxOpCall) && isexpr(children(tree)[2], CSTParser.OPERATOR{1,Tokens.EQ,false})
-    end
-    lasttree = tree
-    while isexpr(tree, BinarySyntaxOpCall)
-        parent = tree
-        tree = children(tree)[1]
-        lasttree = parent
-    end
-    children(lasttree)[1] = expr
-    return tree
-end
