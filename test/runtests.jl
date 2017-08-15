@@ -546,7 +546,7 @@ function widget(colormap::VecTypes{T}, window;
 end
 """
 
-edit_text("""
+@test edit_text("""
 function (x::FacElemMon{S}){S}()
     z = FacElem{elem_type(S), S}()
     z.fac = Dict{elem_type(S), fmpz}()
@@ -562,7 +562,7 @@ function (x::FacElemMon{S})() where S
 end
 """
 
-edit_text("""
+@test edit_text("""
 struct S{T}
     foo
     S{S}(v::Vector{S}) = 42
@@ -574,10 +574,10 @@ struct S{T}
 end
 """
 
-edit_text("""
+@test edit_text("""
 struct S{T}
     foo
-    S{S}(v::Vector{S}) = 42
+    S{T}(v::Vector{T}) = 42
 end
 """)[2] == """
 struct S{T}
@@ -586,7 +586,7 @@ struct S{T}
 end
 """
 
-edit_text("""
+@test edit_text("""
 struct S{T}
     foo
     S(v::Vector{T}) = 42
@@ -597,3 +597,15 @@ struct S{T}
     S{T}(v::Vector{T}) where {T} = 42
 end
 """
+
+text_not_edited(t) = edit_text(t)[2] == t
+
+@test text_not_edited("""
+struct GLVisualizeShader <: AbstractLazyShader
+    paths::Tuple
+    kw_args::Dict{Symbol, Any}
+    function GLVisualizeShader(paths::String...; view = Dict{String, String}(), kw_args...)
+        nothing
+    end
+end
+""")

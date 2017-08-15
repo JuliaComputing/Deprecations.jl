@@ -119,7 +119,8 @@ begin
                     tparams = [tparams[1]; new_curlies[2:end-1]; ReplacementNode{PUNCTUATION{Tokens.COMMA}}(",",""," "); tparams[2:end]]
                 end
             end
-        elseif !had_curly
+        end
+        if !had_curly && !needs_new_curly
             return
         end
         # In long form syntax, with only one parameter, strip the curly braces

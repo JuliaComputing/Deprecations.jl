@@ -3,6 +3,7 @@ struct ReplacementNode{T}
     leading_trivia::String
     trailing_trivia::String
 end
+fullspan_text(r::ReplacementNode) = string(r.leading_trivia, r.text, r.trailing_trivia)
 
 struct ChildReplacementNode
     parent
