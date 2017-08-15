@@ -609,3 +609,7 @@ struct GLVisualizeShader <: AbstractLazyShader
     end
 end
 """)
+
+@test text_not_edited("""
+function foo end
+""")

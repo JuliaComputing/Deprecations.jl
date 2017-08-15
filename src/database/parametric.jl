@@ -96,6 +96,7 @@ begin
         # If there's already a where expr, this is new syntax
         is_where_expr(children(expr)[1]) && return
         call = isexpr(expr, FunctionDef) ? children(expr)[2] : children(expr)[1]
+        length(children(call)) == 0 && return
         had_curly = isexpr(children(call)[1], Curly)
         tparams = []
         if had_curly
