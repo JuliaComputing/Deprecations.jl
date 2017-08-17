@@ -9,6 +9,11 @@ function maybe_strip_trailing_ws_line(body)
     TriviaReplacementNode(nothing, body, "", ws[1:prevind(ws, idx)])
 end
 
+function last_line(ws)
+    idx = findlast(c->c=='\n', ws)
+    idx == 0 && return ""
+    ws[idx+1:end]
+end
 
 function except_first_line(ws)
     idx = findfirst(ws, '\n')
@@ -17,7 +22,7 @@ function except_first_line(ws)
 end
 
 function resolve_inline_body(resolutions, expr, replace_expr)
-    indent = sum(charwidth, trailing_ws(children(expr)[2])) - line_pos(replace_expr, first(replace_expr.span))
+    indent = sum(charwidth, last_line(trailing_ws(children(expr)[2]))) - line_pos(replace_expr, first(replace_expr.span))
     body = format_addindent_body(children(expr)[3], -indent)
     body = maybe_strip_trailing_ws_line(body)
     buf = IOBuffer()
@@ -30,7 +35,7 @@ function resolve_delete_expr(resolutions, expr, replace_expr)
         push!(resolutions, TextReplacement(replace_expr.fullspan, except_first_line(trailing_ws(replace_expr))))
     elseif isexpr(children(expr)[4], KEYWORD{Tokens.ELSE})
         # Inline else body
-        indent = sum(charwidth, trailing_ws(children(expr)[2])) - line_pos(replace_expr, first(replace_expr.span))
+        indent = sum(charwidth, last_line(trailing_ws(children(expr)[2]))) - line_pos(replace_expr, first(replace_expr.span))
         body = format_addindent_body(children(expr)[5], -indent)
         body = maybe_strip_trailing_ws_line(body)
         buf = IOBuffer()
