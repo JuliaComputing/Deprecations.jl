@@ -1,11 +1,14 @@
 using CSTParser: KEYWORD
 
-"Strip a newline from the body if present."
-function maybe_strip_newline(body)
+"Strip a trailing line of purely whitespace (if present)."
+function maybe_strip_trailing_ws_line(body)
     ws = trailing_ws(body)
-    (isempty(ws) || ws[end] != '\n') && return body
-    TriviaReplacementNode(nothing, body, "", ws[1:end-1])
+    idx = findlast(c->c=='\n', ws)
+    idx == 0 && return body
+    any(c->!isspace(c), ws[idx:end]) && return body
+    TriviaReplacementNode(nothing, body, "", ws[1:prevind(ws, idx)])
 end
+
 
 function except_first_line(ws)
     idx = findfirst(ws, '\n')
@@ -16,7 +19,7 @@ end
 function resolve_inline_body(resolutions, expr, replace_expr)
     indent = sum(charwidth, trailing_ws(children(expr)[2])) - line_pos(replace_expr, first(replace_expr.span))
     body = format_addindent_body(children(expr)[3], -indent)
-    body = maybe_strip_newline(body)
+    body = maybe_strip_trailing_ws_line(body)
     buf = IOBuffer()
     print_replacement(buf, body, true, true)
     push!(resolutions, TextReplacement(replace_expr.span, String(take!(buf))))
@@ -29,7 +32,7 @@ function resolve_delete_expr(resolutions, expr, replace_expr)
         # Inline else body
         indent = sum(charwidth, trailing_ws(children(expr)[2])) - line_pos(replace_expr, first(replace_expr.span))
         body = format_addindent_body(children(expr)[5], -indent)
-        body = maybe_strip_newline(body)
+        body = maybe_strip_trailing_ws_line(body)
         buf = IOBuffer()
         print_replacement(buf, body, true, true)
         push!(resolutions, TextReplacement(replace_expr.span, String(take!(buf))))

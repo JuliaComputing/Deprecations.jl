@@ -667,3 +667,24 @@ begin
     d
 end
 """
+
+@test edit_text("""
+begin
+    begin
+        if VERSION > v"0.1.0"
+            a
+            b
+        else
+            c
+            d
+        end
+    end
+end
+""")[2] == """
+begin
+    begin
+        a
+        b
+    end
+end
+"""
