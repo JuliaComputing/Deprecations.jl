@@ -624,3 +624,46 @@ struct LabelMap{K}
     end
 end
 """)
+
+@test edit_text("""
+function fit_mle{T <: Real}(::Type{EmpiricalUnivariateDistribution},
+                           x::Vector{T})
+end
+""")[2] == """
+function fit_mle(::Type{EmpiricalUnivariateDistribution},
+                x::Vector{T}) where T <: Real
+end
+"""
+
+@test edit_text("""
+begin
+    if VERSION > v"0.1.0"
+        a
+        b
+    else
+        c
+    end
+end
+""")[2] == """
+begin
+    a
+    b
+end
+"""
+
+@test edit_text("""
+begin
+    if VERSION < v"0.1.0"
+        a
+        b
+    else
+        c
+        d
+    end
+end
+""")[2] == """
+begin
+    c
+    d
+end
+"""

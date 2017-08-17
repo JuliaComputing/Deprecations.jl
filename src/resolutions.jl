@@ -14,7 +14,7 @@ function except_first_line(ws)
 end
 
 function resolve_inline_body(resolutions, expr, replace_expr)
-    indent = sum(charwidth, trailing_ws(children(expr)[2]))
+    indent = sum(charwidth, trailing_ws(children(expr)[2])) - line_pos(replace_expr, first(replace_expr.span))
     body = format_addindent_body(children(expr)[3], -indent)
     body = maybe_strip_newline(body)
     buf = IOBuffer()
@@ -27,7 +27,7 @@ function resolve_delete_expr(resolutions, expr, replace_expr)
         push!(resolutions, TextReplacement(replace_expr.fullspan, except_first_line(trailing_ws(replace_expr))))
     elseif isexpr(children(expr)[4], KEYWORD{Tokens.ELSE})
         # Inline else body
-        indent = sum(charwidth, trailing_ws(children(expr)[2]))
+        indent = sum(charwidth, trailing_ws(children(expr)[2])) - line_pos(replace_expr, first(replace_expr.span))
         body = format_addindent_body(children(expr)[5], -indent)
         body = maybe_strip_newline(body)
         buf = IOBuffer()
