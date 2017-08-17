@@ -11,6 +11,14 @@ Ideally, however, you should not need to use this package directly, as it does n
 your file supports. Instead, consider using [FemtoCleaner](https://github.com/Keno/FemtoCleaner.jl), or an IDE with integrated support for using
 the information in this package.
 
+## Installation Notes
+Deprecations.jl requires the latest master of `AbstractTrees` and `CSTParser`.
+To Build first do:
+```
+Pkg.checkout("AbstractTrees")
+Pkg.checkout("CSTParser")
+```
+
 # Adding additional deprecations
 
 There are currently two ways of adding deprecations to this package. However, they are both rather ad-hoc and if
