@@ -14,8 +14,10 @@ the information in this package.
 ## Installation Notes
 Deprecations.jl requires the latest master of `AbstractTrees` and `CSTParser`.
 To Build first do:
-`Pkg.checkout("AbstractTrees")`
-`Pkg.checkout("CSTParser")`
+```
+Pkg.checkout("AbstractTrees")
+Pkg.checkout("CSTParser")
+```
 
 # Adding additional deprecations
 
