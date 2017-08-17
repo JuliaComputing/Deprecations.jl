@@ -688,3 +688,19 @@ begin
     end
 end
 """
+
+@test edit_text_converge("""
+struct ReshapedOneD{T,N,Npre,V}
+    data::V
+
+    function (::Type{ReshapedOneD{T,N,Npre,V}}){T,N,Npre,V}(data::V)
+    end
+end
+""") == """
+struct ReshapedOneD{T,N,Npre,V}
+    data::V
+
+    function ReshapedOneD{T,N,Npre,V}(data::V) where {T,N,Npre,V}
+    end
+end
+"""

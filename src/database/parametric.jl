@@ -109,7 +109,7 @@ begin
         end
         needs_new_curly = false
         if sp !== nothing
-            needs_new_curly = isexpr(struct_name(sp), Curly)
+            needs_new_curly = isexpr(struct_name(sp), Curly) && (isexpr(fname, IDENTIFIER) && Expr(fname.expr) == Expr(children(struct_name(sp))[1].expr))
             if needs_new_curly
                 # Includes puctuation
                 new_curlies = struct_name(sp)[2:end]
