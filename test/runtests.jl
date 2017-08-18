@@ -737,3 +737,19 @@ function Base.show{U<:Operator,V<:AbstractLowRankOperator}(io::IO, ::MIME"text/p
     Base.print_matrix(io,blockrank(H),"["," ","]")
 end
 """
+
+@test edit_text("""
+@inline function Base.Broadcast.broadcast_c{S<:AbstractDataArray}(f, ::Type{S}, A, Bs...)
+    T     = Base.Broadcast._broadcast_eltype(f, A, Bs...)
+    shape = Base.Broadcast.broadcast_indices(A, Bs...)
+    dest = S(T, Base.index_lengths(shape...))
+    return broadcast!(f, dest, A, Bs...)
+end
+""")[2] == """
+@inline function Base.Broadcast.broadcast_c(f, ::Type{S}, A, Bs...) where S<:AbstractDataArray
+    T     = Base.Broadcast._broadcast_eltype(f, A, Bs...)
+    shape = Base.Broadcast.broadcast_indices(A, Bs...)
+    dest = S(T, Base.index_lengths(shape...))
+    return broadcast!(f, dest, A, Bs...)
+end
+"""
