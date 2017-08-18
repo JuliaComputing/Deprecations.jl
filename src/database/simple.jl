@@ -7,6 +7,9 @@ begin
         v"0.7.0-DEV.198",
         typemax(VersionNumber)
     ))
+    # Despite having different syntax, all of these parse the same,
+    # so macros can't distinguish
+    applies_in_macrocall(dep::OldStructSyntax, context) = true
 
     # Special purpose formatter to unindent multi-line arglists
     function format_paramlist(tree, matches)

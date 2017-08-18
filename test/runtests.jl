@@ -759,3 +759,25 @@ end
     true
 end
 """)
+
+@test edit_text("""
+@io immutable mach_header
+    magic::UInt32
+    cputype::UInt32
+    cpusubtype::UInt32
+    filetype::UInt32
+    ncmds::UInt32
+    sizeofcmds::UInt32
+    flags::UInt32
+end
+""")[2] == """
+@io struct mach_header
+    magic::UInt32
+    cputype::UInt32
+    cpusubtype::UInt32
+    filetype::UInt32
+    ncmds::UInt32
+    sizeofcmds::UInt32
+    flags::UInt32
+end
+"""
