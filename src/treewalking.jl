@@ -10,6 +10,7 @@ struct OverlayNode{T}
     fullspan::UnitRange{Int}
     span::UnitRange{Int}
 end
+Base.Expr(n::OverlayNode) = Base.Expr(n.expr)
 AbstractTrees.parentlinks(::Type{<:OverlayNode}) = AbstractTrees.StoredParents()
 AbstractTrees.siblinglinks(::Type{<:OverlayNode}) = AbstractTrees.ImplicitSiblings()
 AbstractTrees.parent(node::OverlayNode) = node.parent

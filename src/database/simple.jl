@@ -20,21 +20,21 @@ begin
         tree
     end
 
-    match(OldParametricSyntax,
+    match(OldStructSyntax,
         "immutable \$name\n\$BODY...\nend",
         "struct\$name\n\$BODY!...\nend",
         format_paramlist
     )
-    match(OldParametricSyntax,
+    match(OldStructSyntax,
         "type \$name\n\$BODY...\nend",
         "mutable struct\$name\n\$BODY!...\nend",
         format_paramlist
     )
-    match(OldParametricSyntax,
+    match(OldStructSyntax,
         "abstract \$name",
         "abstract type\$name end"
     )
-    match(OldParametricSyntax,
+    match(OldStructSyntax,
         "bitstype \$size \$name",
         "primitive type\$name \$size! end"
     )

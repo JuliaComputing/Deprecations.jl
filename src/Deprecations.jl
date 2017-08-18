@@ -135,7 +135,7 @@ module Deprecations
                 # Don't consider doc macros here. We know they don't
                 # affect the meaning of the parsed code.
                 if !isexpr(children(x)[1], CSTParser.GlobalRefDoc) &&
-                   !(isa(children(x)[1], IDENTIFIER) && Expr(children(x)[1]) in (
+                   !(isexpr(children(x)[1], IDENTIFIER) && Expr(children(x)[1]) in (
                        Symbol("@eval"), Symbol("@inline"), Symbol("@views")
                    ))
                     context = Context(true, x)

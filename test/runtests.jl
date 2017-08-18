@@ -753,3 +753,9 @@ end
     return broadcast!(f, dest, A, Bs...)
 end
 """
+
+@test text_not_edited("""
+@who_knowns_what_this_macro_does if VERSION >= v"0.1"
+    true
+end
+""")

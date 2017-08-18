@@ -41,6 +41,8 @@ begin
         v"0.7.0-DEV.1143",
         typemax(VersionNumber)
     ))
+    applies_in_macrocall(dep::OldParametricSyntax, context) = true
+
     function is_where_expr(expr)
         isexpr(expr, BinarySyntaxOpCall) || return false
         isexpr(children(expr)[2], OPERATOR{15, Tokens.WHERE, false}) || return false
