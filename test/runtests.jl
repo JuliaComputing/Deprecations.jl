@@ -781,3 +781,13 @@ end
     flags::UInt32
 end
 """
+
+@test edit_text(raw"""
+@compat (::Type{$A{CategoricalValue{T, R}, N, R}}){T, N, R}(dims::NTuple{N,Int};
+                                                            ordered=false) =
+      $A{T, N, R}(dims, ordered=ordered)
+""")[2] == raw"""
+(::Type{$A{CategoricalValue{T, R}, N, R}}){T, N, R}(dims::NTuple{N,Int};
+                                                    ordered=false) =
+      $A{T, N, R}(dims, ordered=ordered)
+"""
