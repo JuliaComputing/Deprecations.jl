@@ -156,15 +156,15 @@ function _format_setindent_body(expr, nexpr, nindent)
     end
 end
 
-function format_addindent_body(expr, nindent, parent = nothing)
+function format_addindent_body(expr, nindent, parent = nothing, trailing=true)
     nexpr = ChildReplacementNode(parent, Any[], expr)
     _format_addindent_body(expr, nexpr, nindent)
-    nexpr
+    TriviaReplacementNode(parent, nexpr, leading_ws(expr), trailing ? addindent_ws(trailing_ws(expr), nindent) : trailing_ws(expr))
 end
-function format_addindent_body(expr::TriviaReplacementNode, nindent, parent = nothing)
+function format_addindent_body(expr::TriviaReplacementNode, nindent, parent = nothing, trailing=true)
     nexpr = ChildReplacementNode(nothing, Any[], expr.onode)
     _format_addindent_body(expr, nexpr, nindent)
-    TriviaReplacementNode(parent, nexpr, leading_ws(expr), addindent_ws(trailing_ws(expr), nindent))
+    TriviaReplacementNode(parent, nexpr, leading_ws(expr), trailing ? addindent_ws(trailing_ws(expr), nindent) : trailing_ws(expr))
 end
 
 function format_setindent_body(expr, nindent, parent = nothing)

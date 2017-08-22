@@ -14,9 +14,9 @@ begin
         end
         ret_expr = ChildReplacementNode(nothing, collect(children(expr)), expr)
         if isexpr(expr, FunctionDef)
-            children(ret_expr)[2] = format_addindent_body(call, -(first(expr.span)-first(orig_expr.span)), nothing)
+            children(ret_expr)[2] = format_addindent_body(call, -(first(expr.span)-first(orig_expr.span)), nothing, false)
         else
-            children(ret_expr)[1] = format_addindent_body(call, -(first(expr.span)-first(orig_expr.span)), nothing)
+            children(ret_expr)[1] = format_addindent_body(call, -(first(expr.span)-first(orig_expr.span)), nothing, false)
         end
         ret_expr
     end

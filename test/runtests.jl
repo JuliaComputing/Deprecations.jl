@@ -791,3 +791,15 @@ end
                                                     ordered=false) =
       $A{T, N, R}(dims, ordered=ordered)
 """
+
+@test edit_text("""
+@compat function (::Type{CategoricalPool{T, R}}){T, R}(index::Vector,
+                                                       ordered::Bool=false)
+    invindex = buildinvindex(index, R)
+end
+""")[2] == """
+function (::Type{CategoricalPool{T, R}}){T, R}(index::Vector,
+                                               ordered::Bool=false)
+    invindex = buildinvindex(index, R)
+end
+"""
