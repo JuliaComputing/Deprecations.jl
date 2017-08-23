@@ -803,3 +803,23 @@ function (::Type{CategoricalPool{T, R}}){T, R}(index::Vector,
     invindex = buildinvindex(index, R)
 end
 """
+
+@test edit_text(raw"""
+ccall((@blasfunc($fname), libblas), $elty,
+    (Ptr{BlasInt}, Ptr{$elty}, Ptr{BlasInt}, Ptr{$elty}, Ptr{BlasInt}),
+     &n, DX, &incx, DY, &incy)
+""")[2] == raw"""
+ccall((@blasfunc($fname), libblas), $elty,
+    (Ref{BlasInt}, Ptr{$elty}, Ref{BlasInt}, Ptr{$elty}, Ref{BlasInt}),
+     n, DX, incx, DY, incy)
+"""
+
+@test edit_text(raw"""
+ccall((@blasfunc($fname), libblas), stdcall, $elty,
+    (Ptr{BlasInt}, Ptr{$elty}, Ptr{BlasInt}, Ptr{$elty}, Ptr{BlasInt}),
+     &n, DX, &incx, DY, &incy)
+""")[2] == raw"""
+ccall((@blasfunc($fname), libblas), stdcall, $elty,
+    (Ref{BlasInt}, Ptr{$elty}, Ref{BlasInt}, Ptr{$elty}, Ref{BlasInt}),
+     n, DX, incx, DY, incy)
+"""

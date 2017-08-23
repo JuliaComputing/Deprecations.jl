@@ -11,3 +11,5 @@ include("database/versioncompare.jl")
 include("database/oldcompat.jl")
 # Grabbag of relatively simple rewrites (mostly handed using the AST matcher code)
 include("database/simple.jl")
+# Rewrites uses of `&x` in ccall to use the equivalent `Ref` instead
+include("database/ccallampersand.jl")
