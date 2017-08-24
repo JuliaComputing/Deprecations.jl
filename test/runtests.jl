@@ -860,3 +860,7 @@ for t in [
 ]
     @test text_not_edited(t)
 end
+
+@test edit_text("a?b:c")[2] == "a ? b : c"
+@test edit_text("a ?b:c")[2] == "a ? b : c"
+@test text_not_edited("a ? b : c")

@@ -128,3 +128,40 @@ begin
         "String",
     )
 end
+
+begin
+    struct ConditionalWhitespace; end
+    register(ConditionalWhitespace, Deprecation(
+        "This Compat definition is deprecated",
+        "julia",
+        v"0.4.0", v"0.7.0-DEV.797", typemax(VersionNumber)
+    ))
+
+    function add_ws_lead_trail!(ret, idx, exprs)
+        any = false
+        expr = exprs[2]
+        allws = string(trailing_ws(exprs[1]), leading_ws(expr))
+        if isempty(allws) || !isspace(allws[end])
+            expr = children(ret)[idx] = TriviaReplacementNode(ret, expr, string(leading_ws(expr), " "), trailing_ws(expr))
+            any = true
+        end
+        allws = string(trailing_ws(expr), leading_ws(exprs[3]))
+        if isempty(allws) || !isspace(allws[end])
+            expr = children(ret)[idx] = TriviaReplacementNode(ret, expr, leading_ws(expr), string(" ", trailing_ws(expr)))
+            any = true
+        end
+        any
+    end
+
+    match(ConditionalWhitespace, CSTParser.ConditionalOpCall) do x
+        dep, expr, resolutions, context = x
+        ret = ChildReplacementNode(nothing, collect(children(expr)), expr)
+        changed = add_ws_lead_trail!(ret, 2, children(expr)[1:3])
+        changed |= add_ws_lead_trail!(ret, 4, children(expr)[3:5])
+        if changed
+            buf = IOBuffer()
+            print_replacement(buf, ret, false, false)
+            push!(resolutions, TextReplacement(expr.span, String(take!(buf))))
+        end
+    end
+end
