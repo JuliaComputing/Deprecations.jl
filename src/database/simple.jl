@@ -64,23 +64,44 @@ begin
 end
 
 begin
-    struct OldStyleConstructor; end
+    struct OldStyleConstructor
+        # In 0.6/0.7 F{T}() still means a parametric function
+        # definition, so we can't perform this upgrade, if there's
+        # no `where` clause.
+        non_where_curly::Bool
+    end
+    OldStyleConstructor() = OldStyleConstructor(false)
+
+    function dep_for_vers(::Type{OldStyleConstructor}, vers)
+        OldStyleConstructor(all(interval->(v"1.0-DEV" <= interval.lower), vers["julia"].intervals))
+    end
+
     register(OldStyleConstructor, Deprecation(
         "This constructor syntax is no longer required",
         "julia",
         v"0.6.0", v"0.6.0", typemax(VersionNumber)
     ))
+    function filter_non_where_curly(dep, tree, matches)
+        dep.non_where_curly && return true
+        isexpr(parent(tree), BinarySyntaxOpCall) || return false
+        isexpr(children(parent(tree))[2], OPERATOR{15,Tokens.WHERE,false}) || return false
+        return true
+    end
     match(OldStyleConstructor,
         "(::Type{\$NAME{\$T...}})(\$ARGS...)",
-        "\$NAME{\$T...}(\$ARGS...)"
+        "\$NAME{\$T...}(\$ARGS...)",
+        filter = filter_non_where_curly
     )
-    function filter_params(tree, matches)
+    function filter_params(dep, tree, matches)
+        # Handled by the above
+        name = first(matches[:NAME][2])
+        isexpr(name, Curly) && return false
         p = parent(tree)
         isexpr(p, BinarySyntaxOpCall) || return true
         isexpr(children(p)[2], OPERATOR{15,Tokens.WHERE,false}) || return true
         # Get all the parameter names
         names = extract_identifiers(children(p)[3:end])
-        !(Expr(first(matches[:NAME][2]).expr) in names)
+        !(Expr(name) in names)
     end
     match(OldStyleConstructor,
         "(::Type{\$NAME})(\$ARGS...)",

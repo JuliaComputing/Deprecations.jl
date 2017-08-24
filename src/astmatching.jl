@@ -26,7 +26,7 @@ struct EmptyMatch
 end
 
 function match_parameters(template, match, result)
-    (typeof(template) != typeof(match)) && return
+    (typeof(template) != typeof(match)) && error("Shouldn't have gotten here")
     j = 1
     for (i,x) in enumerate(children(template))
         if j > length(children(match)) && i == length(children(template))
@@ -37,12 +37,12 @@ function match_parameters(template, match, result)
             end
         end
         y = children(match)[j]
-        if matches_template(x, y)
+        ret, sym, slurp = is_template_expr(x)
+        if !ret && matches_template(x, y)
             ok = match_parameters(x, y, result)
             ok || return ok
             j += 1
         else
-            ret, sym, slurp = is_template_expr(x)
             without_trailing_ws = is_last_leaf(x)
             if ret
                 if !slurp

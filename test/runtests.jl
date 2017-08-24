@@ -823,3 +823,40 @@ ccall((@blasfunc($fname), libblas), stdcall, $elty,
     (Ref{BlasInt}, Ptr{$elty}, Ref{BlasInt}, Ptr{$elty}, Ref{BlasInt}),
      n, DX, incx, DY, incy)
 """
+
+v1deps = Deprecations.applicable_deprecations(Pkg.Reqs.parse(IOBuffer("julia 1.0")))
+
+@test edit_text("""
+(::Type{Tuple{}})() = () # Tuple{}()
+""", v1deps)[2] == """
+Tuple{}() = () # Tuple{}()
+"""
+
+@test edit_text("""
+(::Type{StepRange{<:Dates.DatePeriod,<:Real}})(start, step, stop) =
+     throw(ArgumentError("must specify step as a Period when constructing Dates ranges"))
+""", v1deps)[2] == """
+StepRange{<:Dates.DatePeriod,<:Real}(start, step, stop) =
+     throw(ArgumentError("must specify step as a Period when constructing Dates ranges"))
+"""
+
+@test edit_text("""
+(::Type{LogicalIndex{Int}})(mask::AbstractArray) = LogicalIndex{Int, typeof(mask)}(mask)
+""", v1deps)[2] == """
+LogicalIndex{Int}(mask::AbstractArray) = LogicalIndex{Int, typeof(mask)}(mask)
+"""
+
+for t in [
+    """
+    (::Type{Tuple{}})() = () # Tuple{}()
+    """,
+    """
+    (::Type{StepRange{<:Dates.DatePeriod,<:Real}})(start, step, stop) =
+         throw(ArgumentError("must specify step as a Period when constructing Dates ranges"))
+    """,
+    """
+    (::Type{LogicalIndex{Int}})(mask::AbstractArray) = LogicalIndex{Int, typeof(mask)}(mask)
+    """
+]
+    @test text_not_edited(t)
+end

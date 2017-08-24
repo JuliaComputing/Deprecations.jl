@@ -119,7 +119,7 @@ module Deprecations
                     (!context.in_macrocall || applies_in_macrocall(dep, context)) || continue
                     result = Dict{Any,Any}()
                     match_parameters(t, x, result)[1] || continue
-                    filter(x, result) || continue
+                    filter(dep, x, result) || continue
                     rtree = reassemble_tree(r, result)
                     buf = IOBuffer()
                     print_replacement(buf, formatter(rtree, result))
