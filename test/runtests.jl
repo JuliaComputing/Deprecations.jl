@@ -864,3 +864,17 @@ end
 @test edit_text("a?b:c")[2] == "a ? b : c"
 @test edit_text("a ?b:c")[2] == "a ? b : c"
 @test text_not_edited("a ? b : c")
+
+@test edit_text(raw"""
+@eval function (::Type{cFFTWPlan{$Tc,K,inplace,N}})(X::StridedArray{$Tc,N},
+                                                    Y::StridedArray{$Tc,N},
+                                                    region, flags::Integer, timelimit::Real) where {K,inplace,N}
+    nothing
+end
+""")[2] == raw"""
+@eval function cFFTWPlan{$Tc,K,inplace,N}(X::StridedArray{$Tc,N},
+                                          Y::StridedArray{$Tc,N},
+                                          region, flags::Integer, timelimit::Real) where {K,inplace,N}
+    nothing
+end
+"""

@@ -1,23 +1,31 @@
 begin
-    # Special purpose formatter for `@compat` results
-    function format_result(expr, orig_expr)
-        CSTParser.declares_function(expr) || return expr
-        call = isexpr(expr, FunctionDef) ? children(expr)[2] : children(expr)[1]
-        lparen_pos = line_pos(call, first(children(call)[2].span))
+    function format_new_call_expr(expr, orig_expr, call, orig_call)
+        lparen_pos = line_pos(orig_call, first(children(orig_call)[2].span))
         # Heuristic: If the arugment indents (more spefically the first indented line), is further
         # left than the original lparen, don't unindent, it's unlikely they were aligned.
         if lparen_pos != 0
-            indents = countindent_body(expr)
+            indents = countindent_body(orig_expr)
             if !isempty(indents) && (indents[1] < lparen_pos)
-                return expr
+                return (false, call)
             end
         end
+        # A bit cheesy, but w/e
+        buf = IOBuffer()
+        print_replacement(buf, expr, false, false)
+        x = String(take!(buf))
+        nx = sizeof(x)-length(orig_expr.span)
+        return true, format_addindent_body(call, nx, nothing, false)
+    end
+
+    # Special purpose formatter for `@compat` results
+    function format_result(expr, orig_expr)
+        CSTParser.declares_function(expr) || return expr
+        call_idx = isexpr(expr, FunctionDef) ? 2 : 1
+        call = children(expr)[call_idx]
         ret_expr = ChildReplacementNode(nothing, collect(children(expr)), expr)
-        if isexpr(expr, FunctionDef)
-            children(ret_expr)[2] = format_addindent_body(call, -(first(expr.span)-first(orig_expr.span)), nothing, false)
-        else
-            children(ret_expr)[1] = format_addindent_body(call, -(first(expr.span)-first(orig_expr.span)), nothing, false)
-        end
+        ok, call′ = format_new_call_expr(expr, orig_expr, call, children(children(orig_expr)[2])[call_idx])
+        ok || return expr
+        children(ret_expr)[call_idx] = call′
         ret_expr
     end
 

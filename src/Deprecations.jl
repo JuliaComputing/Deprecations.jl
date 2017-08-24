@@ -48,7 +48,7 @@ module Deprecations
         deps
     end
 
-    identity_formatter(tree, matches) = tree
+    identity_formatter(orig_tree, tree, matches) = tree
 
     function match(dep, template::String, replacement::String, formatter = identity_formatter; filter = (args...)->return true)
         haskey(templates, dep) || (templates[dep] = Vector{Tuple{Any, Any, Any}}())
@@ -122,7 +122,7 @@ module Deprecations
                     filter(dep, x, result) || continue
                     rtree = reassemble_tree(r, result)
                     buf = IOBuffer()
-                    print_replacement(buf, formatter(rtree, result))
+                    print_replacement(buf, formatter(x, rtree, result))
                     push!(results, TextReplacement(x.span, String(take!(buf))))
                 end
             end

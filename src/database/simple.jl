@@ -12,7 +12,7 @@ begin
     applies_in_macrocall(dep::OldStructSyntax, context) = true
 
     # Special purpose formatter to unindent multi-line arglists
-    function format_paramlist(tree, matches)
+    function format_paramlist(orig_tree, tree, matches)
         if isexpr(tree, CSTParser.Struct)
             isexpr(children(tree)[2], CSTParser.Curly) || return tree
             children(tree)[2] = format_addindent_body(children(tree)[2], -3, nothing)
@@ -81,6 +81,11 @@ begin
         "julia",
         v"0.6.0", v"0.6.0", typemax(VersionNumber)
     ))
+    function format_old_constructor(orig_tree, tree, matches)
+        ok, call′ = format_new_call_expr(tree, orig_tree, tree, orig_tree)
+        ok || return tree
+        return call′
+    end
     function filter_non_where_curly(dep, tree, matches)
         dep.non_where_curly && return true
         isexpr(parent(tree), BinarySyntaxOpCall) || return false
@@ -90,6 +95,7 @@ begin
     match(OldStyleConstructor,
         "(::Type{\$NAME{\$T...}})(\$ARGS...)",
         "\$NAME{\$T...}(\$ARGS...)",
+        format_old_constructor,
         filter = filter_non_where_curly
     )
     function filter_params(dep, tree, matches)
@@ -106,6 +112,7 @@ begin
     match(OldStyleConstructor,
         "(::Type{\$NAME})(\$ARGS...)",
         "\$NAME(\$ARGS...)",
+        format_old_constructor,
         filter = filter_params
     )
 end
