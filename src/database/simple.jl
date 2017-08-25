@@ -139,7 +139,7 @@ end
 begin
     struct ConditionalWhitespace; end
     register(ConditionalWhitespace, Deprecation(
-        "This Compat definition is deprecated",
+        "The ternary operator now requires whitespace on both sides of the punctuation.",
         "julia",
         v"0.4.0", v"0.7.0-DEV.797", typemax(VersionNumber)
     ))
@@ -166,6 +166,28 @@ begin
         changed = add_ws_lead_trail!(ret, 2, children(expr)[1:3])
         changed |= add_ws_lead_trail!(ret, 4, children(expr)[3:5])
         if changed
+            buf = IOBuffer()
+            print_replacement(buf, ret, false, false)
+            push!(resolutions, TextReplacement(expr.span, String(take!(buf))))
+        end
+    end
+end
+
+begin
+    struct GeneratorWhitespace; end
+    register(GeneratorWhitespace, Deprecation(
+        "Generators and comprehensions now require whitespace before the `for`",
+        "julia",
+        v"0.4.0", v"0.7.0-DEV.797", typemax(VersionNumber)
+    ))
+
+    match(ConditionalWhitespace, CSTParser.Generator) do x
+        dep, expr, resolutions, context = x
+        ret = ChildReplacementNode(nothing, collect(children(expr)), expr)
+        body, fornode, iterand = children(expr)
+        allws = string(trailing_ws(body), leading_ws(fornode))
+        if isempty(allws) || !isspace(allws[end])
+            children(ret)[2] = TriviaReplacementNode(ret, fornode, string(leading_ws(fornode), " "), trailing_ws(fornode))
             buf = IOBuffer()
             print_replacement(buf, ret, false, false)
             push!(resolutions, TextReplacement(expr.span, String(take!(buf))))

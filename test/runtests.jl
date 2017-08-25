@@ -878,3 +878,21 @@ end
     nothing
 end
 """
+
+@test edit_text("""
+f(xs, ys) = T[(x, y)for (x, y) in zip(xs, ys)]
+""")[2] == """
+f(xs, ys) = T[(x, y) for (x, y) in zip(xs, ys)]
+"""
+
+@test edit_text("""
+f(xs, ys) = [(x, y)for (x, y) in zip(xs, ys)]
+""")[2] == """
+f(xs, ys) = [(x, y) for (x, y) in zip(xs, ys)]
+"""
+
+@test edit_text("""
+f((x, y)for (x, y) in zip(xs, ys))
+""")[2] == """
+f((x, y) for (x, y) in zip(xs, ys))
+"""
