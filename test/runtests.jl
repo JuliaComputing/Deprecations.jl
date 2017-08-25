@@ -1,5 +1,5 @@
 using Deprecations
-using Deprecations: edit_text, overlay_parse, apply_formatter, changed_text
+using Deprecations: overlay_parse, apply_formatter, changed_text
 using Base.Test
 
 @test edit_text("""
@@ -895,4 +895,42 @@ f(xs, ys) = [(x, y) for (x, y) in zip(xs, ys)]
 f((x, y)for (x, y) in zip(xs, ys))
 """)[2] == """
 f((x, y) for (x, y) in zip(xs, ys))
+"""
+
+@test edit_markdown("""
+# Test package
+```julia
+julia> f{T}(a::T) = 1
+f (generic function with 1 method)
+
+julia> f{T}(a::T) = 1
+f (generic function with 1 method)
+```
+""")[2] == """
+# Test package
+```julia
+julia> f(a::T) where {T} = 1
+f (generic function with 1 method)
+
+julia> f(a::T) where {T} = 1
+f (generic function with 1 method)
+```
+"""
+
+@test edit_text("""
+\"""
+# Awesome documention
+```julia
+julia> f{T}(a::T) = 1
+```
+\"""
+x
+""")[2] == """
+\"""
+# Awesome documention
+```julia
+julia> f(a::T) where {T} = 1
+```
+\"""
+x
 """

@@ -1,6 +1,8 @@
 module Deprecations
     using CSTParser
-    using CSTParser: EXPR, MacroCall, IDENTIFIER
+    using CSTParser: EXPR, MacroCall, IDENTIFIER, LITERAL
+
+    export edit_text, edit_file, edit_markdown
 
     struct Deprecation
         description::String
@@ -140,6 +142,19 @@ module Deprecations
                    ))
                     context = Context(true, x)
                 end
+                # Recurse into code examples in documentation
+                if isexpr(children(x)[1], CSTParser.GlobalRefDoc)
+                    docnode = children(x)[2]
+                    doc = span_text(docnode)
+                    nquotes = doc[1:3] == "\"\"\"" ? 3 : 1
+                    doc = doc[(1+nquotes):(end-nquotes)]
+                    if !isa(doc, Expr)
+                        changed, new_doc = edit_markdown(doc)
+                        if changed
+                            push!(results, TextReplacement((first(docnode.span)+nquotes):(last(docnode.span)-nquotes), new_doc))
+                        end
+                    end
+                end
             end
             for arg in children(x)
                 find_replacements(arg, results, context)
@@ -150,15 +165,60 @@ module Deprecations
         changed_text(text, results)
     end
 
-    function edit_file(fname, deps)
+    function edit_file(fname, deps, edit=edit_text)
         text = readstring(fname)
-        any_changed, new_text = edit_text(text, deps)
+        any_changed, new_text = edit(text, deps)
         if any_changed
             open(fname, "w") do io
                 write(io, new_text)
             end
         end
         any_changed
+    end
+
+    function edit_markdown(text, deps = map(x->x(), keys(all_deprecations)))
+        content = Base.Markdown.parse(text)
+        changed_any = false
+        new_text = text
+        map(content.content) do x
+            isa(x, Base.Markdown.Code) || return
+            x.language in ("julia", "jldoctext") || return
+            any_matches = false
+            new_code = x.code
+            for m in eachmatch(r"^julia> "m, x.code)
+                any_matches = true
+                curidx = startidx = m.offset
+                while (curidx = findnext(x.code, '\n', curidx)) != 0
+                    # In order to be a line continuation, needs to be at least
+                    # 7 spaces after a newline.
+                    is_continuation = true
+                    idx = curidx
+                    for i = 1:7
+                        idx = nextind(x.code, idx)
+                        if !isspace(x.code[idx])
+                            is_continuation = false
+                        end
+                    end
+                    is_continuation || break
+                end
+                curidx == 0 && (curidx = endof(x.code))
+                text = x.code[(startidx+7):curidx]
+                try
+                    new_code = replace(new_code, text, edit_text(text, deps)[2])
+                end
+            end
+            if !any_matches
+                # Parse the whole thing
+                try
+                    new_code = edit_text(new_code, deps)[2]
+                end
+            end
+            if x.code != new_code
+                changed_any = true
+                new_text = replace(new_text, x.code, new_code)
+            end
+        end
+        return (changed_any, new_text)
     end
 
 end # module
