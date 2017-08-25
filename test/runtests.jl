@@ -599,6 +599,7 @@ end
 """
 
 text_not_edited(t) = edit_text(t)[2] == t
+markdown_not_edited(t) = edit_markdown(t)[2] == t
 
 @test text_not_edited("""
 struct GLVisualizeShader <: AbstractLazyShader
@@ -950,3 +951,24 @@ julia> f(a::T,
 f (generic function with 1 method)
 ```
 """
+
+@test markdown_not_edited("""
+```
+julia> using DataArrays
+
+julia> dv = data([1, 2, 3])
+3-element DataArray{Int64,1}:
+ 1
+ 2
+ 3
+
+julia> dv[1]
+ 1
+
+julia> dv[2] = NA
+NA
+
+julia> dv[2]
+NA
+```
+""")

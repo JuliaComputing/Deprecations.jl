@@ -193,11 +193,14 @@ module Deprecations
                     # 7 spaces after a newline.
                     is_continuation = true
                     idx = curidx
-                    for i = 1:7
+                    i = 1
+                    while i <= 7 && idx <= endof(x.code)
                         idx = nextind(x.code, idx)
                         if !isspace(x.code[idx])
                             is_continuation = false
+                            break
                         end
+                        i += 1
                     end
                     is_continuation || break
                     curidx = nextind(x.code, curidx)
