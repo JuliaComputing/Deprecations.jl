@@ -934,3 +934,19 @@ julia> f(a::T) where {T} = 1
 \"""
 x
 """
+
+@test edit_markdown("""
+# Test package
+```julia
+julia> f{T}(a::T,
+            b::T) = 1
+f (generic function with 1 method)
+```
+""")[2] == """
+# Test package
+```julia
+julia> f(a::T,
+         b::T) where {T} = 1
+f (generic function with 1 method)
+```
+"""

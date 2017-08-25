@@ -200,6 +200,7 @@ module Deprecations
                         end
                     end
                     is_continuation || break
+                    curidx = nextind(x.code, curidx)
                 end
                 curidx == 0 && (curidx = endof(x.code))
                 text = x.code[(startidx+7):curidx]
