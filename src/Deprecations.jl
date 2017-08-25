@@ -188,7 +188,7 @@ module Deprecations
             for m in eachmatch(r"^julia> "m, x.code)
                 any_matches = true
                 curidx = startidx = m.offset
-                while (curidx = findnext(x.code, '\n', curidx)) != 0
+                while (curidx = search(x.code, '\n', curidx)) != 0
                     # In order to be a line continuation, needs to be at least
                     # 7 spaces after a newline.
                     is_continuation = true
