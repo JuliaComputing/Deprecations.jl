@@ -972,3 +972,7 @@ julia> dv[2]
 NA
 ```
 """)
+
+@test text_not_edited("""
+@test repr(:(x for x in y if aa for z in w if bb)) == ":((x for x = y if aa for z = w if bb))"
+""")
