@@ -112,8 +112,7 @@ begin
     match(ObsoleteCompatMacro, CSTParser.MacroCall) do x
         dep, expr, resolutions, context = x
 
-        macroname = children(expr)[1]
-        is_identifier(macroname, "@compat") || return
+        is_macroname(expr, "compat") || return
         args = filter(x->!isexpr(x, CSTParser.PUNCTUATION), children(expr)[2:end])
         length(args) == 1 || return
 

@@ -136,11 +136,13 @@ module Deprecations
             if isexpr(x, MacroCall) && !context.in_macrocall
                 # Don't consider doc macros here. We know they don't
                 # affect the meaning of the parsed code.
-                if !isexpr(children(x)[1], CSTParser.GlobalRefDoc) &&
-                   !(isexpr(children(x)[1], IDENTIFIER) && Expr(children(x)[1]) in (
-                       Symbol("@eval"), Symbol("@inline"), Symbol("@views")
-                   ))
-                    context = Context(true, x)
+                if !isexpr(children(x)[1], CSTParser.GlobalRefDoc)
+                    macroname = children(children(x)[1])[2]
+                    if !(isexpr(macroname, IDENTIFIER) && Expr(macroname) in (
+                           Symbol("eval"), Symbol("inline"), Symbol("views")
+                            ))
+                        context = Context(true, x)
+                    end
                 end
                 # Recurse into code examples in documentation
                 if isexpr(children(x)[1], CSTParser.GlobalRefDoc)

@@ -1,4 +1,5 @@
 using Tokenize.Tokens: GREATER, LESS, GREATER_EQ, GREATER_THAN_OR_EQUAL_TO, LESS_EQ, LESS_THAN_OR_EQUAL_TO
+using CSTParser: MacroName
 begin
     struct ObsoleteVersionCheck; vers; end
     register(ObsoleteVersionCheck, Deprecation(
@@ -44,6 +45,11 @@ begin
         x.val == id
     end
     is_identifier(x::OverlayNode, id) = is_identifier(x.expr, id)
+    function is_macroname(x::OverlayNode{MacroCall}, name)
+        c = children(x)[1]
+        isexpr(c, MacroName) || return false
+        return is_identifier(children(c)[2], name)
+    end
 
     opcode(x::EXPR{CSTParser.OPERATOR{6,op,false}}) where {op} = op
 
@@ -59,7 +65,7 @@ begin
         # Also applies in @static context, but not necessarily in other macro contexts
         if context.in_macrocall
             context.top_macrocall == parent(expr) || return
-            is_identifier(children(context.top_macrocall)[1], "@static") || return
+            is_macroname(context.top_macrocall, "static") || return
             replace_expr = context.top_macrocall
         end
         r1 = detect_ver_arguments(comparison.args[1], comparison.args[3])
