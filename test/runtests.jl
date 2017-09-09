@@ -990,3 +990,15 @@ function foo(a::A,
     nothing
 end
 """
+
+@test edit_text_converge("""
+@compat function (::Type{CategoricalPool{T, R}})(index::Vector,
+                                                 ordered::Bool=false) where {T, R}
+    nothing
+end
+""") == """
+function CategoricalPool{T, R}(index::Vector,
+                               ordered::Bool=false) where {T, R}
+    nothing
+end
+"""

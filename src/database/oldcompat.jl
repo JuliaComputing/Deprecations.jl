@@ -17,15 +17,29 @@ begin
         return true, format_addindent_body(call, nx, nothing, false)
     end
 
+    function is_where(expr)
+        isexpr(expr, CSTParser.BinarySyntaxOpCall) && isexpr(
+            children(expr)[2],
+            OPERATOR{15, Tokens.WHERE, false})
+    end
+
     # Special purpose formatter for `@compat` results
     function format_result(expr, orig_expr)
         CSTParser.declares_function(expr) || return expr
         call_idx = isexpr(expr, FunctionDef) ? 2 : 1
-        call = children(expr)[call_idx]
+        callorwhere = children(expr)[call_idx]
+        call = is_where(callorwhere) ? children(callorwhere)[1] : callorwhere
         ret_expr = ChildReplacementNode(nothing, collect(children(expr)), expr)
-        ok, call′ = format_new_call_expr(expr, orig_expr, call, children(children(orig_expr)[2])[call_idx])
+        orig_call = children(children(orig_expr)[2])[call_idx]
+        orig_call = is_where(orig_call) ? children(orig_call)[1] : orig_call
+        ok, call′ = format_new_call_expr(expr, orig_expr, call, orig_call)
         ok || return expr
-        children(ret_expr)[call_idx] = call′
+        if is_where(callorwhere)
+            children(ret_expr)[call_idx] = ChildReplacementNode(ret_expr, collect(children(callorwhere)), callorwhere)
+            children(children(ret_expr)[call_idx])[1] = call′
+        else
+            children(ret_expr)[call_idx] = call′
+        end
         ret_expr
     end
 
