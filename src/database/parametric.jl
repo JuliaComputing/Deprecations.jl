@@ -32,6 +32,34 @@ end
 
 CSTParser.get_id(x::OverlayNode{Curly}) = CSTParser.get_id(children(x)[1])
 
+function compute_new_line_pos(tree, node, offset = 0, consider_trailing=true)
+    if isempty(children(tree))
+        if consider_trailing
+            ws = trailing_ws(tree)
+            if '\n' in ws
+                return length(last_line(ws))
+            end
+        end
+        x = sprint(print_replacement, tree, true, consider_trailing)
+        return offset + length(x)
+    end
+    for (i,c) in enumerate(children(tree))
+        if c == node
+            return offset
+        end
+        is_last = i == length(children(tree))
+        offset = compute_new_line_pos(c, node, offset, !isa(c, TriviaReplacementNode) &&
+            !(is_last && !consider_trailing))
+        if isa(c, TriviaReplacementNode) && !(!consider_trailing && is_last)
+            ws = trailing_ws(c)
+            if '\n' in ws
+                offset = length(last_line(ws))
+            end
+        end
+    end
+    offset
+end
+
 begin
     struct OldParametricSyntax; end
     register(OldParametricSyntax, Deprecation(
@@ -145,9 +173,18 @@ begin
             unshift!(children(new_call), fname)
         end
         nchars_moved = (needs_new_curly ? sum(expr->sum(charwidth, fullspan_text(expr)), children(new_curly)[2:end]) : 0) -
-                       (had_curly ? sum(expr->sum(charwidth, fullspan_text(expr)), children(curly)[2:end]) : 0)
+                       (had_curly ? line_pos(call, first(children(call)[2].span)) - (line_pos(curly, first(children(curly)[2].span))) : 0)
         heuristic_pos = had_curly ? line_pos(curly, first(curly.span)) : line_pos(call, first(children(call)[2].span)-1)
         format_arglist!(new_where, nchars_moved, heuristic_pos)
+        # If the parameter list is multi-line, it might need to be indented as well
+        if had_curly
+            new_lbrace_pos = compute_new_line_pos(new_where, children(new_where)[3])
+            old_lbrace_pos = line_pos(curly, first(children(curly)[2].span))
+            where_indent = new_lbrace_pos - old_lbrace_pos
+            for i = 4:length(children(new_where))
+                children(new_where)[i] = format_addindent_body(children(new_where)[i], where_indent, nothing)
+            end
+        end
         buf = IOBuffer()
         print_replacement(buf, new_tree, false, false)
         push!(resolutions, TextReplacement(expr.span, String(take!(buf))))

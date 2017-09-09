@@ -190,7 +190,8 @@ begin
             children(ret)[2] = TriviaReplacementNode(ret, fornode, string(leading_ws(fornode), " "), trailing_ws(fornode))
             buf = IOBuffer()
             print_replacement(buf, ret, false, false)
-            push!(resolutions, TextReplacement(expr.span, String(take!(buf))))
+            repl = String(take!(buf))
+            push!(resolutions, TextReplacement(expr.span, repl))
         end
     end
 end

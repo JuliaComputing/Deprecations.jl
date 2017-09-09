@@ -976,3 +976,17 @@ NA
 @test text_not_edited("""
 @test repr(:(x for x in y if aa for z in w if bb)) == ":((x for x = y if aa for z = w if bb))"
 """)
+
+@test edit_text("""
+function foo{A <: X,
+             B <: Y}(a::A,
+                     b::B)
+    nothing
+end
+""")[2] == """
+function foo(a::A,
+             b::B) where {A <: X,
+                          B <: Y}
+    nothing
+end
+"""
