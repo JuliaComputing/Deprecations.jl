@@ -69,11 +69,15 @@ begin
         # definition, so we can't perform this upgrade, if there's
         # no `where` clause.
         non_where_curly::Bool
+        # In 0.6/0.7 F() inside a struct still refers to the old inner constructor syntax
+        # so we can't perform this upgrade
+        inner_constructor::Bool
     end
-    OldStyleConstructor() = OldStyleConstructor(false)
+    OldStyleConstructor() = OldStyleConstructor(false, false)
 
     function dep_for_vers(::Type{OldStyleConstructor}, vers)
-        OldStyleConstructor(all(interval->(v"1.0-DEV" <= interval.lower), vers["julia"].intervals))
+        is10 = all(interval->(v"1.0-DEV" <= interval.lower), vers["julia"].intervals)
+        OldStyleConstructor(is10, is10)
     end
 
     register(OldStyleConstructor, Deprecation(
@@ -98,6 +102,10 @@ begin
         format_old_constructor,
         filter = filter_non_where_curly
     )
+    function filter_in_struct(dep, tree, matches)
+        dep.inner_constructor && return true
+        return get_struct_parent(tree.parent) === nothing
+    end
     function filter_params(dep, tree, matches)
         # Handled by the above
         name = first(matches[:NAME][2])
@@ -113,7 +121,7 @@ begin
         "(::Type{\$NAME})(\$ARGS...)",
         "\$NAME(\$ARGS...)",
         format_old_constructor,
-        filter = filter_params
+        filter = (args...)->filter_params(args...) && filter_in_struct(args...)
     )
 end
 

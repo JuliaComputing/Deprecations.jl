@@ -1002,3 +1002,23 @@ function CategoricalPool{T, R}(index::Vector,
     nothing
 end
 """
+
+@test edit_text_converge("""
+immutable GroupApplied{T<:AbstractDataFrame}
+    gd::GroupedDataFrame
+    vals::Vector{T}
+
+    function (::Type{GroupApplied})(gd::GroupedDataFrame, vals::Vector)
+        nothing
+    end
+end
+""") == """
+struct GroupApplied{T<:AbstractDataFrame}
+    gd::GroupedDataFrame
+    vals::Vector{T}
+
+    function (::Type{GroupApplied})(gd::GroupedDataFrame, vals::Vector)
+        nothing
+    end
+end
+"""
