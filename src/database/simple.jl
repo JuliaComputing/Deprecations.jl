@@ -189,7 +189,7 @@ begin
         v"0.4.0", v"0.7.0-DEV.797", typemax(VersionNumber)
     ))
 
-    match(ConditionalWhitespace, CSTParser.Generator) do x
+    match(GeneratorWhitespace, CSTParser.Generator) do x
         dep, expr, resolutions, context = x
         ret = ChildReplacementNode(nothing, collect(children(expr)), expr)
         body, fornode, iterand = children(expr)
