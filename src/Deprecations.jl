@@ -184,7 +184,9 @@ module Deprecations
         new_text = text
         map(content.content) do x
             isa(x, Base.Markdown.Code) || return
-            x.language in ("julia", "jldoctext") || return
+            if !(x.language =="julia" || ismatch(r"jldoctest[ ]?(.*)$", x.language))
+                return
+            end
             any_matches = false
             new_code = x.code
             for m in eachmatch(r"^julia> "m, x.code)
