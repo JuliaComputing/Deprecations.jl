@@ -1022,3 +1022,17 @@ struct GroupApplied{T<:AbstractDataFrame}
     end
 end
 """
+
+@test edit_markdown("""
+# Docs....
+```jldoctest nameddoctest
+julia> f{T}(a::T) = 1
+f (generic function with 1 method)
+```
+""")[2] == """
+# Docs....
+```jldoctest nameddoctest
+julia> f(a::T) where {T} = 1
+f (generic function with 1 method)
+```
+"""
