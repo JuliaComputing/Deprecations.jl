@@ -33,7 +33,7 @@ end
 function resolve_delete_expr(resolutions, expr, replace_expr)
     if length(children(expr)) <= 4
         push!(resolutions, TextReplacement(replace_expr.fullspan, except_first_line(trailing_ws(replace_expr))))
-    elseif isexpr(children(expr)[4], KEYWORD{Tokens.ELSE})
+    elseif isexpr(children(expr)[4], KEYWORD, Tokens.ELSE)
         # Inline else body
         indent = sum(charwidth, last_line(trailing_ws(children(expr)[2]))) - line_pos(replace_expr, first(replace_expr.span))
         body = format_addindent_body(children(expr)[5], -indent)
@@ -45,8 +45,8 @@ function resolve_delete_expr(resolutions, expr, replace_expr)
         indent = sum(charwidth, trailing_ws(children(expr)[2]))
         repl = ChildReplacementNode(nothing, Any[], expr)
         eif = children(expr)[4]
-        @assert isexpr(eif, KEYWORD{Tokens.ELSEIF})
-        push!(repl.children, ReplacementNode{KEYWORD{Tokens.IF}}("if", leading_ws(eif), trailing_ws(eif)))
+        @assert isexpr(eif, KEYWORD, Tokens.ELSEIF)
+        push!(repl.children, ReplacementNode("if", leading_ws(eif), trailing_ws(eif)))
         append!(repl.children, children(expr)[5:end])
         buf = IOBuffer()
         print_replacement(buf, repl, false, true)
@@ -92,3 +92,4 @@ function apply_formatter(f, tree)
     print_replacement(buf, rtree)
     TextReplacement(tree.span, String(take!(buf)))
 end
+

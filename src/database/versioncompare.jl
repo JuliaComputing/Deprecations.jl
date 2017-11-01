@@ -27,11 +27,11 @@ begin
 
 
     function detect_ver_arguments(VERSION_arg, v_arg)
-        isa(VERSION_arg, EXPR{CSTParser.IDENTIFIER}) || return nothing
+        isexpr(VERSION_arg, CSTParser.IDENTIFIER) || return nothing
         VERSION_arg.val == "VERSION" || return nothing
-        isa(v_arg, EXPR{CSTParser.x_Str}) || return nothing
-        isa(v_arg.args[1], EXPR{CSTParser.IDENTIFIER}) || return nothing
-        isa(v_arg.args[2], EXPR{CSTParser.LITERAL{Tokens.STRING}}) || return nothing
+        isexpr(v_arg, CSTParser.x_Str) || return nothing
+        isexpr(v_arg.args[1], CSTParser.IDENTIFIER) || return nothing
+        isexpr(v_arg.args[2], CSTParser.LITERAL, Tokens.STRING) || return nothing
         v_arg.args[1].val == "v" || return nothing
         VersionNumber(v_arg.args[2].val)
     end
@@ -40,27 +40,23 @@ begin
         ObsoleteVersionCheck(vers["julia"])
     end
 
-    function is_identifier(x::EXPR, id)
-        isa(x, EXPR{IDENTIFIER}) || return false
+    is_identifier(x, id) = false
+    function is_identifier(x::CSTParser.IDENTIFIER, id)
         x.val == id
     end
     is_identifier(x::OverlayNode, id) = is_identifier(x.expr, id)
-    function is_macroname(x::OverlayNode{MacroCall}, name)
-        c = children(x)[1]
-        isexpr(c, MacroName) || return false
-        return is_identifier(children(c)[2], name)
-    end
 
-    opcode(x::EXPR{CSTParser.OPERATOR{6,op,false}}) where {op} = op
-
+    opcode(x::CSTParser.OPERATOR) = x.kind
+    iscomparison(x::CSTParser.OPERATOR) = CSTParser.precedence(x) == 6
+    iscomparison(x::OverlayNode) = iscomparison(x.expr)
     match(ObsoleteVersionCheck, CSTParser.If) do x
         dep, expr, resolutions, context = x
         replace_expr = expr
         comparison = children(expr)[2]
         isexpr(comparison, CSTParser.BinaryOpCall) || return
-        isexpr(children(comparison)[2], CSTParser.OPERATOR{6,op,false} where op) || return
+        iscomparison(children(comparison)[2]) || return
         comparison = comparison.expr
-        opc = opcode(comparison.args[2])
+        opc = opcode(children(comparison)[2])
         haskey(comparisons, opc) || return
         # Also applies in @static context, but not necessarily in other macro contexts
         if context.in_macrocall
@@ -68,7 +64,7 @@ begin
             is_macroname(context.top_macrocall, "static") || return
             replace_expr = context.top_macrocall
         end
-        r1 = detect_ver_arguments(comparison.args[1], comparison.args[3])
+        r1 = detect_ver_arguments(children(comparison)[1], children(comparison)[3])
         if r1 !== nothing
             f = comparisons[opc]
             alwaystrue = all(interval->(f(interval.lower, r1) && f(interval.upper, r1)), dep.vers.intervals)

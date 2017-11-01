@@ -1,6 +1,18 @@
-using Deprecations: Deprecation
 using Compat
-using CSTParser: FunctionDef, OPERATOR, PUNCTUATION, Curly, BinaryOpCall, BinarySyntaxOpCall, ComparisonOp, DeclarationOp
+using CSTParser: FunctionDef, OPERATOR, PUNCTUATION, Curly, BinaryOpCall, BinarySyntaxOpCall, ComparisonOp, DeclarationOp, MacroCall, MacroName
+
+
+function is_where_expr(expr)
+    isexpr(expr, BinarySyntaxOpCall) || isexpr(expr, CSTParser.WhereOpCall) || return false
+    isexpr(children(expr)[2], OPERATOR, Tokens.WHERE) || return false
+    return true
+end
+
+function is_macroname(x::OverlayNode{MacroCall}, name)
+    c = children(x)[1]
+    isexpr(c, MacroName) || return false
+    return is_identifier(children(c)[2], name)
+end
 
 # Rewrites related to the new parametric type syntax on 0.6, including
 # rewriting inner constructors

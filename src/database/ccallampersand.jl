@@ -21,7 +21,7 @@ match(CCallAmpersand, CSTParser.Call) do x
         node = children(expr)[idx]
         # Check if this is ampersand syntax
         if isexpr(node, UnarySyntaxOpCall) && isexpr(children(node)[1],
-                OPERATOR{TimesOp,Tokens.AND})
+                OPERATOR, Tokens.AND)
             # Check if the argtype is `Ptr`.
             argT = children(argtypes)[2*i] # Every other node is punctuation
             isexpr(argT, Curly) || continue
@@ -40,3 +40,4 @@ match(CCallAmpersand, CSTParser.Call) do x
         push!(resolutions, TextReplacement(expr.span, String(take!(buf))))
     end
 end
+
