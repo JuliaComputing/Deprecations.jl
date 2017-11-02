@@ -1040,4 +1040,11 @@ julia> f(a::T) where {T} = 1
 f (generic function with 1 method)
 ```
 """
+
+@test text_not_edited("""
+[i for i in 1:2 if all([c for c in a])]
+""")
+
 end
+
+
