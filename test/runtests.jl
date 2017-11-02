@@ -1040,4 +1040,53 @@ julia> f(a::T) where {T} = 1
 f (generic function with 1 method)
 ```
 """
+
+@test edit_text("""
+if isdefined(Base, :Test)
+    do_this()
+else
+    do_that()
 end
+""", [Deprecations.dep_for_vers(
+    Deprecations.IsDefinedBaseCheck,
+    Pkg.Reqs.parse(IOBuffer("julia 0.5 0.6"))
+)])[2] == """
+do_this()
+"""
+
+@test edit_text("""
+if isdefined(Base, :Test)
+    do_this()
+else
+    do_that()
+end
+""", [Deprecations.dep_for_vers(
+    Deprecations.IsDefinedBaseCheck,
+    Pkg.Reqs.parse(IOBuffer("julia 0.7-DEV.2004"))
+)])[2] == """
+do_that()
+"""
+
+@test edit_text("""
+isdefined(Base, :__precompile__) && __precompile__()
+""")[2] == """
+__precompile__()
+"""
+
+@test edit_text(raw"""
+@static if !isdefined(Base, Symbol("@nospecialize"))
+	# 0.7
+	macro nospecialize(arg)
+        earg = esc(arg)
+        if isa(arg, Symbol)
+	        export @nospecialize
+        end
+	end
+end
+""", [Deprecations.dep_for_vers(
+    Deprecations.IsDefinedBaseCheck,
+    Pkg.Reqs.parse(IOBuffer("julia 0.7-DEV.969"))
+)])[2] == """
+"""
+
+end # testset
