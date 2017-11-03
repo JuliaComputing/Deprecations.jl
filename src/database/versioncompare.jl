@@ -30,10 +30,10 @@ begin
         isexpr(VERSION_arg, CSTParser.IDENTIFIER) || return nothing
         VERSION_arg.val == "VERSION" || return nothing
         isexpr(v_arg, CSTParser.x_Str) || return nothing
-        isexpr(v_arg.args[1], CSTParser.IDENTIFIER) || return nothing
-        isexpr(v_arg.args[2], CSTParser.LITERAL, Tokens.STRING) || return nothing
-        v_arg.args[1].val == "v" || return nothing
-        VersionNumber(v_arg.args[2].val)
+        isexpr(children(v_arg)[1], CSTParser.IDENTIFIER) || return nothing
+        isexpr(children(v_arg)[2], CSTParser.LITERAL, Tokens.STRING) || return nothing
+        children(v_arg)[1].val == "v" || return nothing
+        VersionNumber(children(v_arg)[2].val)
     end
 
     function dep_for_vers(::Type{ObsoleteVersionCheck}, vers)
@@ -74,7 +74,7 @@ begin
             alwaysfalse && resolve_delete_expr(resolutions, expr, replace_expr)
             return
         end
-        r2 = detect_ver_arguments(comparison.args[3], comparison.args[1])
+        r2 = detect_ver_arguments(children(comparison)[3], children(comparison)[1])
         if r2 !== nothing
             f = comparisons[opc]
             alwaystrue = all(interval->(f(interval.lower, r2) && f(interval.upper, r2)), dep.vers.intervals)
