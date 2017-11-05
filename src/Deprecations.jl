@@ -117,7 +117,7 @@ module Deprecations
         match = overlay_parse(text)
         function find_replacements(x, results, context=Context(false, nothing))
             for (i,(dep, (t, r, formatter, filter))) in enumerate(parsed_replacementes)
-                if typeof(x) == typeof(t)
+                if matches_template2(x, t)
                     (!context.in_macrocall || applies_in_macrocall(dep, context)) || continue
                     result = Dict{Any,Any}()
                     match_parameters(t, x, result)[1] || continue

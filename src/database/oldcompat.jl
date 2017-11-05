@@ -17,24 +17,18 @@ begin
         return true, format_addindent_body(call, nx, nothing, false)
     end
 
-    function is_where(expr)
-        isexpr(expr, CSTParser.BinarySyntaxOpCall) && isexpr(
-            children(expr)[2],
-            OPERATOR{15, Tokens.WHERE, false})
-    end
-
     # Special purpose formatter for `@compat` results
     function format_result(expr, orig_expr)
         CSTParser.declares_function(expr) || return expr
         call_idx = isexpr(expr, FunctionDef) ? 2 : 1
         callorwhere = children(expr)[call_idx]
-        call = is_where(callorwhere) ? children(callorwhere)[1] : callorwhere
+        call = is_where_expr(callorwhere) ? children(callorwhere)[1] : callorwhere
         ret_expr = ChildReplacementNode(nothing, collect(children(expr)), expr)
         orig_call = children(children(orig_expr)[2])[call_idx]
-        orig_call = is_where(orig_call) ? children(orig_call)[1] : orig_call
+        orig_call = is_where_expr(orig_call) ? children(orig_call)[1] : orig_call
         ok, call′ = format_new_call_expr(expr, orig_expr, call, orig_call)
         ok || return expr
-        if is_where(callorwhere)
+        if is_where_expr(callorwhere)
             children(ret_expr)[call_idx] = ChildReplacementNode(ret_expr, collect(children(callorwhere)), callorwhere)
             children(children(ret_expr)[call_idx])[1] = call′
         else
@@ -65,54 +59,54 @@ begin
     function new_style_typealias(ex::ANY)
         Base.Meta.isexpr(ex, :(=)) || return false
         ex = ex::Expr
-        return length(ex.args) == 2 && Base.Meta.isexpr(ex.args[1], :curly)
+        return length(children(ex)) == 2 && Base.Meta.isexpr(children(ex)[1], :curly)
     end
     is_index_style(ex::Expr) = ex == :(Compat.IndexStyle) || ex == :(Base.IndexStyle) ||
-    (ex.head == :(.) && (ex.args[1] == :Compat || ex.args[1] == :Base) &&
-        ex.args[2] == Expr(:quote, :IndexStyle))
+    (ex.head == :(.) && (children(ex)[1] == :Compat || children(ex)[1] == :Base) &&
+        children(ex)[2] == Expr(:quote, :IndexStyle))
     is_index_style(arg) = false
-    withincurly(ex) = Base.Meta.isexpr(ex, :curly) ? ex.args[1] : ex
+    withincurly(ex) = Base.Meta.isexpr(ex, :curly) ? children(ex)[1] : ex
     function _compat(min_ver, ex::Expr)
         if ex.head === :call
-            f = ex.args[1]
-            if min_ver < v"0.6.0-dev.826" && length(ex.args) == 3 && # julia#18510
-                    istopsymbol(withincurly(ex.args[1]), :Base, :Nullable)
+            f = children(ex)[1]
+            if min_ver < v"0.6.0-dev.826" && length(children(ex)) == 3 && # julia#18510
+                    istopsymbol(withincurly(children(ex)[1]), :Base, :Nullable)
                 return true
             end
         elseif ex.head === :curly
-            f = ex.args[1]
-            if min_ver < v"0.6.0-dev.2575" && any(i->isa(ex.args[i], Expr) && ex.args[i].head == Symbol("<:"), 2:length(ex.args)) #20414
+            f = children(ex)[1]
+            if min_ver < v"0.6.0-dev.2575" && any(i->isa(children(ex)[i], Expr) && children(ex)[i].head == Symbol("<:"), 2:length(children(ex))) #20414
                 return true
             end
-        elseif ex.head === :quote && isa(ex.args[1], Symbol)
+        elseif ex.head === :quote && isa(children(ex)[1], Symbol)
             # Passthrough
             return false
         elseif min_ver < v"0.6.0-dev.2782" && new_style_typealias(ex)
             return true
-        elseif min_ver < v"0.6.0-dev.2782" && ex.head === :const && length(ex.args) == 1 && new_style_typealias(ex.args[1])
+        elseif min_ver < v"0.6.0-dev.2782" && ex.head === :const && length(children(ex)) == 1 && new_style_typealias(children(ex)[1])
             return true
         end
         if min_ver < v"0.6.0-dev.2840"
-            if ex.head == :(=) && isa(ex.args[1], Expr) && ex.args[1].head == :call
-                a = ex.args[1].args[1]
+            if ex.head == :(=) && isa(children(ex)[1], Expr) && children(ex)[1].head == :call
+                a = children(children(ex)[1])[1]
                 if is_index_style(a)
                     return true
                 elseif isa(a, Expr) && a.head == :curly
-                    if is_index_style(a.args[1])
+                    if is_index_style(children(a)[1])
                         return true
                     end
                 end
             end
         end
         if min_ver < v"0.7.0-DEV.880"
-            if ex.head == :curly && ex.args[1] == :CartesianRange && length(ex.args) >= 2
-                a = ex.args[2]
-                if a != :CartesianIndex && !(isa(a, Expr) && a.head == :curly && a.args[1] == :CartesianIndex)
+            if ex.head == :curly && children(ex)[1] == :CartesianRange && length(children(ex)) >= 2
+                a = children(ex)[2]
+                if a != :CartesianIndex && !(isa(a, Expr) && a.head == :curly && children(a)[1] == :CartesianIndex)
                     return true
                 end
             end
         end
-        return any(x->_compat(min_ver, x), ex.args)
+        return any(x->_compat(min_ver, x), children(ex))
     end
 
     function is_at_compat_needed(dep, expr)

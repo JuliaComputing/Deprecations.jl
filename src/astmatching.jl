@@ -1,32 +1,54 @@
 using Tokenize: Tokens
 
-function is_template_expr(expr, allow_slurp = true)
-    isa(expr, EXPR{CSTParser.UnarySyntaxOpCall}) || return (false, nothing, false)
-    if isa(expr.args[2], EXPR{CSTParser.OPERATOR{7, Tokens.DDDOT, false}})
-        isa(expr.args[1], EXPR{CSTParser.UnarySyntaxOpCall}) || return (false, nothing, false)
-        isa(expr.args[1].args[1], EXPR{CSTParser.OPERATOR{9,Tokens.EX_OR,false}}) || return (false, nothing, false)
-        return (true, Symbol(expr.args[1].args[2].val), true)
+function is_template_expr(expr)
+    isexpr(expr, CSTParser.UnarySyntaxOpCall) || return (false, nothing, false)
+    if isexpr(children(expr)[2], OPERATOR, Tokens.DDDOT)
+        isexpr(children(expr)[1], CSTParser.UnarySyntaxOpCall) || return (false, nothing, false)
+        isexpr(children(children(expr)[1])[1], OPERATOR, Tokens.EX_OR) || return (false, nothing, false)
+        return (true, Symbol( children(children(expr)[1])[2].val), true)
     end
-    isa(expr.args[1], EXPR{CSTParser.OPERATOR{9,Tokens.EX_OR,false}}) || return (false, nothing, false)
-    return (true, Symbol(expr.args[2].val), false)
+    isexpr(children(expr)[1], OPERATOR, Tokens.EX_OR) || return (false, nothing, false)
+    return (true, Symbol(children(expr)[2].val), false)
 end
 
 function matches_template(x, y)
-    typeof(x) == typeof(y) || return false
-    if typeof(x) == EXPR{CSTParser.IDENTIFIER}
+    if typeof(x) != typeof(y)
+        return false
+    end
+    if typeof(x) == CSTParser.IDENTIFIER
         return strip(x.val) == strip(y.val)
+    end
+    if typeof(x) in (CSTParser.KEYWORD, CSTParser.PUNCTUATION, CSTParser.OPERATOR)
+        return x.kind == y.kind
     end
     true
 end
 
 matches_template(x::OverlayNode, y::OverlayNode) = matches_template(x.expr, y.expr)
 
+function matches_template2(x, y)
+    if (typeof(x) == BinarySyntaxOpCall && typeof(y) == CSTParser.WhereOpCall) ||
+            (typeof(x) == CSTParser.WhereOpCall && typeof(y) == BinarySyntaxOpCall)
+        return true
+    end
+    if typeof(x) != typeof(y)
+        return false
+    end
+    if typeof(x) in (CSTParser.KEYWORD, CSTParser.PUNCTUATION, CSTParser.OPERATOR)
+        if x.kind != y.kind
+            return false
+        end
+    end
+    true
+end
+matches_template2(x::OverlayNode, y::OverlayNode) = matches_template2(x.expr, y.expr)
+
 struct EmptyMatch
     parent
 end
 
 function match_parameters(template, match, result)
-    (typeof(template) != typeof(match)) && error("Shouldn't have gotten here")
+    !matches_template2(template, match) && error("Shouldn't have gotten here $template, $match")
     j = 1
     for (i,x) in enumerate(children(template))
         if j > length(children(match)) && i == length(children(template))
@@ -56,7 +78,7 @@ function match_parameters(template, match, result)
                     else
                         nextx = children(template)[i + 1]
                         startj = j
-                        while j <= length(children(match)) && typeof(nextx) != typeof(children(match)[j])
+                        while j <= length(children(match)) && !matches_template2(nextx, children(match)[j])
                             push!(matched_exprs, children(match)[j])
                             j += 1
                         end
@@ -74,10 +96,10 @@ function match_parameters(template, match, result)
     return true
 end
 
-function leaf_is_template_expr(x::EXPR)
-    isempty(x.args) && return (false, nothing, false)
+function leaf_is_template_expr(x)
+    isempty(children(x)) && return (false, nothing, false)
     ret, sym, slurp = is_template_expr(x)
-    ret || return leaf_is_template_expr(x.args[1])
+    ret || return leaf_is_template_expr(children(x)[1])
     ret, sym, slurp
 end
 is_template_expr(x::OverlayNode) = is_template_expr(x.expr)

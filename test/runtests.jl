@@ -1,7 +1,11 @@
 using Deprecations
 using Deprecations: overlay_parse, apply_formatter, changed_text
 using Base.Test
+using TestSetExtensions
 
+include("unittests.jl")
+
+@testset ExtendedTestSet "Tests" begin
 @test edit_text("""
 function foobar{T}(x, y::T)
     println(x, y)
@@ -1036,3 +1040,4 @@ julia> f(a::T) where {T} = 1
 f (generic function with 1 method)
 ```
 """
+end
