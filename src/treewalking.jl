@@ -32,6 +32,9 @@ Base.length(::CSTParser.IDENTIFIER) = 0
 
 children(node::OverlayNode) = node
 
+# CSTParser gives argument in filter in the opposite lexical order,
+# remove this when fixed in CSTParser
+children(filter::EXPR{CSTParser.Filter}) = reverse(filter.args)
 
 function Base.getindex(node::OverlayNode, idx::Integer)
     offset = first(node.fullspan)
@@ -51,7 +54,7 @@ Base.setindex!(o::OverlayNode, x::OverlayNode, idx) = Base.setindex!(o.expr.args
 Base.start(node::OverlayNode) = (start(node.expr), first(node.fullspan))
 function Base.next(node::OverlayNode, state::Tuple{Int, Int})
     idx, offset = state
-    expr, idx = next(node.expr, idx)
+    expr, idx = next(children(node.expr), idx)
     (OverlayNode(node, node.buffer, expr, offset:(offset+expr.fullspan-1), offset - 1 + expr.span), (idx, offset + expr.fullspan))
 end
 Base.done(node::OverlayNode, state::Tuple{Int, Int}) = done(node.expr, state[1])

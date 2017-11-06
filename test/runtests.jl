@@ -1089,4 +1089,10 @@ end
 )])[2] == """
 """
 
+@test text_not_edited("""
+[i for i in 1:2 if all([c for c in a])]
+""")
+
 end # testset
+
+end
