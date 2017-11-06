@@ -25,3 +25,5 @@ include("database/oldcompat.jl")
 include("database/simple.jl")
 # Rewrites uses of `&x` in ccall to use the equivalent `Ref` instead
 include("database/ccallampersand.jl")
+# Removes calls to isdefined(Base, :symbol) when these are always true or false
+include("database/isdefined_base.jl")
