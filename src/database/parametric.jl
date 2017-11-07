@@ -188,7 +188,7 @@ begin
         end
         nchars_moved = (needs_new_curly ? sum(expr->sum(charwidth, fullspan_text(expr)), children(new_curly)[2:end]) : 0) -
                        (had_curly ? line_pos(call, first(children(call)[2].span)) - (line_pos(curly, first(children(curly)[2].span))) : 0)
-        heuristic_pos = had_curly ? line_pos(curly, first(children(curly)[4].span)) : line_pos(call, first(children(call)[2].span)-1)
+        heuristic_pos = had_curly ? line_pos(curly, first(children(curly)[2].span)) : line_pos(call, first(children(call)[2].span)-1)
         format_arglist!(new_where, nchars_moved, heuristic_pos)
         # If the parameter list is multi-line, it might need to be indented as well
         if had_curly
