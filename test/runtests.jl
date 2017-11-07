@@ -1093,4 +1093,14 @@ end
 [i for i in 1:2 if all([c for c in a])]
 """)
 
+@test edit_text("""
+preprocess_mean{T<:AbstractFloat}(X::Matrix{T}, m) = (m == nothing ? vec(Base.mean(X, 2)) :
+                                                      m == 0 ? T[] :
+                                                      m)::Vector{T}
+""")[2] == """
+preprocess_mean(X::Matrix{T}, m) where {T<:AbstractFloat} = (m == nothing ? vec(Base.mean(X, 2)) :
+                                                             m == 0 ? T[] :
+                                                             m)::Vector{T}
+"""
+
 end # testset

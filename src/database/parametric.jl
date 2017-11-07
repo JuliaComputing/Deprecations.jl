@@ -21,6 +21,23 @@ function format_arglist!(wheren, nchars_moved, lcurly_pos = 0)
     nothing
 end
 
+function format_shortfunc_body!(tree, funcdef, nchars_moved)
+    # Heurisitc: In short format, it is possible that people aligned after the equal
+    # sign. If the whole body is after the equal sign, indent it.
+    body = children(funcdef)[3]
+    indents = Int[]
+    countindent_body(body, indents)
+    while length(indents) != 0 && indents[end] == 0
+        pop!(indents)
+    end
+    eq_sign_offset = line_pos(funcdef, first(children(funcdef)[2].span))
+    if length(indents) != 0 && all(indents .> eq_sign_offset)
+        new_body = format_addindent_body(body, strwidth(" where "), parent(body))
+        children(tree)[3] = new_body
+    end
+    nothing
+end
+
 CSTParser.declares_function(node::OverlayNode) = CSTParser.declares_function(node.expr)
 function CSTParser.get_id(x::OverlayNode{BinarySyntaxOpCall})
     if isexpr(children(x)[2], OPERATOR ,Tokens.ISSUBTYPE) || isexpr(children(x)[2], OPERATOR, Tokens.DECLARATION)
@@ -181,6 +198,9 @@ begin
             for i = 4:length(children(new_where))
                 children(new_where)[i] = format_addindent_body(children(new_where)[i], where_indent, nothing)
             end
+        end
+        if !isexpr(expr, FunctionDef)
+            format_shortfunc_body!(new_tree, expr, nchars_moved)
         end
         buf = IOBuffer()
         print_replacement(buf, new_tree, false, false)
