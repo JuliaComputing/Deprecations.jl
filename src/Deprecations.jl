@@ -167,7 +167,7 @@ module Deprecations
         changed_text(text, results)
     end
 
-    function edit_file(fname, deps, edit=edit_text)
+    function edit_file(fname, deps = map(x->x(), keys(all_deprecations)), edit=edit_text)
         text = readstring(fname)
         any_changed, new_text = edit(text, deps)
         if any_changed
