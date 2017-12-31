@@ -198,8 +198,9 @@ module Deprecations
                     is_continuation = true
                     idx = curidx
                     i = 1
-                    while i <= 7 && idx <= endof(x.code)
+                    while i <= 7
                         idx = nextind(x.code, idx)
+                        idx > endof(x.code) && break
                         if !isspace(x.code[idx])
                             is_continuation = false
                             break
