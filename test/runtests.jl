@@ -1103,8 +1103,15 @@ preprocess_mean(X::Matrix{T}, m) where {T<:AbstractFloat} = (m == nothing ? vec(
                                                              m)::Vector{T}
 """
 
-# Test that fixing the following does not error:
+@test edit_text("""
+function xϵ{N,T}(s::M{T, N})
+end
+""")[2] == """
+function xϵ(s::M{T, N}) where {N,T}
+end
+"""
 
+# Test that fixing the following does not error:
 edit_text(readstring(joinpath(@__DIR__, "regressionfiles", "LightGraphs_1.jl")))
 
 end # testset
