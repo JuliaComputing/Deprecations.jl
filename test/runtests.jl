@@ -1111,4 +1111,7 @@ function xϵ(s::M{T, N}) where {N,T}
 end
 """
 
+# Test that fixing the following does not error:
+edit_text(readstring(joinpath(@__DIR__, "regressionfiles", "LightGraphs_1.jl")))
+
 end # testset
