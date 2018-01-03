@@ -35,10 +35,19 @@ function AbstractTrees.printnode(io::IO, x::TriviaReplacementNode)
 end
 Base.show(io::IO, x::Union{ChildReplacementNode, TriviaReplacementNode}) = AbstractTrees.print_tree(io, x)
 
+function findprev_str(testf::Function, A::String, start::Integer)
+    i = start
+    while i >= 1
+        testf(A[i]) && return i
+        i = prevind(A, i)
+    end
+    return 0
+end
+
 function line_pos(node::OverlayNode, pos)
-    buffer_pos = 1+pos
-    find_pos = findprev(i->i=='\n', node.buffer, buffer_pos)
-    (buffer_pos - find_pos) - 1
+    buffer_pos = nextind(node.buffer, pos)
+    find_pos = findprev_str(i->i=='\n', node.buffer, buffer_pos)
+    return prevind(node.buffer, buffer_pos - find_pos)
 end
 
 function countindent_ws(ws, indents)

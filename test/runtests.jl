@@ -1103,4 +1103,12 @@ preprocess_mean(X::Matrix{T}, m) where {T<:AbstractFloat} = (m == nothing ? vec(
                                                              m)::Vector{T}
 """
 
+@test edit_text("""
+function xϵ{N,T}(s::M{T, N})
+end
+""")[2] == """
+function xϵ(s::M{T, N}) where {N,T}
+end
+"""
+
 end # testset
