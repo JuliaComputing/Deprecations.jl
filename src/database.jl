@@ -14,6 +14,12 @@ function is_macroname(x::OverlayNode{MacroCall}, name)
     return is_identifier(children(c)[2], name)
 end
 
+is_identifier(x, id) = false
+function is_identifier(x::CSTParser.IDENTIFIER, id)
+    x.val == id
+end
+is_identifier(x::OverlayNode, id) = is_identifier(x.expr, id)
+
 # Rewrites related to the new parametric type syntax on 0.6, including
 # rewriting inner constructors
 include("database/parametric.jl")

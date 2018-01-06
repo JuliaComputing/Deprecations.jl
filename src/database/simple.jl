@@ -204,3 +204,41 @@ begin
     end
 end
 
+begin
+    struct Void2Nothing; end
+    register(Void2Nothing, Deprecation(
+        "The `typealias` keyword is deprecated in Julia 0.6",
+        "julia",
+        v"0.7.0-DEV.3137",
+        v"1.0",
+        typemax(VersionNumber)
+    ))
+
+    match(Void2Nothing,
+        "Void",
+        "Nothing",
+    )
+
+    match(Void2Nothing,
+        "Ptr{Void}",
+        "Ptr{Cvoid}",
+    )
+
+    match(Void2Nothing, CSTParser.Call) do x
+        # Match ccall only
+        dep, expr, resolutions, context = x
+        is_identifier(children(expr)[1], "ccall") || return
+        _replace_void_cvoid!(resolutions, expr)
+    end
+
+    function _replace_void_cvoid!(resolutions, expr)
+        if expr.expr isa CSTParser.IDENTIFIER && expr.expr.val == "Void"
+            push!(resolutions, TextReplacement(expr.span, "Cvoid"))
+        end
+        isempty(children(expr)) && return
+        for c in children(expr)
+            _replace_void_cvoid!(resolutions, c)
+        end
+        return
+    end
+end
