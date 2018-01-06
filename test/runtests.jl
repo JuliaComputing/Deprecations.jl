@@ -602,8 +602,10 @@ struct S{T}
 end
 """
 
-text_not_edited(t) = edit_text(t)[2] == t
-markdown_not_edited(t) = edit_markdown(t)[2] == t
+text_not_edited(t)        = edit_text(t)[2] == t
+markdown_not_edited(t)    = edit_markdown(t)[2] == t
+text_not_edited(t, d)     = edit_text(t, d)[2] == t
+markdown_not_edited(t, d) = edit_markdown(t, d)[2] == t
 
 @test text_not_edited("""
 struct GLVisualizeShader <: AbstractLazyShader
@@ -1108,6 +1110,37 @@ function xϵ{N,T}(s::M{T, N})
 end
 """)[2] == """
 function xϵ(s::M{T, N}) where {N,T}
+end
+"""
+
+tuplesplat = [Deprecations.dep_for_vers(
+    Deprecations.TupleSplat,
+    Pkg.Reqs.parse(IOBuffer("julia 0.7"))
+)]
+
+@test edit_text("""
+(foo(3)...)
+""", tuplesplat)[2] == """
+(foo(3)...,)
+"""
+
+@test text_not_edited("""
+(1, 2...)
+""", tuplesplat)
+
+@test edit_text("""
+(x...) -> (x...)
+""", tuplesplat)[2] == """
+(x...) -> (x...,)
+"""
+
+@test edit_text("""
+function f(x...)
+    (x...)
+end
+""", tuplesplat)[2] == """
+function f(x...)
+    (x...,)
 end
 """
 
