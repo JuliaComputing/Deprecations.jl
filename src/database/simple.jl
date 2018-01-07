@@ -207,7 +207,7 @@ end
 begin
     struct Void2Nothing; end
     register(Void2Nothing, Deprecation(
-        "The `typealias` keyword is deprecated in Julia 0.6",
+        "The type `Void` is renamed to `Nothing` (and a synonym `Cvoid` is added)",
         "julia",
         v"0.7.0-DEV.3137",
         v"1.0",
