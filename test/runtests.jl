@@ -1111,6 +1111,34 @@ function xϵ(s::M{T, N}) where {N,T}
 end
 """
 
+
+void2nothing = [Deprecations.dep_for_vers(
+    Deprecations.Void2Nothing,
+    Pkg.Reqs.parse(IOBuffer("julia 0.7"))
+)]
+
+@test edit_text("""
+x = Ptr{Void}
+""", void2nothing)[2] == """
+x = Ptr{Cvoid}
+"""
+
+@test edit_text("""
+struct Foo{T}
+    x::Union{Void, T}
+end
+""", void2nothing)[2] == """
+struct Foo{T}
+    x::Union{Nothing, T}
+end
+"""
+
+@test edit_text("""
+ccall(:jl_gc_add_finalizer_th, Void, (Ptr{Void}, Any, Any), Core.getptls(), o, f)
+""", void2nothing)[2] == """
+ccall(:jl_gc_add_finalizer_th, Cvoid, (Ptr{Cvoid}, Any, Any), Core.getptls(), o, f)
+"""
+
 # Test that fixing the following does not error:
 edit_text(readstring(joinpath(@__DIR__, "regressionfiles", "LightGraphs_1.jl")))
 

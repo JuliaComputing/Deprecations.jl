@@ -39,6 +39,11 @@ function matches_template2(x, y)
             return false
         end
     end
+    if typeof(x) == CSTParser.IDENTIFIER
+        if x.val != y.val
+            return false
+        end
+    end
     true
 end
 matches_template2(x::OverlayNode, y::OverlayNode) = matches_template2(x.expr, y.expr)
