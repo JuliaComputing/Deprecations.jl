@@ -3,6 +3,17 @@ using Deprecations: overlay_parse, apply_formatter, changed_text
 using Base.Test
 using TestSetExtensions
 
+function edit_text_converge(t)
+    while true
+        new_t = edit_text(t)[2]
+        t == new_t && return new_t
+        t = new_t
+    end
+end
+
+text_not_edited(t) = edit_text(t)[2] == t
+markdown_not_edited(t) = edit_markdown(t)[2] == t
+
 include("unittests.jl")
 
 @testset ExtendedTestSet "Tests" begin
@@ -432,14 +443,6 @@ struct KfoldState
 end
 """
 
-function edit_text_converge(t)
-    while true
-        new_t = edit_text(t)[2]
-        t == new_t && return new_t
-        t = new_t
-    end
-end
-
 @test edit_text_converge("""
 @compat (::Type{Array{T,N}}){T,N}(a::AFArray{T,N}) = convert(Array{T,N}, a)
 """) == """
@@ -601,9 +604,6 @@ struct S{T}
     S{T}(v::Vector{T}) where {T} = 42
 end
 """
-
-text_not_edited(t) = edit_text(t)[2] == t
-markdown_not_edited(t) = edit_markdown(t)[2] == t
 
 @test text_not_edited("""
 struct GLVisualizeShader <: AbstractLazyShader
@@ -1137,6 +1137,16 @@ end
 ccall(:jl_gc_add_finalizer_th, Void, (Ptr{Void}, Any, Any), Core.getptls(), o, f)
 """, void2nothing)[2] == """
 ccall(:jl_gc_add_finalizer_th, Cvoid, (Ptr{Cvoid}, Any, Any), Core.getptls(), o, f)
+"""
+
+@test text_not_edited("@compat finalizer(x, y)")
+@test edit_text("""
+@compat finalizer(x, y)
+""", [Deprecations.dep_for_vers(
+      Deprecations.ObsoleteCompatMacro,
+      Pkg.Reqs.parse(IOBuffer("julia 0.7"))
+)])[2] == """
+finalizer(x, y)
 """
 
 # Test that fixing the following does not error:
