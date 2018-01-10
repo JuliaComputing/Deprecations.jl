@@ -242,3 +242,39 @@ begin
         return
     end
 end
+
+
+macro add_rename(from, to, version)
+    StructName = Symbol(from, "_2_", to)
+    return quote
+        struct $(StructName); end
+        register($(StructName),
+            Deprecation(
+                string($(string(esc(from))), " got renamed to ", $(string(esc(to))), " in version ", $version),
+                "julia",
+                $version,
+                v"1.0",
+                typemax(VersionNumber)
+            )
+        )
+
+        match($(StructName),
+              $(string(from)),
+              $(string(to))
+        )
+    end
+end
+
+@add_rename ipermute!      invpermute!      v"0.7.0-DEV.3173"
+@add_rename unshift!       pushfirst!       v"0.7.0-DEV.3155"
+@add_rename JULIA_HOME     Sys.BINDIR       v"0.7.0-DEV.3073"
+@add_rename CartesianRange CartesianIndices v"0.7.0-DEV.3025"
+@add_rename sub2ind        CartesianIndices v"0.7.0-DEV.3025"
+@add_rename ind2sub        LinearIndices    v"0.7.0-DEV.3025"
+@add_rename Display        AbstractDisplay  v"0.7.0-DEV.2695"
+@add_rename strwidth       textwidth        v"0.7.0-DEV.1930"
+@add_rename charwidth      textwidth        v"0.7.0-DEV.1930"
+@add_rename sqrtm          sqrt             v"0.7.0-DEV.1599"
+@add_rename logm           log              v"0.7.0-DEV.1597"
+@add_rename expm           exp              v"0.7.0-DEV.1486"
+
