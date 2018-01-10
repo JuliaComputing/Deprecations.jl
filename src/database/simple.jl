@@ -290,3 +290,5 @@ end
 @add_rename is_apple       Sys.isapple      v"0.7.0-DEV.914"
 @add_rename is_unix        Sys.isunix       v"0.7.0-DEV.914"
 @add_rename is_windows     Sys.iswindows    v"0.7.0-DEV.914"
+@add_rename AbstractIOBuffer GenericIOBuffer v"0.7.0-DEV.961"
+
