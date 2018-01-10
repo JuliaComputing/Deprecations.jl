@@ -280,6 +280,6 @@ end
 @add_rename Complex32      ComplexF16       v"0.7.0-DEV.2919"
 @add_rename Complex64      ComplexF32       v"0.7.0-DEV.2919"
 @add_rename Complex128     ComplexF64       v"0.7.0-DEV.2919"
+@add_rename EnvHash        EnvDict          v"0.7.0-DEV.2265"
 @add_rename ctranspose     adjoint          v"0.7.0-DEV.1415"
 @add_rename ctranspose!    adjoint!         v"0.7.0-DEV.1415"
-
