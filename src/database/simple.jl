@@ -277,4 +277,7 @@ end
 @add_rename sqrtm          sqrt             v"0.7.0-DEV.1599"
 @add_rename logm           log              v"0.7.0-DEV.1597"
 @add_rename expm           exp              v"0.7.0-DEV.1486"
+@add_rename Complex32      ComplexF16       v"0.7.0-DEV.2919"
+@add_rename Complex64      ComplexF32       v"0.7.0-DEV.2919"
+@add_rename Complex128     ComplexF64       v"0.7.0-DEV.2919"
 
