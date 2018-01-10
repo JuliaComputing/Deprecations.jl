@@ -285,4 +285,8 @@ end
 @add_rename ctranspose!    adjoint!         v"0.7.0-DEV.1415"
 @add_rename writecsv       writedlm         v"0.7.0-DEV.1737"
 @add_rename readcsv        readdlm          v"0.7.0-DEV.1740"
-
+@add_rename is_linux       Sys.islinux      v"0.7.0-DEV.914"
+@add_rename is_bsd         Sys.isbsd        v"0.7.0-DEV.914"
+@add_rename is_apple       Sys.isapple      v"0.7.0-DEV.914"
+@add_rename is_unix        Sys.isunix       v"0.7.0-DEV.914"
+@add_rename is_windows     Sys.iswindows    v"0.7.0-DEV.914"
