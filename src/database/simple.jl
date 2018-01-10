@@ -283,3 +283,6 @@ end
 @add_rename EnvHash        EnvDict          v"0.7.0-DEV.2265"
 @add_rename ctranspose     adjoint          v"0.7.0-DEV.1415"
 @add_rename ctranspose!    adjoint!         v"0.7.0-DEV.1415"
+@add_rename writecsv       writedlm         v"0.7.0-DEV.1737"
+@add_rename readcsv        readdlm          v"0.7.0-DEV.1740"
+
