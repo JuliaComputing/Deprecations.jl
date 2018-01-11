@@ -1149,6 +1149,41 @@ ccall(:jl_gc_add_finalizer_th, Cvoid, (Ptr{Cvoid}, Any, Any), Core.getptls(), o,
 finalizer(x, y)
 """
 
+@test edit_text("""
+function f()
+    if VERSION < v"0.6.0-dev.2840"
+        print("hello")
+    end
+    if VERSION < v"0.7.0-dev.880"
+        print("world")
+    end
+end
+""")[2] == """
+function f()
+    if VERSION < v"0.7.0-dev.880"
+        print("world")
+    end
+end
+"""
+
+@test edit_text("""
+b = unshift!(a)
+""", [Deprecations.dep_for_vers(
+     Deprecations.unshift!_2_pushfirst!,
+     Pkg.Reqs.parse(IOBuffer("julia 0.7"))
+)])[2] == """
+b = pushfirst!(a)
+"""
+
+@test edit_text("""
+JULIA_HOME + 2
+""", [Deprecations.dep_for_vers(
+    @eval(Deprecations.$(Symbol("JULIA_HOME_2_Sys.BINDIR"))),
+    Pkg.Reqs.parse(IOBuffer("julia 0.7"))
+)])[2] == """
+Sys.BINDIR + 2
+"""
+
 # Test that fixing the following does not error:
 edit_text(readstring(joinpath(@__DIR__, "regressionfiles", "LightGraphs_1.jl")))
 
