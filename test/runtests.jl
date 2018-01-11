@@ -1139,6 +1139,23 @@ ccall(:jl_gc_add_finalizer_th, Void, (Ptr{Void}, Any, Any), Core.getptls(), o, f
 ccall(:jl_gc_add_finalizer_th, Cvoid, (Ptr{Cvoid}, Any, Any), Core.getptls(), o, f)
 """
 
+@test edit_text("""
+function f()
+    if VERSION < v"0.6.0-dev.2840"
+        print("hello")
+    end
+    if VERSION < v"0.7.0-dev.880"
+        print("world")
+    end
+end
+""")[2] == """
+function f()
+    if VERSION < v"0.7.0-dev.880"
+        print("world")
+    end
+end
+"""
+
 # Test that fixing the following does not error:
 edit_text(readstring(joinpath(@__DIR__, "regressionfiles", "LightGraphs_1.jl")))
 
