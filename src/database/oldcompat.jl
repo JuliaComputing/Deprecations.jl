@@ -106,6 +106,11 @@ begin
                 end
             end
         end
+        if min_ver < v"0.7.0-DEV.2562"
+            if ex.head == :call && children(ex)[1] == :finalizer
+                return true
+            end
+        end
         return any(x->_compat(min_ver, x), children(ex))
     end
 
