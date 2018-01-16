@@ -291,4 +291,12 @@ end
 @add_rename is_unix        Sys.isunix       v"0.7.0-DEV.914"
 @add_rename is_windows     Sys.iswindows    v"0.7.0-DEV.914"
 @add_rename AbstractIOBuffer GenericIOBuffer v"0.7.0-DEV.961"
+@add_rename select         partialsort      v"0.7.0-DEV.1535"
+@add_rename select!        partialsort!     v"0.7.0-DEV.1535"
+@add_rename selectperm     partialsortperm  v"0.7.0-DEV.1535"
+@add_rename selectperm!    partialsortperm! v"0.7.0-DEV.1535"
+@add_rename Range          AbstractRange    v"0.7.0-DEV.1721"
+@add_rename isleaftype     isconcretetype   v"0.7.0-DEV.1775"
+@add_rename isnumber       isnumeric        v"0.7.0-DEV.1775"
+@add_rename Associative    AbstractDict     v"0.7.0-DEV.2951"
 
