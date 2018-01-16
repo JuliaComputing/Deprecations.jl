@@ -40,12 +40,6 @@ begin
         ObsoleteVersionCheck(vers["julia"])
     end
 
-    is_identifier(x, id) = false
-    function is_identifier(x::CSTParser.IDENTIFIER, id)
-        x.val == id
-    end
-    is_identifier(x::OverlayNode, id) = is_identifier(x.expr, id)
-
     opcode(x::CSTParser.OPERATOR) = x.kind
     iscomparison(x::CSTParser.OPERATOR) = CSTParser.precedence(x) == 6
     iscomparison(x::OverlayNode) = iscomparison(x.expr)

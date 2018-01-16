@@ -33,7 +33,11 @@ end
 
 function resolve_delete_expr(resolutions, expr, replace_expr)
     if length(children(expr)) <= 4
-        push!(resolutions, TextReplacement(replace_expr.fullspan, except_first_line(trailing_ws(replace_expr))))
+        # Find our current indentation
+        prev = findprev_str(i -> !isspace(i), replace_expr.buffer, first(replace_expr.fullspan))
+        prev != 0 && (prev = nextind(replace_expr.buffer, prev))
+        push!(resolutions, TextReplacement(prev:last(replace_expr.fullspan),
+                                           except_first_line(trailing_ws(replace_expr))))
     elseif isexpr(children(expr)[4], KEYWORD, Tokens.ELSE)
         # Inline else body
         _last_line = last_line(trailing_ws(children(expr)[2]))

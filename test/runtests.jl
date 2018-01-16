@@ -3,6 +3,19 @@ using Deprecations: overlay_parse, apply_formatter, changed_text
 using Base.Test
 using TestSetExtensions
 
+function edit_text_converge(t)
+    while true
+        new_t = edit_text(t)[2]
+        t == new_t && return new_t
+        t = new_t
+    end
+end
+
+text_not_edited(t)        = edit_text(t)[2] == t
+markdown_not_edited(t)    = edit_markdown(t)[2] == t
+text_not_edited(t, d)     = edit_text(t, d)[2] == t
+markdown_not_edited(t, d) = edit_markdown(t, d)[2] == t
+
 include("unittests.jl")
 
 @testset ExtendedTestSet "Tests" begin
@@ -432,14 +445,6 @@ struct KfoldState
 end
 """
 
-function edit_text_converge(t)
-    while true
-        new_t = edit_text(t)[2]
-        t == new_t && return new_t
-        t = new_t
-    end
-end
-
 @test edit_text_converge("""
 @compat (::Type{Array{T,N}}){T,N}(a::AFArray{T,N}) = convert(Array{T,N}, a)
 """) == """
@@ -601,11 +606,6 @@ struct S{T}
     S{T}(v::Vector{T}) where {T} = 42
 end
 """
-
-text_not_edited(t)        = edit_text(t)[2] == t
-markdown_not_edited(t)    = edit_markdown(t)[2] == t
-text_not_edited(t, d)     = edit_text(t, d)[2] == t
-markdown_not_edited(t, d) = edit_markdown(t, d)[2] == t
 
 @test text_not_edited("""
 struct GLVisualizeShader <: AbstractLazyShader
@@ -1142,6 +1142,78 @@ end
 function f(x...)
     (x...,)
 end
+"""
+
+void2nothing = [Deprecations.dep_for_vers(
+    Deprecations.Void2Nothing,
+    Pkg.Reqs.parse(IOBuffer("julia 0.7"))
+)]
+
+@test edit_text(""" 
+x = Ptr{Void}
+""", void2nothing)[2] == """
+x = Ptr{Cvoid}
+"""
+
+@test edit_text("""
+struct Foo{T}
+    x::Union{Void, T}
+end
+""", void2nothing)[2] == """
+struct Foo{T}
+    x::Union{Nothing, T}
+end
+"""
+
+@test edit_text("""
+ccall(:jl_gc_add_finalizer_th, Void, (Ptr{Void}, Any, Any), Core.getptls(), o, f)
+""", void2nothing)[2] == """
+ccall(:jl_gc_add_finalizer_th, Cvoid, (Ptr{Cvoid}, Any, Any), Core.getptls(), o, f)
+"""
+
+@test text_not_edited("@compat finalizer(x, y)")
+@test edit_text("""
+@compat finalizer(x, y)
+""", [Deprecations.dep_for_vers(
+      Deprecations.ObsoleteCompatMacro,
+      Pkg.Reqs.parse(IOBuffer("julia 0.7"))
+)])[2] == """
+finalizer(x, y)
+"""
+
+@test edit_text("""
+function f()
+    if VERSION < v"0.6.0-dev.2840"
+        print("hello")
+    end
+    if VERSION < v"0.7.0-dev.880"
+        print("world")
+    end
+end
+""")[2] == """
+function f()
+    if VERSION < v"0.7.0-dev.880"
+        print("world")
+    end
+end
+"""
+
+@test edit_text("""
+b = unshift!(a)
+""", [Deprecations.dep_for_vers(
+     Deprecations.unshift!_2_pushfirst!,
+     Pkg.Reqs.parse(IOBuffer("julia 0.7"))
+)])[2] == """
+b = pushfirst!(a)
+"""
+
+@test edit_text("""
+JULIA_HOME + 2
+""", [Deprecations.dep_for_vers(
+    @eval(Deprecations.$(Symbol("JULIA_HOME_2_Sys.BINDIR"))),
+    Pkg.Reqs.parse(IOBuffer("julia 0.7"))
+)])[2] == """
+Sys.BINDIR + 2
 """
 
 # Test that fixing the following does not error:

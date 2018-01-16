@@ -226,3 +226,91 @@ begin
     )
 
 end
+
+begin
+    struct Void2Nothing; end
+    register(Void2Nothing, Deprecation(
+        "The type `Void` is renamed to `Nothing` (and a synonym `Cvoid` is added)",
+        "julia",
+        v"0.7.0-DEV.3137",
+        v"1.0",
+        typemax(VersionNumber)
+    ))
+
+    match(Void2Nothing,
+        "Void",
+        "Nothing",
+    )
+
+    match(Void2Nothing,
+        "Ptr{Void}",
+        "Ptr{Cvoid}",
+    )
+
+    match(Void2Nothing, CSTParser.Call) do x
+        # Match ccall only
+        dep, expr, resolutions, context = x
+        is_identifier(children(expr)[1], "ccall") || return
+        _replace_void_cvoid!(resolutions, expr)
+    end
+
+    function _replace_void_cvoid!(resolutions, expr)
+        if expr.expr isa CSTParser.IDENTIFIER && expr.expr.val == "Void"
+            push!(resolutions, TextReplacement(expr.span, "Cvoid"))
+        end
+        isempty(children(expr)) && return
+        for c in children(expr)
+            _replace_void_cvoid!(resolutions, c)
+        end
+        return
+    end
+end
+
+
+macro add_rename(from, to, version)
+    StructName = Symbol(from, "_2_", to)
+    return quote
+        struct $(StructName); end
+        register($(StructName),
+            Deprecation(
+                string($(string(esc(from))), " got renamed to ", $(string(esc(to))), " in version ", $version),
+                "julia",
+                $version,
+                v"1.0",
+                typemax(VersionNumber)
+            )
+        )
+
+        match($(StructName),
+              $(string(from)),
+              $(string(to))
+        )
+    end
+end
+
+@add_rename ipermute!      invpermute!      v"0.7.0-DEV.3173"
+@add_rename unshift!       pushfirst!       v"0.7.0-DEV.3155"
+@add_rename JULIA_HOME     Sys.BINDIR       v"0.7.0-DEV.3073"
+@add_rename CartesianRange CartesianIndices v"0.7.0-DEV.3025"
+@add_rename sub2ind        CartesianIndices v"0.7.0-DEV.3025"
+@add_rename ind2sub        LinearIndices    v"0.7.0-DEV.3025"
+@add_rename Display        AbstractDisplay  v"0.7.0-DEV.2695"
+@add_rename strwidth       textwidth        v"0.7.0-DEV.1930"
+@add_rename charwidth      textwidth        v"0.7.0-DEV.1930"
+@add_rename sqrtm          sqrt             v"0.7.0-DEV.1599"
+@add_rename logm           log              v"0.7.0-DEV.1597"
+@add_rename expm           exp              v"0.7.0-DEV.1486"
+@add_rename Complex32      ComplexF16       v"0.7.0-DEV.2919"
+@add_rename Complex64      ComplexF32       v"0.7.0-DEV.2919"
+@add_rename Complex128     ComplexF64       v"0.7.0-DEV.2919"
+@add_rename EnvHash        EnvDict          v"0.7.0-DEV.2265"
+@add_rename ctranspose     adjoint          v"0.7.0-DEV.1415"
+@add_rename ctranspose!    adjoint!         v"0.7.0-DEV.1415"
+@add_rename writecsv       writedlm         v"0.7.0-DEV.1737"
+@add_rename readcsv        readdlm          v"0.7.0-DEV.1740"
+@add_rename is_linux       Sys.islinux      v"0.7.0-DEV.914"
+@add_rename is_bsd         Sys.isbsd        v"0.7.0-DEV.914"
+@add_rename is_apple       Sys.isapple      v"0.7.0-DEV.914"
+@add_rename is_unix        Sys.isunix       v"0.7.0-DEV.914"
+@add_rename is_windows     Sys.iswindows    v"0.7.0-DEV.914"
+@add_rename AbstractIOBuffer GenericIOBuffer v"0.7.0-DEV.961"
