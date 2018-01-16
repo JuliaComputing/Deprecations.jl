@@ -1149,7 +1149,7 @@ void2nothing = [Deprecations.dep_for_vers(
     Pkg.Reqs.parse(IOBuffer("julia 0.7"))
 )]
 
-@test edit_text(""" 
+@test edit_text("""
 x = Ptr{Void}
 """, void2nothing)[2] == """
 x = Ptr{Cvoid}
