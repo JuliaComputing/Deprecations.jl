@@ -243,6 +243,20 @@ begin
     end
 end
 
+begin
+    struct IssubtypeToInfix; end
+    register(IssubtypeToInfix, Deprecation(
+        "issubtype is deprecated for `<:`",
+        "julia",
+        v"0.5.0", v"0.7.0-DEV.1162", typemax(VersionNumber)
+    ))
+
+    match(IssubtypeToInfix,
+        "issubtype(\$A, \$B)",
+        "\$A <: \$B!",
+    )
+end
+
 
 macro add_rename(from, to, version)
     StructName = Symbol(from, "_2_", to)
