@@ -145,6 +145,20 @@ begin
 end
 
 begin
+    struct ReadString; end
+    register(ReadString, Deprecation(
+        "readstring(x) is deprecated to read(x, String)",
+        "julia",
+        v"0.5.0", v"0.7.0-DEV.1053", typemax(VersionNumber)
+    ))
+
+    match(ReadString,
+        "readstring(\$A)",
+        "read(\$A, String)"
+    )
+end
+
+begin
     struct ConditionalWhitespace; end
     register(ConditionalWhitespace, Deprecation(
         "The ternary operator now requires whitespace on both sides of the punctuation.",
@@ -266,6 +280,20 @@ begin
     end
 end
 
+begin
+    struct IssubtypeToInfix; end
+    register(IssubtypeToInfix, Deprecation(
+        "issubtype is deprecated for `<:`",
+        "julia",
+        v"0.5.0", v"0.7.0-DEV.1162", typemax(VersionNumber)
+    ))
+
+    match(IssubtypeToInfix,
+        "issubtype(\$A, \$B)",
+        "\$A <: \$B!",
+    )
+end
+
 
 macro add_rename(from, to, version)
     StructName = Symbol(from, "_2_", to)
@@ -314,3 +342,12 @@ end
 @add_rename is_unix        Sys.isunix       v"0.7.0-DEV.914"
 @add_rename is_windows     Sys.iswindows    v"0.7.0-DEV.914"
 @add_rename AbstractIOBuffer GenericIOBuffer v"0.7.0-DEV.961"
+@add_rename select         partialsort      v"0.7.0-DEV.1535"
+@add_rename select!        partialsort!     v"0.7.0-DEV.1535"
+@add_rename selectperm     partialsortperm  v"0.7.0-DEV.1535"
+@add_rename selectperm!    partialsortperm! v"0.7.0-DEV.1535"
+@add_rename Range          AbstractRange    v"0.7.0-DEV.1721"
+@add_rename isleaftype     isconcretetype   v"0.7.0-DEV.1775"
+@add_rename isnumber       isnumeric        v"0.7.0-DEV.1775"
+@add_rename Associative    AbstractDict     v"0.7.0-DEV.2951"
+

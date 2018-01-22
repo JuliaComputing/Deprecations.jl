@@ -1171,6 +1171,15 @@ ccall(:jl_gc_add_finalizer_th, Void, (Ptr{Void}, Any, Any), Core.getptls(), o, f
 ccall(:jl_gc_add_finalizer_th, Cvoid, (Ptr{Cvoid}, Any, Any), Core.getptls(), o, f)
 """
 
+@test edit_text("""
+readstring("path/foo")
+""", [Deprecations.dep_for_vers(
+     Deprecations.ReadString,
+     Pkg.Reqs.parse(IOBuffer("julia 0.7"))
+)])[2] == """
+read("path/foo", String)
+"""
+
 @test text_not_edited("@compat finalizer(x, y)")
 @test edit_text("""
 @compat finalizer(x, y)
@@ -1214,6 +1223,15 @@ JULIA_HOME + 2
     Pkg.Reqs.parse(IOBuffer("julia 0.7"))
 )])[2] == """
 Sys.BINDIR + 2
+"""
+
+@test edit_text("""
+issubtype(foo(), bar())
+""", [Deprecations.dep_for_vers(
+     Deprecations.IssubtypeToInfix,
+     Pkg.Reqs.parse(IOBuffer("julia 0.7"))
+)])[2] == """
+foo() <: bar()
 """
 
 # Test that fixing the following does not error:
