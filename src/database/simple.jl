@@ -145,6 +145,20 @@ begin
 end
 
 begin
+    struct ReadString; end
+    register(ReadString, Deprecation(
+        "readstring(x) is deprecated to read(x, String)",
+        "julia",
+        v"0.5.0", v"0.7.0-DEV.1053", typemax(VersionNumber)
+    ))
+
+    match(ReadString,
+        "readstring(\$A)",
+        "read(\$A, String)"
+    )
+end
+
+begin
     struct ConditionalWhitespace; end
     register(ConditionalWhitespace, Deprecation(
         "The ternary operator now requires whitespace on both sides of the punctuation.",
