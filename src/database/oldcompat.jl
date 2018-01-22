@@ -19,7 +19,7 @@ begin
 
     # Special purpose formatter for `@compat` results
     function format_result(expr, orig_expr)
-        CSTParser.declares_function(expr) || return expr
+        CSTParser.defines_function(expr) || return expr
         call_idx = isexpr(expr, FunctionDef) ? 2 : 1
         callorwhere = children(expr)[call_idx]
         call = is_where_expr(callorwhere) ? children(callorwhere)[1] : callorwhere

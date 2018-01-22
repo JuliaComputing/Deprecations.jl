@@ -38,7 +38,8 @@ function format_shortfunc_body!(tree, funcdef, nchars_moved)
     nothing
 end
 
-CSTParser.declares_function(node::OverlayNode) = CSTParser.declares_function(node.expr)
+CSTParser.defines_function(node::OverlayNode) = CSTParser.defines_function(node.expr)
+CSTParser.has_sig(node::OverlayNode) = CSTParser.has_sig(node.expr)
 function CSTParser.get_id(x::OverlayNode{BinarySyntaxOpCall})
     if isexpr(children(x)[2], OPERATOR ,Tokens.ISSUBTYPE) || isexpr(children(x)[2], OPERATOR, Tokens.DECLARATION)
         return CSTParser.get_id(children(x)[1])
@@ -94,7 +95,7 @@ begin
         (isexpr(expr.parent, CSTParser.Struct) ||
             isexpr(expr.parent, CSTParser.Mutable)) && return expr.parent
         # Nested function are ok
-        CSTParser.declares_function(expr.parent) && return nothing
+        CSTParser.defines_function(expr.parent) && return nothing
         return get_struct_parent(expr.parent)
     end
 
@@ -133,7 +134,7 @@ begin
     end
 
     function rewrite_param_syntax(expr, resolutions)
-        CSTParser.declares_function(expr) || return
+        CSTParser.defines_function(expr) || return
         sp = get_struct_parent(expr)
         # If there's already a where expr, this is new syntax
         call = isexpr(expr, FunctionDef) ? children(expr)[2] : children(expr)[1]

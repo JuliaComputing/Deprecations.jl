@@ -219,6 +219,29 @@ begin
 end
 
 begin
+    struct TupleSplat; end
+
+    register(TupleSplat, Deprecation(
+        "Splat of single value in tuple needs trailing comma",
+        "julia",
+        v"0.7.0-DEV.2559", v"1.0", typemax(VersionNumber)
+    ))
+
+    function filter_funcdef_and_multiarg(dep, expr, matches)
+        length(children(expr)) == 3     || return false  # 3 = '(' + ')' + 1 arg
+        CSTParser.has_sig(parent(expr)) && return false
+        return true
+    end
+
+    match(TupleSplat,
+          "(\$ID...)",
+          "(\$ID...,)",
+          filter = filter_funcdef_and_multiarg
+    )
+
+end
+
+begin
     struct Void2Nothing; end
     register(Void2Nothing, Deprecation(
         "The type `Void` is renamed to `Nothing` (and a synonym `Cvoid` is added)",
