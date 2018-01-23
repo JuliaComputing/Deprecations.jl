@@ -350,4 +350,9 @@ end
 @add_rename isleaftype     isconcretetype   v"0.7.0-DEV.1775"
 @add_rename isnumber       isnumeric        v"0.7.0-DEV.1775"
 @add_rename Associative    AbstractDict     v"0.7.0-DEV.2951"
-
+@add_rename find           findall          v"0.7.0-DEV.3415"
+@add_rename module_parent   parentmodule    v"0.7.0-DEV.3460"
+@add_rename datatype_module parentmodule    v"0.7.0-DEV.3460"
+@add_rename function_module parentmodule    v"0.7.0-DEV.3460"
+@add_rename indmin         argmin           v"0.7.0-DEV.3516"
+@add_rename indmax         argmax           v"0.7.0-DEV.3516"
