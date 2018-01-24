@@ -359,3 +359,5 @@ end
 @add_rename module_name    nameof           v"0.7.0-DEV.3539"
 @add_rename function_name  nameof           v"0.7.0-DEV.3539"
 @add_rename datatype_name  nameof           v"0.7.0-DEV.3539"
+@add_rename method_exist   hasmethod        v"0.7.0-DEV.3455"
+@add_rename object_id      objectid         v"0.7.0-DEV.3455"
