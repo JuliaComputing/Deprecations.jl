@@ -1234,6 +1234,29 @@ issubtype(foo(), bar())
 foo() <: bar()
 """
 
+for (old, new) in (("Timer(a, b)", "Timer(a, interval = b)"),
+                    ("Timer(a, b, c)", "Timer(a, b, interval = c)"),
+                    ("names(a, b)", "names(a, all = b)"),
+                    ("names(a, b, c)", "names(a, all = b, imported = c)"),
+                    ("code_native(a, b, c, d)", "code_native(a, b, c, syntax = d)"),
+                    ("code_native(a, b, c)", "code_native(a, b, syntax = c)"),
+                    ("eachmatch(a, b, c)", "eachmatch(a, b, overlap = c)"),
+                    ("matchall(a, b, c)", "matchall(a, b, overlap = c)"),
+                    ("chop(a, b)", "chop(a, head = b)"),
+                    ("chop(a, b, c)", "chop(a, head = b, tail = c)"),
+                    ("tryparse(a, b, c)", "tryparse(a, b, base = c)"),
+                    ("parse(a, b, c)", "parse(a, b, base = c)"),
+                    ("mkdir(a, b)", "mkdir(a, mode = b)"),
+                    ("mkpath(a, b)", "mkpath(a, mode = b)"),
+                    ("countlines(a, b)", "countlines(a, eol = b)"),
+                    ("PipeBuffer(a, b)", "PipeBuffer(a, maxsize = b)"),
+                    ("unsafe_wrap(a, b, c, d)", "unsafe_wrap(a, b, c, own = d)"),
+                    )
+    @test edit_text(old, [Deprecations.dep_for_vers(
+        Deprecations.KeywordsUnlocked,
+        Pkg.Reqs.parse(IOBuffer("julia 0.7")))])[2] == new
+end
+
 # Test that fixing the following does not error:
 edit_text(readstring(joinpath(@__DIR__, "regressionfiles", "LightGraphs_1.jl")))
 

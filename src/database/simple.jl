@@ -351,3 +351,79 @@ end
 @add_rename isnumber       isnumeric        v"0.7.0-DEV.1775"
 @add_rename Associative    AbstractDict     v"0.7.0-DEV.2951"
 
+begin
+    struct KeywordsUnlocked; end
+    register(KeywordsUnlocked, Deprecation(
+        "a bunch of functions got keyword arguments instead of positional arguments",
+        "julia",
+        v"0.7.0-DEV.3526", v"1.0", typemax(VersionNumber)
+    ))
+    match(KeywordsUnlocked,
+        "Timer(\$timeout, \$repeat)",
+        "Timer(\$timeout, interval = \$repeat!)"
+    )
+    match(KeywordsUnlocked,
+        "Timer(\$callback, \$delay, \$repeat)",
+        "Timer(\$callback, \$delay!, interval = \$repeat!)"
+    )
+    match(KeywordsUnlocked,
+        "names(\$m, \$all)",
+        "names(\$m, all = \$all!)"
+    )
+    match(KeywordsUnlocked,
+        "names(\$m, \$all, \$imported)",
+        "names(\$m, all = \$all!, imported = \$imported!)"
+    )
+    match(KeywordsUnlocked,
+        "code_native(\$io, \$f, \$types, \$syntax)",
+        "code_native(\$io, \$f!, \$types!, syntax = \$syntax!)"
+        )
+    match(KeywordsUnlocked,
+        "code_native(\$f, \$types, \$syntax)",
+        "code_native(\$f, \$types!, syntax = \$syntax!)"
+        )
+    match(KeywordsUnlocked,
+        "eachmatch(\$re, \$str, \$overlap)",
+        "eachmatch(\$re, \$str!, overlap = \$overlap!)"
+        )
+    match(KeywordsUnlocked,
+        "matchall(\$re, \$str, \$overlap)",
+        "matchall(\$re, \$str!, overlap = \$overlap!)"
+        )
+    match(KeywordsUnlocked,
+        "chop(\$s, \$head)",
+        "chop(\$s, head = \$head!)"
+        )
+    match(KeywordsUnlocked,
+        "chop(\$s, \$head, \$tail)",
+        "chop(\$s, head = \$head!, tail = \$tail!)"
+        )
+    match(KeywordsUnlocked,
+        "tryparse(\$T, \$s, \$base)",
+        "tryparse(\$T, \$s!, base = \$base!)"
+        )
+    match(KeywordsUnlocked,
+        "parse(\$T, \$s, \$base)",
+        "parse(\$T, \$s!, base = \$base!)"
+        )
+    match(KeywordsUnlocked,
+        "mkdir(\$path, \$mode)",
+        "mkdir(\$path, mode = \$mode!)"
+        )
+    match(KeywordsUnlocked,
+        "mkpath(\$path, \$mode)",
+        "mkpath(\$path, mode = \$mode!)"
+        )
+    match(KeywordsUnlocked,
+        "countlines(\$x, \$eol)",
+        "countlines(\$x, eol = \$eol!)"
+        )
+    match(KeywordsUnlocked,
+        "PipeBuffer(\$data, \$maxsize)",
+        "PipeBuffer(\$data, maxsize = \$maxsize!)"
+        )
+    match(KeywordsUnlocked,
+        "unsafe_wrap(\$T, \$pointer, \$dims, \$own)",
+        "unsafe_wrap(\$T, \$pointer!, \$dims!, own = \$own!)"
+        )
+end
