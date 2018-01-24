@@ -356,3 +356,6 @@ end
 @add_rename function_module parentmodule    v"0.7.0-DEV.3460"
 @add_rename indmin         argmin           v"0.7.0-DEV.3516"
 @add_rename indmax         argmax           v"0.7.0-DEV.3516"
+@add_rename module_name    nameof           v"0.7.0-DEV.3539"
+@add_rename function_name  nameof           v"0.7.0-DEV.3539"
+@add_rename datatype_name  nameof           v"0.7.0-DEV.3539"
