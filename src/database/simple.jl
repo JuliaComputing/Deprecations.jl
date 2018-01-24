@@ -285,7 +285,7 @@ begin
     register(IssubtypeToInfix, Deprecation(
         "issubtype is deprecated for `<:`",
         "julia",
-        v"0.5.0", v"0.7.0-DEV.1162", typemax(VersionNumber)
+        v"0.7.0-DEV.1162", v"1.0", typemax(VersionNumber)
     ))
 
     match(IssubtypeToInfix,
