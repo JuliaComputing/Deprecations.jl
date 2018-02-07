@@ -149,7 +149,7 @@ begin
     register(ReadString, Deprecation(
         "readstring(x) is deprecated to read(x, String)",
         "julia",
-        v"0.5.0", v"0.7.0-DEV.1053", typemax(VersionNumber)
+        v"0.7.0-DEV.1053", v"1.0", typemax(VersionNumber)
     ))
 
     match(ReadString,
