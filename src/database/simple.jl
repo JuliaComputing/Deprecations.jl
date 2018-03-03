@@ -149,7 +149,7 @@ begin
     register(ReadString, Deprecation(
         "readstring(x) is deprecated to read(x, String)",
         "julia",
-        v"0.5.0", v"0.7.0-DEV.1053", typemax(VersionNumber)
+        v"0.7.0-DEV.1053", v"1.0", typemax(VersionNumber)
     ))
 
     match(ReadString,
@@ -350,6 +350,17 @@ end
 @add_rename isleaftype     isconcretetype   v"0.7.0-DEV.1775"
 @add_rename isnumber       isnumeric        v"0.7.0-DEV.1775"
 @add_rename Associative    AbstractDict     v"0.7.0-DEV.2951"
+@add_rename find           findall          v"0.7.0-DEV.3415"
+@add_rename module_parent   parentmodule    v"0.7.0-DEV.3460"
+@add_rename datatype_module parentmodule    v"0.7.0-DEV.3460"
+@add_rename function_module parentmodule    v"0.7.0-DEV.3460"
+@add_rename indmin         argmin           v"0.7.0-DEV.3516"
+@add_rename indmax         argmax           v"0.7.0-DEV.3516"
+@add_rename module_name    nameof           v"0.7.0-DEV.3539"
+@add_rename function_name  nameof           v"0.7.0-DEV.3539"
+@add_rename datatype_name  nameof           v"0.7.0-DEV.3539"
+@add_rename method_exist   hasmethod        v"0.7.0-DEV.3455"
+@add_rename object_id      objectid         v"0.7.0-DEV.3455"
 
 begin
     struct KeywordsUnlocked; end
