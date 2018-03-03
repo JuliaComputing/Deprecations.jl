@@ -361,3 +361,8 @@ end
 @add_rename datatype_name  nameof           v"0.7.0-DEV.3539"
 @add_rename method_exist   hasmethod        v"0.7.0-DEV.3455"
 @add_rename object_id      objectid         v"0.7.0-DEV.3455"
+@add_rename DevNull        devnull          v"0.7.0-DEV.4068"
+@add_rename STDIN          stdin            v"0.7.0-DEV.4068"
+@add_rename STDOUT         stdout           v"0.7.0-DEV.4068"
+@add_rename STDERR         stderr           v"0.7.0-DEV.4068"
+@add_rename reprmime       repr             v"0.7.0-DEV.4010"
