@@ -350,7 +350,6 @@ end
 @add_rename isleaftype     isconcretetype   v"0.7.0-DEV.1775"
 @add_rename isnumber       isnumeric        v"0.7.0-DEV.1775"
 @add_rename Associative    AbstractDict     v"0.7.0-DEV.2951"
-<<<<<<< HEAD
 @add_rename find           findall          v"0.7.0-DEV.3415"
 @add_rename module_parent   parentmodule    v"0.7.0-DEV.3460"
 @add_rename datatype_module parentmodule    v"0.7.0-DEV.3460"
@@ -367,7 +366,6 @@ end
 @add_rename STDOUT         stdout           v"0.7.0-DEV.4068"
 @add_rename STDERR         stderr           v"0.7.0-DEV.4068"
 @add_rename reprmime       repr             v"0.7.0-DEV.4010"
-=======
 
 begin
     struct KeywordsUnlocked; end
@@ -441,4 +439,3 @@ begin
         "unsafe_wrap(\$T, \$pointer!, \$dims!, own = \$own!)"
         )
 end
->>>>>>> add some Deprecations for functions that got positional args replace by kwargs
