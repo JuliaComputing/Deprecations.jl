@@ -218,6 +218,9 @@ begin
     end
 end
 
+
+# This doesn't work becuase the `...` what we want to match against
+# is also used as a wildcard sentinel
 begin
     struct TupleSplat; end
 
@@ -229,6 +232,7 @@ begin
 
     function filter_funcdef_and_multiarg(dep, expr, matches)
         length(children(expr)) == 3     || return false  # 3 = '(' + ')' + 1 arg
+        isexpr(children(expr)[2], UnarySyntaxOpCall) || return false
         CSTParser.has_sig(parent(expr)) && return false
         return true
     end
@@ -238,7 +242,6 @@ begin
           "(\$ID...,)",
           filter = filter_funcdef_and_multiarg
     )
-
 end
 
 begin
