@@ -414,10 +414,6 @@ begin
         "tryparse(\$T, \$s!, base = \$base!)"
         )
     match(KeywordsUnlocked,
-        "parse(\$T, \$s, \$base)",
-        "parse(\$T, \$s!, base = \$base!)"
-        )
-    match(KeywordsUnlocked,
         "mkdir(\$path, \$mode)",
         "mkdir(\$path, mode = \$mode!)"
         )
