@@ -1144,6 +1144,11 @@ function f(x...)
 end
 """
 
+@test text_not_edited("""
+PDiagMat(v::Vector) = PDiagMat(v, inv.(v))
+""", tuplesplat)
+
+
 void2nothing = [Deprecations.dep_for_vers(
     Deprecations.Void2Nothing,
     Pkg.Reqs.parse(IOBuffer("julia 0.7"))
