@@ -21,22 +21,22 @@ function except_first_line(ws)
     ws[idx+1:end]
 end
 
-function resolve_inline_body(resolutions, expr, replace_expr)
+function resolve_inline_body(dep, resolutions, expr, replace_expr)
     _last_line = last_line(trailing_ws(children(expr)[2]))
     indent = (isempty(_last_line) ? 0 : sum(charwidth, _last_line)) - line_pos(replace_expr, first(replace_expr.span))
     body = format_addindent_body(children(expr)[3], -indent)
     body = maybe_strip_trailing_ws_line(body)
     buf = IOBuffer()
     print_replacement(buf, body, true, true)
-    push!(resolutions, TextReplacement(replace_expr.span, String(take!(buf))))
+    push!(resolutions, TextReplacement(dep, replace_expr.span, String(take!(buf))))
 end
 
-function resolve_delete_expr(resolutions, expr, replace_expr)
+function resolve_delete_expr(dep, resolutions, expr, replace_expr)
     if length(children(expr)) <= 4
         # Find our current indentation
         prev = findprev_str(i -> !isspace(i), replace_expr.buffer, first(replace_expr.fullspan))
         prev != 0 && (prev = nextind(replace_expr.buffer, prev))
-        push!(resolutions, TextReplacement(prev:last(replace_expr.fullspan),
+        push!(resolutions, TextReplacement(dep, prev:last(replace_expr.fullspan),
                                            except_first_line(trailing_ws(replace_expr))))
     elseif isexpr(children(expr)[4], KEYWORD, Tokens.ELSE)
         # Inline else body
@@ -46,7 +46,7 @@ function resolve_delete_expr(resolutions, expr, replace_expr)
         body = maybe_strip_trailing_ws_line(body)
         buf = IOBuffer()
         print_replacement(buf, body, true, true)
-        push!(resolutions, TextReplacement(replace_expr.span, String(take!(buf))))
+        push!(resolutions, TextReplacement(dep, replace_expr.span, String(take!(buf))))
     else
         indent = sum(charwidth, trailing_ws(children(expr)[2]))
         repl = ChildReplacementNode(nothing, Any[], expr)
@@ -58,7 +58,7 @@ function resolve_delete_expr(resolutions, expr, replace_expr)
         print_replacement(buf, repl, false, true)
         # Here we actually replace expr, rather than replace_expr, since we're not removing the
         # expr, entirely, just removing a branch.
-        push!(resolutions, TextReplacement(expr.fullspan, String(take!(buf))))
+        push!(resolutions, TextReplacement(dep, expr.fullspan, String(take!(buf))))
     end
 end
 
@@ -96,6 +96,6 @@ function apply_formatter(f, tree)
     rtree = f(tree)
     buf = IOBuffer()
     print_replacement(buf, rtree)
-    TextReplacement(tree.span, String(take!(buf)))
+    TextReplacement(nothing, tree.span, String(take!(buf)))
 end
 

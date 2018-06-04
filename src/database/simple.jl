@@ -190,7 +190,7 @@ begin
         if changed
             buf = IOBuffer()
             print_replacement(buf, ret, false, false)
-            push!(resolutions, TextReplacement(expr.span, String(take!(buf))))
+            push!(resolutions, TextReplacement(dep, expr.span, String(take!(buf))))
         end
     end
 end
@@ -213,7 +213,7 @@ begin
             buf = IOBuffer()
             print_replacement(buf, ret, false, false)
             repl = String(take!(buf))
-            push!(resolutions, TextReplacement(expr.span, repl))
+            push!(resolutions, TextReplacement(dep, expr.span, repl))
         end
     end
 end
@@ -268,16 +268,16 @@ begin
         # Match ccall only
         dep, expr, resolutions, context = x
         is_identifier(children(expr)[1], "ccall") || return
-        _replace_void_cvoid!(resolutions, expr)
+        _replace_void_cvoid!(dep, resolutions, expr)
     end
 
-    function _replace_void_cvoid!(resolutions, expr)
+    function _replace_void_cvoid!(dep, resolutions, expr)
         if expr.expr isa CSTParser.IDENTIFIER && expr.expr.val == "Void"
-            push!(resolutions, TextReplacement(expr.span, "Cvoid"))
+            push!(resolutions, TextReplacement(dep, expr.span, "Cvoid"))
         end
         isempty(children(expr)) && return
         for c in children(expr)
-            _replace_void_cvoid!(resolutions, c)
+            _replace_void_cvoid!(dep, resolutions, c)
         end
         return
     end

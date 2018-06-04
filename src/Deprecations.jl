@@ -79,8 +79,13 @@ module Deprecations
     applies_in_macrocall(dep, context) = false
 
     struct TextReplacement
+        dep::Union{Deprecation, Nothing}
         range::UnitRange{Int}
         text::String
+    end
+    function TextReplacement(dep, range::UnitRange{Int}, text::String)
+        dep = all_deprecations[typeof(dep)]
+        TextReplacement(dep, range, text)
     end
 
     function overlay_parse(text, cont = true)
@@ -106,7 +111,7 @@ module Deprecations
         (length(resolutions) != 0, String(take!(buf)))
     end
 
-    function edit_text(text, deps = map(x->x(), keys(all_deprecations)))
+    function text_replacements(text, deps)
         replacements = Any[]
         customs = Any[]
         for dep in deps
@@ -125,7 +130,7 @@ module Deprecations
                     rtree = reassemble_tree(r, result)
                     buf = IOBuffer()
                     print_replacement(buf, formatter(x, rtree, result))
-                    push!(results, TextReplacement(x.span, String(take!(buf))))
+                    push!(results, TextReplacement(dep, x.span, String(take!(buf))))
                 end
             end
             for (i,(dep, (k, f))) in enumerate(customs)
@@ -153,7 +158,9 @@ module Deprecations
                     if !isa(doc, Expr)
                         changed, new_doc = edit_markdown(doc)
                         if changed
-                            push!(results, TextReplacement((first(docnode.span)+nquotes):(last(docnode.span)-nquotes), new_doc))
+                            # TODO: More fine grained deprecation messages inside
+                            # doc strings
+                            push!(results, TextReplacement(nothing, (first(docnode.span)+nquotes):(last(docnode.span)-nquotes), new_doc))
                         end
                     end
                 end
@@ -164,7 +171,11 @@ module Deprecations
         end
         results = TextReplacement[]
         find_replacements(match, results)
-        changed_text(text, results)
+        results
+    end
+
+    function edit_text(text, deps = map(x->x(), keys(all_deprecations)))
+        changed_text(text, text_replacements(text, deps))
     end
 
     function edit_file(fname, deps = map(x->x(), keys(all_deprecations)), edit=edit_text)

@@ -37,7 +37,7 @@ match(CCallAmpersand, CSTParser.Call) do x
     if found_any
         buf = IOBuffer()
         print_replacement(buf, expr′, false, false)
-        push!(resolutions, TextReplacement(expr.span, String(take!(buf))))
+        push!(resolutions, TextReplacement(dep, expr.span, String(take!(buf))))
     end
 end
 

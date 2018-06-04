@@ -132,7 +132,7 @@ begin
         if !is_at_compat_needed(dep, args[1])
             buf = IOBuffer()
             print_replacement(buf, format_result(args[1], expr), false, false)
-            push!(resolutions, TextReplacement(expr.span, String(take!(buf))))
+            push!(resolutions, TextReplacement(dep, expr.span, String(take!(buf))))
         end
     end
 end

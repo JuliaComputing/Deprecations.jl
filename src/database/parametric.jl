@@ -133,7 +133,7 @@ begin
         new_exprs
     end
 
-    function rewrite_param_syntax(expr, resolutions)
+    function rewrite_param_syntax(dep, expr, resolutions)
         CSTParser.defines_function(expr) || return
         sp = get_struct_parent(expr)
         # If there's already a where expr, this is new syntax
@@ -205,16 +205,16 @@ begin
         end
         buf = IOBuffer()
         print_replacement(buf, new_tree, false, false)
-        push!(resolutions, TextReplacement(expr.span, String(take!(buf))))
+        push!(resolutions, TextReplacement(dep, expr.span, String(take!(buf))))
     end
 
     match(OldParametricSyntax, CSTParser.FunctionDef) do x
         dep, expr, resolutions, context = x
-        rewrite_param_syntax(expr, resolutions)
+        rewrite_param_syntax(dep, expr, resolutions)
     end
 
     match(OldParametricSyntax, CSTParser.BinarySyntaxOpCall) do x
         dep, expr, resolutions, context = x
-        rewrite_param_syntax(expr, resolutions)
+        rewrite_param_syntax(dep, expr, resolutions)
     end
 end

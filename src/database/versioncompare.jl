@@ -64,8 +64,8 @@ begin
             alwaystrue = all(interval->(f(interval.lower, r1) && f(interval.upper, r1)), dep.vers.intervals)
             alwaysfalse = all(interval->(!f(interval.lower, r1) && !f(interval.upper, r1)), dep.vers.intervals)
             @assert !(alwaystrue && alwaysfalse)
-            alwaystrue && resolve_inline_body(resolutions, expr, replace_expr)
-            alwaysfalse && resolve_delete_expr(resolutions, expr, replace_expr)
+            alwaystrue && resolve_inline_body(dep, resolutions, expr, replace_expr)
+            alwaysfalse && resolve_delete_expr(dep,resolutions, expr, replace_expr)
             return
         end
         r2 = detect_ver_arguments(children(comparison)[3], children(comparison)[1])
@@ -74,8 +74,8 @@ begin
             alwaystrue = all(interval->(f(interval.lower, r2) && f(interval.upper, r2)), dep.vers.intervals)
             alwaysfalse = all(interval->(!f(interval.lower, r2) && !f(interval.upper, r2)), dep.vers.intervals)
             @assert !(alwaystrue && alwaysfalse)
-            alwaystrue && resolve_inline_body(resolutions, expr, replace_expr)
-            alwaysfalse && resolve_delete_expr(resolutions, expr, replace_expr)
+            alwaystrue && resolve_inline_body(dep, resolutions, expr, replace_expr)
+            alwaysfalse && resolve_delete_expr(dep, resolutions, expr, replace_expr)
         end
     end
 end

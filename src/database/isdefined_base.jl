@@ -117,9 +117,9 @@ begin
         end
         @assert !(alwaysdefined && neverdefined)
         if alwaysdefined
-            resolve_inline_body(resolutions, expr, replace_expr)
+            resolve_inline_body(dep, resolutions, expr, replace_expr)
         elseif neverdefined
-            resolve_delete_expr(resolutions, expr, replace_expr)
+            resolve_delete_expr(dep, resolutions, expr, replace_expr)
         end
     end
 end
