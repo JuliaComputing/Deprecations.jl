@@ -9,7 +9,7 @@ notifications:
 # uncomment the following lines to override the default test script
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia -e 'Pkg.clone(pwd()); Pkg.checkout("AbstractTrees"); Pkg.build("Deprecations"); Pkg.test("Deprecations"; coverage=true)'
+  - julia -e 'Pkg.clone(pwd()); Pkg.checkout("AbstractTrees", "d2096ba3a3b23fd4f70e619cdf6810708a54e22d"); Pkg.build("Deprecations"); Pkg.test("Deprecations"; coverage=true)'
 after_success:
   # push coverage results to Codecov
   - julia -e 'cd(Pkg.dir("Deprecations")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
