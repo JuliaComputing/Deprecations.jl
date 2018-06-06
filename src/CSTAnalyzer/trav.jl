@@ -27,6 +27,8 @@ function trav(x, s, S::State)
     s
 end
 
+trav(x::OverlayNode, s, S::State) = trav(x.expr, s, S)
+
 function trav(x)
     S = State()
     trav(x, S.current_scope, S)

@@ -34,8 +34,23 @@ end
 function resolve_delete_expr(dep, resolutions, expr, replace_expr)
     if length(children(expr)) <= 4
         # Find our current indentation
-        prev = findprev_str(i -> !isspace(i), replace_expr.buffer, first(replace_expr.fullspan))
-        prev != 0 && (prev = nextind(replace_expr.buffer, prev))
+        prev = findprev_str(i -> !isspace(i), replace_expr.buffer, prevind(replace_expr.buffer, first(replace_expr.fullspan)))
+        if prev == 0
+            prev = 1
+        else
+            # Essentially, we drop everything except for the content up until
+            # the first newline from the leading whitespace and do the opposite
+            # for the trailing whitespace
+            while true
+                prev = nextind(replace_expr.buffer, prev)
+                c = replace_expr.buffer[prev]
+                !isspace(c) && break
+                if c == '\n'
+                    prev = nextind(replace_expr.buffer, prev)
+                    break
+                end
+            end
+        end
         push!(resolutions, TextReplacement(dep, prev:last(replace_expr.fullspan),
                                            except_first_line(trailing_ws(replace_expr))))
     elseif isexpr(children(expr)[4], KEYWORD, Tokens.ELSE)

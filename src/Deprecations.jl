@@ -1,6 +1,8 @@
 module Deprecations
     using CSTParser
     using CSTParser: EXPR, MacroCall, IDENTIFIER, LITERAL
+    using AbstractTrees
+    using Tokenize: Tokens
 
     export edit_text, edit_file, edit_markdown
 
@@ -17,6 +19,7 @@ module Deprecations
 
     include("CSTUtils/CSTUtils.jl")
     using .CSTUtils
+    import .CSTUtils: span_text, fullspan_text, leading_ws, trailing_ws
     include("CSTAnalyzer/CSTAnalyzer.jl")
     using .CSTAnalyzer
     using .CSTAnalyzer: State, FileSystem, Scope, Location, File
@@ -100,18 +103,18 @@ module Deprecations
     function changed_text(text, resolutions)
         sort!(resolutions, by=x->first(x.range))
         buf = IOBuffer()
-        lastoffset = 0
+        lastoffset = 1
         for r in resolutions
             if lastoffset > first(r.range)
                 # Overlapping replacements. Only apply the first one for now.
                 # We'll re-run this to convergence
                 continue
             end
-            write(buf, text[1+(lastoffset:first(r.range)-1)])
+            write(buf, text[(lastoffset:first(r.range)-1)])
             write(buf, r.text)
             lastoffset = last(r.range)+1
         end
-        write(buf, text[lastoffset+1:end])
+        write(buf, text[lastoffset:end])
         (length(resolutions) != 0, String(take!(buf)))
     end
 

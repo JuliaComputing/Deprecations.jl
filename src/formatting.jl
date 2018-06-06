@@ -44,8 +44,7 @@ function findprev_str(testf::Function, A::String, start::Integer)
     return 0
 end
 
-function line_pos(node::OverlayNode, pos)
-    buffer_pos = nextind(node.buffer, pos)
+function line_pos(node::OverlayNode, buffer_pos)
     find_pos = findprev_str(i->i=='\n', node.buffer, buffer_pos)
     return prevind(node.buffer, buffer_pos - find_pos)
 end
@@ -191,32 +190,11 @@ function format_setindent_body(expr::TriviaReplacementNode, nindent, parent = no
     TriviaReplacementNode(parent, nexpr, leading_ws(expr), setindent_ws(trailing_ws(expr), nindent))
 end
 
+CSTUtils.isexpr(x::ChildReplacementNode, ::Type{S}) where {S} = isexpr(x.onode, S)
+CSTUtils.isexpr(x::TriviaReplacementNode, ::Type{S}) where {S} = isexpr(x.onode, S)
 
-isexpr(x::EXPR{T}, ::Type{S}) where {T, S} = T == S
-
-isexpr(x::T, ::Type{T}) where {T} = true
-isexpr(x::T1, ::Type{T2}) where {T1, T2} = false
-# Operator
-isexpr(x::CSTParser.OPERATOR, o::Type{CSTParser.OPERATOR}, op::Tokens.Kind) = x.kind == op && x.dot == false
-isexpr(x, o::Type{CSTParser.OPERATOR}, op::Tokens.Kind) = false
-# Keyword
-isexpr(x::CSTParser.KEYWORD, k::Type{CSTParser.KEYWORD}, kw::Tokens.Kind) = x.kind == kw
-isexpr(x, k::Type{CSTParser.KEYWORD}, kw::Tokens.Kind) = false
-# Literal
-isexpr(x::CSTParser.LITERAL, k::Type{CSTParser.LITERAL}, lit::Tokens.Kind) = x.kind == lit
-isexpr(x, k::Type{CSTParser.LITERAL}, lit::Tokens.Kind) = false
-
-isexpr(x::OverlayNode, ::Type{S}, kind::Tokens.Kind) where {S} = isexpr(x.expr, S, kind)
-isexpr(x::OverlayNode, ::Type{CSTParser.OPERATOR}, kind::Tokens.Kind)  = isexpr(x.expr, CSTParser.OPERATOR, kind)
-isexpr(x::OverlayNode, ::Type{CSTParser.KEYWORD}, kind::Tokens.Kind)  = isexpr(x.expr, CSTParser.KEYWORD, kind)
-isexpr(x::OverlayNode, ::Type{CSTParser.LITERAL}, kind::Tokens.Kind) = isexpr(x.expr, CSTParser.LITERAL, kind)
-isexpr(x::OverlayNode, ::Type{S}) where {S} = isexpr(x.expr, S)
-
-isexpr(x::ChildReplacementNode, ::Type{S}) where {S} = isexpr(x.onode, S)
-isexpr(x::TriviaReplacementNode, ::Type{S}) where {S} = isexpr(x.onode, S)
-
-children(x::ChildReplacementNode) = x.children
-children(x::TriviaReplacementNode) = children(x.onode)
+AbstractTrees.children(x::ChildReplacementNode) = x.children
+AbstractTrees.children(x::TriviaReplacementNode) = children(x.onode)
 
 trailing_ws(x::ChildReplacementNode) = trailing_ws(last(x.children))
 trailing_ws(x::TriviaReplacementNode) = x.trailing_trivia

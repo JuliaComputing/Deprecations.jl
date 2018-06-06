@@ -110,21 +110,6 @@ end
 is_template_expr(x::OverlayNode) = is_template_expr(x.expr)
 leaf_is_template_expr(x::OverlayNode) = leaf_is_template_expr(x.expr)
 
-function text(o::OverlayNode, leading_trivia = true, trailing_trivia = true)
-    o.buffer[1 + ((leading_trivia ? first(o.fullspan) : first(o.span)):(trailing_trivia ? last(o.fullspan) : last(o.span)))]
-end
-
-function trailing_ws(o::OverlayNode)
-    o.buffer[1 + (1+last(o.span):last(o.fullspan))]
-end
-
-function leading_ws(o::OverlayNode)
-    o.buffer[1 + (first(o.fullspan):first(o.fullspan)-1)]
-end
-
-span_text(o::OverlayNode) = text(o, false, false)
-fullspan_text(o::OverlayNode) = text(o, true, true)
-
 using AbstractTrees: prevsibling, nextsibling
 
 function prev_node_ws(node)

@@ -1,6 +1,7 @@
 using AbstractTrees
 import AbstractTrees: children
-using CSTParser: FunctionDef, BinarySyntaxOpCall
+using CSTParser
+using CSTParser: FunctionDef, BinarySyntaxOpCall, EXPR
 using Tokenize: Tokens
 
 struct OverlayNode{T}
@@ -17,7 +18,7 @@ AbstractTrees.siblinglinks(::Type{<:OverlayNode}) = AbstractTrees.ImplicitSiblin
 AbstractTrees.parent(node::OverlayNode) = node.parent
 AbstractTrees.isroot(node::OverlayNode) = node.parent == nothing
 
-OverlayNode(expr, buffer) = OverlayNode(nothing, buffer, expr, 0:(expr.fullspan-1), expr.span - 1)
+OverlayNode(expr, buffer) = OverlayNode(nothing, buffer, expr, 1:(expr.fullspan), expr.span)
 AbstractTrees.printnode(io::IO, o::OverlayNode{T}) where {T} = print(io, sprint(AbstractTrees.printnode, o.expr), " -- ", o.fullspan, " (", o.span, ")")
 Base.show(io::IO, o::OverlayNode) = AbstractTrees.print_tree(io, o)
 

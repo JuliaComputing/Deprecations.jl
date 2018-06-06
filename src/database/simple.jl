@@ -230,7 +230,7 @@ begin
         v"0.7.0-DEV.2559", v"1.0", typemax(VersionNumber)
     ))
 
-    function filter_funcdef_and_multiarg(dep, expr, matches)
+    function filter_funcdef_and_multiarg(S, dep, expr, matches)
         length(children(expr)) == 3     || return false  # 3 = '(' + ')' + 1 arg
         isexpr(children(expr)[2], UnarySyntaxOpCall) || return false
         CSTParser.has_sig(parent(expr)) && return false
@@ -299,7 +299,7 @@ end
 
 function filter_base_id(S, dep, expr, matches)
     @assert isa(expr, OverlayNode{CSTParser.IDENTIFIER})
-    binding = resolve(S, expr)
+    binding = CSTAnalyzer.resolve(S, expr)
     return binding.t == "BaseCore"
 end
 
