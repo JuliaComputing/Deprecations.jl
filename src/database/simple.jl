@@ -90,7 +90,7 @@ begin
         ok || return tree
         return call′
     end
-    function filter_non_where_curly(dep, tree, matches)
+    function filter_non_where_curly(S, dep, tree, matches)
         dep.non_where_curly && return true
         isexpr(parent(tree), BinarySyntaxOpCall) || isexpr(parent(tree), CSTParser.WhereOpCall) || return false
         isexpr(children(parent(tree))[2], OPERATOR, Tokens.WHERE) || return false
@@ -102,11 +102,11 @@ begin
         format_old_constructor,
         filter = filter_non_where_curly
     )
-    function filter_in_struct(dep, tree, matches)
+    function filter_in_struct(S, dep, tree, matches)
         dep.inner_constructor && return true
         return get_struct_parent(tree.parent) === nothing
     end
-    function filter_params(dep, tree, matches)
+    function filter_params(S, dep, tree, matches)
         # Handled by the above
         name = first(matches[:NAME][2])
         isexpr(name, Curly) && return false
@@ -297,6 +297,11 @@ begin
     )
 end
 
+function filter_base_id(S, dep, expr, matches)
+    @assert isa(expr, OverlayNode{CSTParser.IDENTIFIER})
+    binding = resolve(S, expr)
+    return binding.t == "BaseCore"
+end
 
 macro add_rename(from, to, version)
     StructName = Symbol(from, "_2_", to)
@@ -314,7 +319,8 @@ macro add_rename(from, to, version)
 
         match($(StructName),
               $(string(from)),
-              $(string(to))
+              $(string(to)),
+              filter = filter_base_id
         )
     end
 end

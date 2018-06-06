@@ -17,6 +17,9 @@ module Deprecations
 
     include("CSTUtils/CSTUtils.jl")
     using .CSTUtils
+    include("CSTAnalyzer/CSTAnalyzer.jl")
+    using .CSTAnalyzer
+    using .CSTAnalyzer: State, FileSystem, Scope, Location, File
     include("formatting.jl")
     include("astmatching.jl")
     include("resolutions.jl")
@@ -113,6 +116,11 @@ module Deprecations
     end
 
     function text_replacements(text, deps)
+        match = overlay_parse(text)
+        # Analysis
+        S = State{FileSystem}(Scope(), Location("top", 0), "", [], [], 0:0, false, Dict(), FileSystem())
+        CSTAnalyzer.trav(match, S.current_scope, S)
+        # CST Matchers
         replacements = Any[]
         customs = Any[]
         for dep in deps
@@ -120,14 +128,13 @@ module Deprecations
             haskey(custom_resolutions, typeof(dep)) && append!(customs, collect(Iterators.product((dep,), custom_resolutions[typeof(dep)])))
         end
         parsed_replacementes = map(x->(x[1],(overlay_parse(x[2][1],false),overlay_parse(x[2][2],false),x[2][3:end]...)), replacements)
-        match = overlay_parse(text)
         function find_replacements(x, results, context=Context(false, nothing))
             for (i,(dep, (t, r, formatter, filter))) in enumerate(parsed_replacementes)
                 if matches_template2(x, t)
                     (!context.in_macrocall || applies_in_macrocall(dep, context)) || continue
                     result = Dict{Any,Any}()
                     match_parameters(t, x, result)[1] || continue
-                    filter(dep, x, result) || continue
+                    filter(S, dep, x, result) || continue
                     rtree = reassemble_tree(r, result)
                     buf = IOBuffer()
                     print_replacement(buf, formatter(x, rtree, result))
