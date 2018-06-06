@@ -15,7 +15,8 @@ module Deprecations
         maxver::Base.VersionNumber
     end
 
-    include("treewalking.jl")
+    include("CSTUtils/CSTUtils.jl")
+    using .CSTUtils
     include("formatting.jl")
     include("astmatching.jl")
     include("resolutions.jl")
