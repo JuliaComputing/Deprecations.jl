@@ -42,7 +42,6 @@ function trav(path::String)
     return S
 end
 
-
 function enter_scope(x, s, S)
     isempty(S.target_file) && return true
     ns =  CSTParser.defines_function(x) ||
@@ -68,5 +67,5 @@ function enter_scope(x, s, S)
     else
         return true
     end
-    
+
 end

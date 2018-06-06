@@ -1,6 +1,9 @@
-module StaticLint
+module CSTAnalyzer
+
 const loaded_mods = Dict{String,Tuple{Set{Symbol},Set{Symbol}}}()
 using CSTParser
+using AbstractTrees
+using ..CSTUtils
 const BaseCoreNames = Set(vcat(names(Base), names(Core), :end, :new, :ccall))
 
 mutable struct File
@@ -29,11 +32,12 @@ mutable struct Scope
     range::UnitRange{Int64}
     loc::Location
 end
+AbstractTrees.children(s::Scope) = s.children
 Scope() = Scope("__toplevel__", "", nothing, [], Dict(), 1:typemax(Int), Location("", 1:typemax(Int)))
-function Base.display(s::Scope, i = 0)
-    println(" "^i, s.t, ":[", join(keys(s.names), ", "), "]")
+function Base.show(io::IO, s::Scope, i = 0)
+    println(io, " "^i, s.t, ":[", join(keys(s.names), ", "), "]")
     for c in s.children
-        display(c, i + 1)
+        show(io, c, i + 1)
     end
 end
 
@@ -46,6 +50,9 @@ mutable struct Reference{T}
     loc::Location{UnitRange{Int}}
 end
 
+function Base.show(io::IO, ref::Reference{T}) where T
+    print(io, "Reference{$T}(", ref.x, "...)")
+end
 
 struct FileSystem end
 mutable struct State{T}
@@ -61,7 +68,11 @@ mutable struct State{T}
 end
 State(s) = State{FileSystem}(s, Location("", 0), "", [], [], 0:0, false, Dict(), FileSystem())
 State() = State(Scope())
-
+function Base.show(io::IO, s::State)
+    print(io, "State(<target file ")
+    show(s.target_file)
+    println(io, ">)")
+end
 
 function add_binding(x, name, t, S::State, offset)
     if haskey(S.current_scope.names, name)
@@ -103,7 +114,7 @@ function create_scope(x, s, S::State)
             for arg in CSTParser.get_curly_params(sig)
                 add_binding(sig, arg, :Any, S, S.loc.offset + x.args[1].fullspan + x.args[1].span)
             end
-            
+
             for arg in CSTParser.get_args(x)
                 add_binding(arg, CSTParser.str_value(arg), :Any, S, S.loc.offset + x.span)
             end
@@ -111,12 +122,12 @@ function create_scope(x, s, S::State)
     elseif x isa CSTParser.EXPR{CSTParser.Let}
         add_scope(x, s, S, "Let")
     elseif x isa CSTParser.EXPR{CSTParser.Do}
-        add_scope(x, s, S, "Do") 
+        add_scope(x, s, S, "Do")
         for arg in CSTParser.get_args(x)
             add_binding(arg, CSTParser.str_value(arg), :Any, S, S.loc.offset + x.args[1].fullspan + x.args[2].fullspan + x.args[3].span)
         end
     elseif x isa CSTParser.EXPR{CSTParser.While}
-        add_scope(x, s, S, "While") 
+        add_scope(x, s, S, "While")
     elseif x isa CSTParser.EXPR{CSTParser.For}
         add_scope(x, s, S, "For")
         S.nodecl = S.loc.offset + x.args[1].fullspan + x.args[2].span
@@ -140,7 +151,7 @@ function create_scope(x, s, S::State)
                 end
             end
         end
-    elseif x isa CSTParser.EXPR{CSTParser.Try} 
+    elseif x isa CSTParser.EXPR{CSTParser.Try}
         add_scope(x, s, S, "Try")
     elseif x isa CSTParser.WhereOpCall
         add_scope(x, s, S, "WhereOpCall")
@@ -148,7 +159,7 @@ function create_scope(x, s, S::State)
             add_binding(x, arg, :DataType, S, S.loc.offset + x.span)
         end
     elseif x isa CSTParser.EXPR{CSTParser.Generator}
-        add_scope(x, s, S, "Generator") 
+        add_scope(x, s, S, "Generator")
         for arg in CSTParser.get_args(x)
             add_binding(arg, CSTParser.str_value(arg), :Any, S, S.loc.offset + x.args[1].fullspan + x.args[2].fullspan + x.args[3].span)
         end
@@ -158,7 +169,7 @@ function create_scope(x, s, S::State)
             add_binding(arg, CSTParser.str_value(arg), :Any, S, S.loc.offset + x.span)
         end
     elseif CSTParser.is_assignment(x) && x.arg1 isa CSTParser.EXPR{CSTParser.Curly}
-        add_scope(x, s, S, "Typealias") 
+        add_scope(x, s, S, "Typealias")
         for param in CSTParser.get_curly_params(x.arg1)
             add_binding(x, param, :Any, S, S.loc.offset + x.span)
         end
@@ -192,7 +203,7 @@ function get_external_binding(x, s, S::State)
         name = CSTParser.str_value(CSTParser.get_name(x))
         add_binding(x, name, :Module, S, S.loc.offset + x.span)
         return false
-    elseif CSTParser.is_assignment(x) 
+    elseif CSTParser.is_assignment(x)
         ass = x.arg1
         ass = CSTParser.rem_decl(ass)
         ass = CSTParser.rem_curly(ass)
@@ -254,6 +265,21 @@ function find_ref(name, s, S::State)
     end
 end
 
+# Find scopes
+function find_scope(s::Scope, range::UnitRange)
+    if !(range in s.range)
+        error("")
+    end
+    for child in children(s)
+        if range in child.range
+            return find_scope(child, range)
+        end
+    end
+    return s
+end
+find_scope(S::State, range::UnitRange{Int}) =
+    find_scope(S.current_scope, range)
+
 # Build scopes
 
 
@@ -270,7 +296,7 @@ Base.in(x::UnitRange{Int}, y::UnitRange{Int}) = first(x) ≥ first(y) && last(x)
 
 function find_bad_refs(S)
     for r in S.refs
-        if r.b isa StaticLint.MissingBinding
+        if r.b isa MissingBinding
             resolved = resolve_missing_binding(r)
             if !resolved
                 push!(S.bad_refs, r)
@@ -295,4 +321,11 @@ include("trav.jl")
 include("imports.jl")
 include("includes.jl")
 mod_names(Main, loaded_mods)
+
+function resolve(S::State, node::OverlayNode{CSTParser.IDENTIFIER})
+    scope = find_scope(S, node.span)
+    find_ref(span_text(node), scope, S)
+end
+
+
 end # module
