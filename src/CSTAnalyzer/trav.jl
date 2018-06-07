@@ -1,4 +1,6 @@
-function trav(x::CSTParser.LeafNode, s, S::State)
+struct DefaultWalker <: Walker; end
+
+function trav(w::Walker, x::CSTParser.LeafNode, s, S::State)
     if x isa CSTParser.IDENTIFIER && !S.isquotenode
         binding = find_ref(CSTParser.str_value(x), S)
         push!(S.refs, Reference(x, binding, Location(S.loc.path, S.loc.offset + x.span)))
@@ -6,18 +8,18 @@ function trav(x::CSTParser.LeafNode, s, S::State)
     S.loc.offset += x.fullspan
 end
 
-function trav(x::CSTParser.EXPR{T}, s, S::State) where T <: Union{CSTParser.MacroName,CSTParser.Quote}
+function trav(w::Walker, x::CSTParser.EXPR{T}, s, S::State) where T <: Union{CSTParser.MacroName,CSTParser.Quote}
     S.loc.offset += x.fullspan
 end
 
-function trav(x, s, S::State)
+function trav(w::Walker, x, s, S::State)
     x isa CSTParser.EXPR{CSTParser.Quotenode} && (S.isquotenode = true)
     for a in x
         get_external_binding(a, s, S)
         if enter_scope(x, s, S)
             create_scope(a, s, S)
-            lint_call(a, s, S)
-            trav(a, S.current_scope, S)
+            lint_call(w, a, s, S)
+            trav(w, a, S.current_scope, S)
             S.current_scope = s
         else
             S.loc.offset += a.fullspan
@@ -27,19 +29,19 @@ function trav(x, s, S::State)
     s
 end
 
-trav(x::OverlayNode, s, S::State) = trav(x.expr, s, S)
+trav(w::Walker, x::OverlayNode, s, S::State) = trav(w, x.expr, s, S)
 
-function trav(x)
+function trav(w::Walker, x)
     S = State()
-    trav(x, S.current_scope, S)
+    trav(w, x, S.current_scope, S)
     find_bad_refs(S)
     return S
 end
 
-function trav(path::String)
+function trav(w::Walker, path::String)
     S = State{FileSystem}(Scope(), Location(path, 0), "", [], [], 0:0, false, Dict(path => File(path, nothing, [])), FileSystem())
     x = CSTParser.parse(readstring(path), true)
-    trav(x, S.current_scope, S)
+    trav(w, x, S.current_scope, S)
     find_bad_refs(S)
     return S
 end

@@ -6,6 +6,8 @@ using AbstractTrees
 using ..CSTUtils
 const BaseCoreNames = Set(vcat(names(Base), names(Core), :end, :new, :ccall))
 
+abstract type Walker; end
+
 mutable struct File
     path::String
     parent::Union{Void,Tuple{File,UnitRange{Int}}}
@@ -83,7 +85,7 @@ function add_binding(x, name, t, S::State, offset)
 end
 
 function add_scope(a, s, S::State, t, name = "")
-    push!(S.current_scope.children, Scope(t, name, s, [], Dict(), S.loc.offset + a.span, Location(S.loc.path, S.loc.offset + a.span)))
+    push!(S.current_scope.children, Scope(t, name, s, [], Dict(), S.loc.offset + a.span, Location(s.loc.path, S.loc.offset + a.span)))
     S.current_scope = last(S.current_scope.children)
 end
 
@@ -283,13 +285,12 @@ find_scope(S::State, range::UnitRange{Int}) =
 # Build scopes
 
 
-function lint_call(x, s, S) end
-function lint_call(x::CSTParser.EXPR{CSTParser.Call}, s, S)
+function lint_call(w::Walker, x, s, S) end
+function lint_call(w::Walker, x::CSTParser.EXPR{CSTParser.Call}, s, S)
     fname = CSTParser.get_name(x)
     if CSTParser.str_value(fname) == "include"
         follow_include(x, s, S)
     end
-
 end
 
 Base.in(x::UnitRange{Int}, y::UnitRange{Int}) = first(x) ≥ first(y) && last(x) ≤ last(y)
@@ -322,10 +323,9 @@ include("imports.jl")
 include("includes.jl")
 mod_names(Main, loaded_mods)
 
-function resolve(S::State, node::OverlayNode{CSTParser.IDENTIFIER})
-    scope = find_scope(S, node.span)
+function resolve(S::State, file_scope::Scope, node::OverlayNode{CSTParser.IDENTIFIER})
+    scope = find_scope(file_scope, node.span)
     find_ref(span_text(node), scope, S)
 end
-
 
 end # module

@@ -118,11 +118,16 @@ module Deprecations
         (length(resolutions) != 0, String(take!(buf)))
     end
 
-    function text_replacements(text, deps)
+    function text_replacements(text, deps; analysis = nothing)
         match = overlay_parse(text)
-        # Analysis
-        S = State{FileSystem}(Scope(), Location("top", 0), "", [], [], 0:0, false, Dict(), FileSystem())
-        CSTAnalyzer.trav(match, S.current_scope, S)
+        # Re-construct analysis by assuming top-level
+        if analysis === nothing
+            S = State{FileSystem}(Scope(), Location("top", 0), "", [], [], 0:0, false, Dict(), FileSystem())
+            Scop = S.current_scope
+            CSTAnalyzer.trav(CSTAnalyzer.DefaultWalker(), match, Scop, S)
+        else
+            (S, Scop) = analysis
+        end
         # CST Matchers
         replacements = Any[]
         customs = Any[]
@@ -137,7 +142,7 @@ module Deprecations
                     (!context.in_macrocall || applies_in_macrocall(dep, context)) || continue
                     result = Dict{Any,Any}()
                     match_parameters(t, x, result)[1] || continue
-                    filter(S, dep, x, result) || continue
+                    filter((S, Scop), dep, x, result) || continue
                     rtree = reassemble_tree(r, result)
                     buf = IOBuffer()
                     print_replacement(buf, formatter(x, rtree, result))
@@ -155,7 +160,7 @@ module Deprecations
                 if !isexpr(children(x)[1], CSTParser.GlobalRefDoc)
                     macroname = children(children(x)[1])[2]
                     if !(isexpr(macroname, IDENTIFIER) && Expr(macroname) in (
-                           Symbol("eval"), Symbol("inline"), Symbol("views")
+                           Symbol("eval"), Symbol("inline"), Symbol("views"), Symbol("test")
                             ))
                         context = Context(true, x)
                     end
@@ -185,13 +190,13 @@ module Deprecations
         results
     end
 
-    function edit_text(text, deps = map(x->x(), keys(all_deprecations)))
-        changed_text(text, text_replacements(text, deps))
+    function edit_text(text, deps = map(x->x(), keys(all_deprecations)); kwargs...)
+        changed_text(text, text_replacements(text, deps; kwargs...))
     end
 
-    function edit_file(fname, deps = map(x->x(), keys(all_deprecations)), edit=edit_text)
+    function edit_file(fname, deps = map(x->x(), keys(all_deprecations)), edit=edit_text; kwargs...)
         text = readstring(fname)
-        any_changed, new_text = edit(text, deps)
+        any_changed, new_text = edit(text, deps; kwargs...)
         if any_changed
             open(fname, "w") do io
                 write(io, new_text)
@@ -200,7 +205,7 @@ module Deprecations
         any_changed
     end
 
-    function edit_markdown(text, deps = map(x->x(), keys(all_deprecations)))
+    function edit_markdown(text, deps = map(x->x(), keys(all_deprecations)); kwargs...)
         content = Base.Markdown.parse(text)
         changed_any = false
         new_text = text
@@ -250,6 +255,47 @@ module Deprecations
             end
         end
         return (changed_any, new_text)
+    end
+
+    struct IncludeWalker <: CSTAnalyzer.Walker
+        include_map::Vector{Pair{Scope, String}}
+    end
+    IncludeWalker() = IncludeWalker(Vector{Pair{Scope, String}}())
+
+    function CSTAnalyzer.lint_call(w::IncludeWalker, x::CSTParser.EXPR{CSTParser.Call}, s, S)
+        fname = CSTParser.get_name(x)
+        if CSTParser.str_value(fname) == "include"
+            path = CSTAnalyzer.get_path(x)
+            isempty(path) && return
+            path = isabspath(path) ? path : joinpath(dirname(s.loc.path), path)
+            push!(w.include_map, s=>path)
+        end
+    end
+
+    function scope_include!(parent, scope)
+        push!(parent.children, scope)
+        scope.parent = parent
+        merge!(parent.names, scope.names)
+        empty!(scope.names)
+    end
+
+    # Given a set of files in a package, process all of them
+    # using CSTAnalyzer
+    function process_all(files)
+        parsed = [ file=>overlay_parse(readstring(file)) for file in files ]
+        S = State{FileSystem}(Scope(), Location("top", 0), "", [], [], 0:0, false, Dict(), FileSystem())
+        walker = IncludeWalker()
+        file_scopes = Dict(file => Scope() for file in files)
+        for (file, p) in parsed
+            s = file_scopes[file]
+            s.loc = Location(file, 0)
+            S.current_scope = s
+            CSTAnalyzer.trav(walker, p, s, S)
+        end
+        for (scope, incl) in walker.include_map
+            scope_include!(scope, file_scopes[incl])
+        end
+        S, file_scopes
     end
 
 end # module

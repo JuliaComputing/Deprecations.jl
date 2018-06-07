@@ -1264,4 +1264,82 @@ end
 # Test that fixing the following does not error:
 edit_text(readstring(joinpath(@__DIR__, "regressionfiles", "LightGraphs_1.jl")))
 
+@test text_not_edited("""
+module Foo
+    function parse(x)
+        println("Hello")
+    end
+    parse("Hello")
+end
+""")
+
+@test edit_text("""
+module Foo
+    parse("Hello")
+end
+""")[2] == """
+module Foo
+    Meta.parse("Hello")
+end
+"""
+
+@test edit_text("""
+module Foo
+    import JSON
+    parse("Hello")
+    JSON.parse(\"\"\"
+        { "Hello": "World" }
+    \"\"\")
+end
+""")[2] == """
+module Foo
+    import JSON
+    Meta.parse("Hello")
+    JSON.parse(\"\"\"
+        { "Hello": "World" }
+    \"\"\")
+end
+"""
+
+files = joinpath.((joinpath(@__DIR__, "regressionfiles"),), ["top_define.jl", "parse.jl"])
+let analysis = Deprecations.process_all(files)
+    @test edit_text(readstring(files[2]);
+        analysis=(analysis[1], analysis[2][files[2]]))[2] == """
+    parse(\"\"\"
+        { "Hello": "World" }
+    \"\"\")
+    """
+end
+
+@test text_not_edited("""
+module Foo
+    using JSON: parse
+    parse(\"\"\"
+        { "Hello": "World" }
+    \"\"\")
+end
+""")
+
+files = joinpath.((joinpath(@__DIR__, "regressionfiles"),), ["top_include.jl", "using_json.jl", "parse.jl"])
+let analysis = Deprecations.process_all(files)
+    @test edit_text(readstring(files[end]);
+        analysis=(analysis[1], analysis[2][files[end]]))[2] == """
+    parse(\"\"\"
+        { "Hello": "World" }
+    \"\"\")
+    """
+end
+
+files = joinpath.((joinpath(@__DIR__, "regressionfiles"),), ["top_not_include.jl", "using_json.jl", "parse.jl"])
+let analysis = Deprecations.process_all(files)
+    @test edit_text(readstring(files[end]);
+        analysis=(analysis[1], analysis[2][files[end]]))[2] == """
+    Meta.parse(\"\"\"
+        { "Hello": "World" }
+    \"\"\")
+    """
+end
+
+@test edit_text("@test eval(parse(x)) == 1")[2] == "@test eval(Meta.parse(x)) == 1"
+
 end # testset

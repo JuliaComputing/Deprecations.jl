@@ -19,9 +19,9 @@ function unwrap_imports(x)
         end
         i += 1
     end
-    
+
     while i <= length(x.args)
-        if CSTParser.is_comma(x.args[i]) 
+        if CSTParser.is_comma(x.args[i])
             i += 1
         end
         var = copy(prefix)
@@ -42,14 +42,6 @@ function is_pkg_loaded(pkg::Symbol, S)
     string(pkg) in keys(loaded_mods)
 end
 
-
-function load_pkg(pkg::Symbol, S)
-    if is_pkg_available(pkg, S)
-        eval(:(import $(pkg)))
-        mod_names(getfield(Main, pkg), loaded_mods)
-    end
-end
-
 function get_imports(x, S) end
 function get_imports(x::CSTParser.EXPR{T}, S) where T <: Union{CSTParser.Using,CSTParser.Import,CSTParser.ImportAll}
     u = T == CSTParser.Using
@@ -66,19 +58,8 @@ function get_imports(x::CSTParser.EXPR{T}, S) where T <: Union{CSTParser.Using,C
                     end
                 end
             end
-        elseif join(v, ".") in keys(loaded_mods)
+        else
             add_binding(x, string(v[end]), :Any, S::State, S.loc.offset + x.span)
-            if u
-                for n in loaded_mods[join(v, ".")][1]
-                    add_binding(x, string(n), :Any, S::State, S.loc.offset + x.span)
-                end
-            end
-        elseif length(v) > 1 && join(v[1:length(v)-1], ".") in keys(loaded_mods)
-            if v[end] in loaded_mods[join(view(v,1:length(v)-1), ".")][2]
-                add_binding(x, string(v[end]), :Any, S::State, S.loc.offset + x.span)
-            end
-        elseif is_pkg_available(v[1], S)
-            load_pkg(v[1], S)
         end
     end
 end

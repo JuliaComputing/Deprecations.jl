@@ -297,9 +297,11 @@ begin
     )
 end
 
-function filter_base_id(S, dep, expr, matches)
+function filter_base_id(analysis, dep, expr, matches)
+    S, file_scope = analysis
     @assert isa(expr, OverlayNode{CSTParser.IDENTIFIER})
-    binding = CSTAnalyzer.resolve(S, expr)
+    isexpr(parent(expr), CSTParser.Quotenode) && return false
+    binding = CSTAnalyzer.resolve(S, file_scope, expr)
     return binding.t == "BaseCore"
 end
 
@@ -375,6 +377,7 @@ end
 @add_rename STDOUT         stdout           v"0.7.0-DEV.4068"
 @add_rename STDERR         stderr           v"0.7.0-DEV.4068"
 @add_rename reprmime       repr             v"0.7.0-DEV.4010"
+@add_rename parse          Meta.parse       v"0.7.0-DEV.2437"
 
 begin
     struct KeywordsUnlocked; end
