@@ -1346,4 +1346,6 @@ end
 @test edit_text("round(convert(Float64,x), ceil(Int,f/_log2_10))", v1deps)[2] ==
     "round(convert(Float64,x), digits=ceil(Int,f/_log2_10))"
 
+@test edit_text("findin(collect(1:3:15), collect(2:4:10))")[2] ==
+    "findall(in(collect(2:4:10)), collect(1:3:15))"
 end # testset

@@ -390,6 +390,8 @@ const renames = [
     @add_rename parse          Meta.parse       v"0.7.0-DEV.2437"
     @add_rename isabstract     isabstracttype   v"0.7.0-DEV.1775"
     @add_rename iteratorsize   IteratorSize     v"0.7.0-DEV.3309"
+    @add_rename iteratoreltype IteratorEltype   v"0.7.0-DEV.3309"
+    @add_rename nb_available   bytesavailable   v"0.7.0-DEV.3477"
 ]
 
 struct KeywordsUnlocked; end
@@ -496,5 +498,30 @@ begin
     match(KeywordsUnlocked,
         "signif(\$x, \$digits, \$base)",
         "round(\$x!, sigdigits=\$digits!, base=\$base!)"
+    )
+    match(KeywordsUnlocked,
+        "method_exists(\$f, \$t, \$world)",
+        "hasmethod(\$f, \$t, world=\$world)"
+    )
+end
+
+struct Misc07; end
+begin
+    register(Misc07, Deprecation(
+        "a number of function APIs were changed",
+        "julia",
+        v"0.7.0-DEV.1", v"1.0", typemax(VersionNumber)
+    ))
+    match(Misc07,
+        "ismatch(\$r, \$s)",
+        "occursin(\$s, \$r)"
+    )
+    match(Misc07,
+        "findin(\$a, \$b)",
+        "findall(in(\$b), \$a)"
+    )
+    match(Misc07,
+        "method_exists(\$f, \$t)",
+        "hasmethod(\$f, \$t)"
     )
 end
