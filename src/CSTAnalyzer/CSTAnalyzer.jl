@@ -321,7 +321,6 @@ end
 include("trav.jl")
 include("imports.jl")
 include("includes.jl")
-mod_names(Main, loaded_mods)
 
 function resolve(S::State, file_scope::Scope, node::OverlayNode{CSTParser.IDENTIFIER})
     scope = find_scope(file_scope, node.span)

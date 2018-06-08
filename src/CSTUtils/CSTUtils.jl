@@ -34,9 +34,13 @@ module CSTUtils
     isexpr(x::CSTParser.LITERAL, k::Type{CSTParser.LITERAL}, lit::Tokens.Kind) = x.kind == lit
     isexpr(x, k::Type{CSTParser.LITERAL}, lit::Tokens.Kind) = false
 
+    isexpr(x::CSTParser.PUNCTUATION, k::Type{CSTParser.PUNCTUATION}, lit::Tokens.Kind) = x.kind == lit
+    isexpr(x, k::Type{CSTParser.PUNCTUATION}, lit::Tokens.Kind) = false
+
     isexpr(x::OverlayNode, ::Type{S}, kind::Tokens.Kind) where {S} = isexpr(x.expr, S, kind)
     isexpr(x::OverlayNode, ::Type{CSTParser.OPERATOR}, kind::Tokens.Kind)  = isexpr(x.expr, CSTParser.OPERATOR, kind)
     isexpr(x::OverlayNode, ::Type{CSTParser.KEYWORD}, kind::Tokens.Kind)  = isexpr(x.expr, CSTParser.KEYWORD, kind)
     isexpr(x::OverlayNode, ::Type{CSTParser.LITERAL}, kind::Tokens.Kind) = isexpr(x.expr, CSTParser.LITERAL, kind)
+    isexpr(x::OverlayNode, ::Type{CSTParser.PUNCTUATION}, kind::Tokens.Kind) = isexpr(x.expr, CSTParser.PUNCTUATION, kind)
     isexpr(x::OverlayNode, ::Type{S}) where {S} = isexpr(x.expr, S)
 end

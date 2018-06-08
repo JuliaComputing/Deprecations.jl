@@ -135,4 +135,81 @@ begin
             push!(resolutions, TextReplacement(dep, expr.span, String(take!(buf))))
         end
     end
+
+    struct ObsoleteCompatGetfield
+        min_ver::VersionNumber
+    end
+    register(ObsoleteCompatGetfield, Deprecation(
+        "This compat getfield is no longer required",
+        "julia",
+        v"0.5.0", v"0.5.0", typemax(VersionNumber)
+    ))
+    ObsoleteCompatGetfield() = ObsoleteCompatGetfield(v"0.6.0")
+    function dep_for_vers(::Type{ObsoleteCompatGetfield}, vers)
+        ObsoleteCompatGetfield(minimum(map(interval->interval.lower, vers["julia"].intervals)))
+    end
+
+    function should_replace(dep, refed)
+        if (is_identifier(refed, "Test") ||
+            is_identifier(refed, "Mmap") ||
+            is_identifier(refed, "DelimitedFiles") ||
+            is_identifier(refed, "SharedArrays")) && dep.min_ver > v"0.7.0-DEV.2005"
+        elseif is_identifier(refed, "Dates") && dep.min_ver > v"0.7.0-DEV.2575"
+        elseif is_identifier(refed, "Libdl") && dep.min_ver > v"0.7.0-DEV.3382"
+        elseif is_identifier(refed, "Printf") && dep.min_ver > v"0.7.0-DEV.3052"
+        else
+            return false
+        end
+        return true
+    end
+
+    function process_compat_getfield(x)
+        dep, expr, resolutions, context = x
+
+        isexpr(children(expr)[2], OPERATOR, Tokens.DOT) || return
+
+        is_identifier(children(expr)[1], "Compat") || return
+
+        refed = children(expr)[3]
+        should_replace(dep, refed) || return
+
+        buf = IOBuffer()
+        print_replacement(buf, format_result(args[1], expr), false, false)
+        push!(resolutions, TextReplacement(dep, expr.span, String(take!(buf))))
+    end
+
+    function process_compat_using(x)
+        dep, expr, resolutions, context = x
+        i = 2
+        while i < length(children(expr))
+            id = children(expr)[i]
+            i += 1
+            if is_identifier(id, "Compat")
+                if !isexpr(children(expr)[i], PUNCTUATION, Tokens.DOT)
+                    i += 1
+                    continue
+                end
+                i += 1
+                rid = children(expr)[i]
+                if should_replace(dep, rid)
+                    buf = IOBuffer()
+                    print_replacement(buf, rid, false, false)
+                    push!(resolutions, TextReplacement(dep,
+                        first(id.span):last(rid.span), String(take!(buf))))
+                end
+            end
+            while i < length(children(expr)) && !isexpr(children(expr)[i], PUNCTUATION, Tokens.COMMA)
+                i += 1
+            end
+            i += 1
+        end
+    end
+
+    match(ObsoleteCompatGetfield, CSTParser.BinarySyntaxOpCall) do x
+        process_compat_getfield(x)
+    end
+
+    match(ObsoleteCompatGetfield, CSTParser.Using) do x
+        process_compat_using(x)
+    end
 end

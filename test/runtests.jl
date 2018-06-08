@@ -1344,4 +1344,6 @@ end
 
 @test text_not_edited("foo(parse = true)")
 
+@test edit_text("using Compat.Test", v1deps)[2] == "using Test"
+
 end # testset
