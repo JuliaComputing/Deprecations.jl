@@ -1342,4 +1342,6 @@ end
 
 @test edit_text("@test eval(parse(x)) == 1")[2] == "@test eval(Meta.parse(x)) == 1"
 
+@test text_not_edited("foo(parse = true)")
+
 end # testset

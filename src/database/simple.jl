@@ -301,6 +301,10 @@ function filter_base_id(analysis, dep, expr, matches)
     S, file_scope = analysis
     @assert isa(expr, OverlayNode{CSTParser.IDENTIFIER})
     isexpr(parent(expr), CSTParser.Quotenode) && return false
+    # Not on the LHS of a keyword arg
+    if isexpr(parent(expr), CSTParser.Kw)
+        expr == children(parent(expr))[1] && return false
+    end
     binding = CSTAnalyzer.resolve(S, file_scope, expr)
     return binding.t == "BaseCore"
 end
