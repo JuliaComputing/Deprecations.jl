@@ -43,19 +43,18 @@ begin
     opcode(x::CSTParser.OPERATOR) = x.kind
     iscomparison(x::CSTParser.OPERATOR) = CSTParser.precedence(x) == 6
     iscomparison(x::OverlayNode) = iscomparison(x.expr)
-    match(ObsoleteVersionCheck, CSTParser.If) do x
-        dep, expr, resolutions, context = x
-        replace_expr = expr
-        comparison = children(expr)[2]
-        isexpr(comparison, CSTParser.BinaryOpCall) || return
-        iscomparison(children(comparison)[2]) || return
+
+    function process_comparison(comparison, expr, dep, context)
+        isexpr(comparison, CSTParser.BinaryOpCall) || return nothing
+        iscomparison(children(comparison)[2]) || return nothing
         comparison = comparison.expr
         opc = opcode(children(comparison)[2])
-        haskey(comparisons, opc) || return
+        haskey(comparisons, opc) || return nothing
+        replace_expr = expr
         # Also applies in @static context, but not necessarily in other macro contexts
         if context.in_macrocall
-            context.top_macrocall == parent(expr) || return
-            is_macroname(context.top_macrocall, "static") || return
+            context.top_macrocall == parent(expr) || return nothing
+            is_macroname(context.top_macrocall, "static") || return nothing
             replace_expr = context.top_macrocall
         end
         r1 = detect_ver_arguments(children(comparison)[1], children(comparison)[3])
@@ -64,9 +63,7 @@ begin
             alwaystrue = all(interval->(f(interval.lower, r1) && f(interval.upper, r1)), dep.vers.intervals)
             alwaysfalse = all(interval->(!f(interval.lower, r1) && !f(interval.upper, r1)), dep.vers.intervals)
             @assert !(alwaystrue && alwaysfalse)
-            alwaystrue && resolve_inline_body(dep, resolutions, expr, replace_expr)
-            alwaysfalse && resolve_delete_expr(dep,resolutions, expr, replace_expr)
-            return
+            return (replace_expr, alwaystrue, alwaysfalse)
         end
         r2 = detect_ver_arguments(children(comparison)[3], children(comparison)[1])
         if r2 !== nothing
@@ -74,8 +71,37 @@ begin
             alwaystrue = all(interval->(f(interval.lower, r2) && f(interval.upper, r2)), dep.vers.intervals)
             alwaysfalse = all(interval->(!f(interval.lower, r2) && !f(interval.upper, r2)), dep.vers.intervals)
             @assert !(alwaystrue && alwaysfalse)
-            alwaystrue && resolve_inline_body(dep, resolutions, expr, replace_expr)
-            alwaysfalse && resolve_delete_expr(dep, resolutions, expr, replace_expr)
+            return (replace_expr, alwaystrue, alwaysfalse)
+        end
+        return nothing
+    end
+
+    match(ObsoleteVersionCheck, CSTParser.If) do x
+        dep, expr, resolutions, context = x
+        replace_expr = expr
+        comparison = children(expr)[2]
+        result = process_comparison(comparison, expr, dep, context)
+        result === nothing && return
+        (replace_expr, alwaystrue, alwaysfalse) = result
+        alwaystrue && resolve_inline_body(dep, resolutions, expr, replace_expr)
+        alwaysfalse && resolve_delete_expr(dep,resolutions, expr, replace_expr)
+    end
+
+    match(ObsoleteVersionCheck, CSTParser.BinarySyntaxOpCall) do x
+        dep, expr, resolutions, context = x
+        is_and = isexpr(children(expr)[2], OPERATOR, Tokens.LAZY_AND)
+        (isexpr(children(expr)[2], OPERATOR, Tokens.LAZY_OR) ||
+         is_and) || return
+        comparison = children(expr)[1]
+        result = process_comparison(comparison, expr, dep, context)
+        result === nothing && return
+        (replace_expr, alwaystrue, alwaysfalse) = result
+        if is_and ? alwaystrue : alwaysfalse
+            push!(resolutions,
+                TextReplacement(dep,
+                first(replace_expr.span):(first(children(expr)[3].span)-1), ""))
+        elseif is_and ? alwaysfalse : alwaystrue
+            resolve_delete_expr(dep, resolutions, expr, replace_expr)
         end
     end
 end

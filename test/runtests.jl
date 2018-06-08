@@ -1340,4 +1340,7 @@ end
 
 @test edit_text("using Compat.Test", v1deps)[2] == "using Test"
 
+@test edit_text("VERSION >= v\"0.4.0-dev+6641\" && __precompile__()")[2] ==
+    "__precompile__()"
+
 end # testset
