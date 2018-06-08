@@ -1,0 +1,3 @@
+parse("""
+    { "Hello": "World" }
+""")
