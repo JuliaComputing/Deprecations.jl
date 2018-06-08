@@ -70,15 +70,15 @@ function match_parameters(template, match, result)
             ok || return ok
             j += 1
         else
-            without_trailing_ws = is_last_leaf(x)
+            ws = is_last_leaf(x), string(prev_node_ws(x), leading_ws(x)), string(trailing_ws(x), next_node_ws(x))
             if ret
                 if !slurp
-                    result[sym] =  (without_trailing_ws, (y,))
+                    result[sym] =  (ws, (y,))
                     j += 1
                 else
                     matched_exprs = Any[]
                     if i == length(children(template))
-                        result[sym] = (without_trailing_ws, children(match)[j:end])
+                        result[sym] = (ws, children(match)[j:end])
                         j = length(children(match))
                     else
                         nextx = children(template)[i + 1]
@@ -87,7 +87,7 @@ function match_parameters(template, match, result)
                             push!(matched_exprs, children(match)[j])
                             j += 1
                         end
-                        result[sym] = (without_trailing_ws, isempty(matched_exprs) ? (EmptyMatch(children(match)[j]),) : matched_exprs)
+                        result[sym] = (ws, isempty(matched_exprs) ? (EmptyMatch(children(match)[j]),) : matched_exprs)
                     end
                 end
             else
@@ -116,6 +116,15 @@ function prev_node_ws(node)
     while true
         sib = prevsibling(node)
         sib != nothing && return trailing_ws(sib)
+        node.parent == nothing && return ""
+        node = node.parent
+    end
+end
+
+function next_node_ws(node)
+    while true
+        sib = nextsibling(node)
+        sib != nothing && return leading_ws(sib)
         node.parent == nothing && return ""
         node = node.parent
     end
@@ -167,10 +176,53 @@ end
 
 function skip_next_ws(c)
     ret, sym, _ = next_is_template(c)
-    ret && endswith(String(sym), "!")
+    ret
+end
+
+"""
+    For whitespace before or after a template parameter, given the whitespace:
+        1. In the template
+        2. In the corresponding replacement
+        3. In the match
+
+    Compute the whitespace that should end up in the final replacement.
+"""
+function process_whitespace(template, replacement, match)
+    # The idea here to apply the "diff" between template and replacement
+    # to match. For now, we require one to be a substring of the other.
+    if template == replacement
+        return match
+    elseif length(replacement) < length(template)
+        @assert startswith(template, replacement)
+        # Any characters at the start of match that match `replacement` are fine
+        i = 0
+        while i < min(length(replacement), length(match))
+            i = nextind(match, i)
+            if replacement[i] != match[j]
+                return match
+            end
+        end
+        i > length(match) && return match
+        j = nextind(match, i)
+        # Then we cut any characters of the match that match the template
+        while j <= min(length(template), length(match))
+            if template[j] != match[j]
+                break
+            end
+            j = nextind(match, j)
+        end
+        return string(match[1:i],match[j:end])
+    elseif length(template) < length(replacement)
+        @assert endswith(replacement, template)
+        return string(replacement[end-sizeof(template):end], match)
+    end
 end
 
 function reassemble_tree(replacement, matches, parent = nothing)
+    # Whitespace hanlding: For any match, we need to process both the leading
+    # and the trailing whitespace. Sometimes one template exprs trailing
+    # whitespace is the next's leading whitespace. In that case, we break the
+    # ties in favor of always processing leading ws (i.e. we skip trailing whitespace)
     if isempty(children(replacement))
         return skip_next_ws(replacement) ?
             TriviaReplacementNode(parent, replacement, leading_ws(replacement), "") :
@@ -187,18 +239,31 @@ function reassemble_tree(replacement, matches, parent = nothing)
                 use_template_trailing_ws = false
                 sym = Symbol(String(sym)[1:end-1])
             end
-            no_trailing_ws, exprs = matches[sym]
+            (no_trailing_ws, template_leading_ws, template_trailing_ws), exprs = matches[sym]
             expr = first(exprs)
             if typeof(expr) == EmptyMatch
                 push!(ret.children, TriviaInsertionNode(prev_node_ws(expr.parent)))
                 continue
             end
-            push!(ret.children, TriviaReplacementNode(ret, expr,
+            lws = process_whitespace(template_leading_ws,
+                string(prev_node_ws(x), leading_ws(x)),
                 string(prev_node_ws(expr), leading_ws(expr)),
-                    skip_next_ws(x) ? "" :
-                    string(no_trailing_ws ? "" : trailing_ws(expr),
-                          use_template_trailing_ws ? trailing_ws(x) : "")))
-            append!(ret.children, exprs[2:end])
+            )
+            tws = process_whitespace(template_trailing_ws,
+                string(next_node_ws(x), trailing_ws(x)),
+                string(next_node_ws(last(exprs)), trailing_ws(last(exprs))),
+            )
+            if length(exprs) == 1
+                push!(ret.children, TriviaReplacementNode(ret, expr,
+                    lws, skip_next_ws(x) ? "" : tws))
+            else
+                push!(ret.children, TriviaReplacementNode(ret, expr,
+                    lws, trailing_ws(expr)))
+                append!(ret.children, exprs[2:end-1])
+                lexpr = last(exprs)
+                push!(ret.children, TriviaReplacementNode(ret, lexpr,
+                    leading_ws(lexpr), skip_next_ws(x) ? "" : tws))
+            end
         end
     end
     ret

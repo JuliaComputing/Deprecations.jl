@@ -25,21 +25,21 @@ begin
 
     match(OldStructSyntax,
         "immutable \$name\n\$BODY...\nend",
-        "struct\$name\n\$BODY!...\nend",
+        "struct \$name\n\$BODY!...\nend",
         format_paramlist
     )
     match(OldStructSyntax,
         "type \$name\n\$BODY...\nend",
-        "mutable struct\$name\n\$BODY!...\nend",
+        "mutable struct \$name\n\$BODY!...\nend",
         format_paramlist
     )
     match(OldStructSyntax,
         "abstract \$name",
-        "abstract type\$name end"
+        "abstract type \$name end"
     )
     match(OldStructSyntax,
         "bitstype \$size \$name",
-        "primitive type\$name \$size! end"
+        "primitive type \$name \$size! end"
     )
 end
 
@@ -59,7 +59,7 @@ begin
     )
     match(OldTypeAliasSyntax,
         "typealias \$A \$B",
-        "const\$A=\$B"
+        "const \$A = \$B"
     )
 end
 
@@ -401,19 +401,19 @@ begin
     ))
     match(KeywordsUnlocked,
         "Timer(\$timeout, \$repeat)",
-        "Timer(\$timeout, interval =\$repeat!)"
+        "Timer(\$timeout, interval=\$repeat!)"
     )
     match(KeywordsUnlocked,
         "Timer(\$callback, \$delay, \$repeat)",
-        "Timer(\$callback, \$delay!, interval =\$repeat!)"
+        "Timer(\$callback, \$delay!, interval=\$repeat!)"
     )
     match(KeywordsUnlocked,
         "names(\$m, \$all)",
-        "names(\$m, all =\$all!)"
+        "names(\$m, all=\$all!)"
     )
     match(KeywordsUnlocked,
         "names(\$m, \$all, \$imported)",
-        "names(\$m, all =\$all!, imported =\$imported!)"
+        "names(\$m, all=\$all!, imported=\$imported!)"
     )
     match(KeywordsUnlocked,
         "code_native(\$io, \$f, \$types, \$syntax)",
@@ -433,11 +433,11 @@ begin
         )
     match(KeywordsUnlocked,
         "chop(\$s, \$head)",
-        "chop(\$s, head =\$head!)"
+        "chop(\$s, head=\$head!)"
         )
     match(KeywordsUnlocked,
         "chop(\$s, \$head, \$tail)",
-        "chop(\$s, head =\$head!, tail=\$tail!)"
+        "chop(\$s, head=\$head!, tail=\$tail!)"
         )
     match(KeywordsUnlocked,
         "tryparse(\$T, \$s, \$base)",
