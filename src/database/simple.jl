@@ -388,6 +388,8 @@ const renames = [
     @add_rename STDERR         stderr           v"0.7.0-DEV.4068"
     @add_rename reprmime       repr             v"0.7.0-DEV.4010"
     @add_rename parse          Meta.parse       v"0.7.0-DEV.2437"
+    @add_rename isabstract     isabstracttype   v"0.7.0-DEV.1775"
+    @add_rename iteratorsize   IteratorSize     v"0.7.0-DEV.3309"
 ]
 
 begin
