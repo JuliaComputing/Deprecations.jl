@@ -151,7 +151,7 @@ module Deprecations
             end
             for (i,(dep, (k, f))) in enumerate(customs)
                 if isexpr(x, k)
-                    f((dep, x, results, context))
+                    f((dep, x, results, context, (S, Scop)))
                 end
             end
             if isexpr(x, MacroCall) && !context.in_macrocall

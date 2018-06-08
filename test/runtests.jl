@@ -1214,19 +1214,13 @@ end
 
 @test edit_text("""
 b = unshift!(a)
-""", [Deprecations.dep_for_vers(
-     Deprecations.unshift!_2_pushfirst!,
-     Pkg.Reqs.parse(IOBuffer("julia 0.7"))
-)])[2] == """
+""", v1deps)[2] == """
 b = pushfirst!(a)
 """
 
 @test edit_text("""
 JULIA_HOME + 2
-""", [Deprecations.dep_for_vers(
-    @eval(Deprecations.$(Symbol("JULIA_HOME_2_Sys.BINDIR"))),
-    Pkg.Reqs.parse(IOBuffer("julia 0.7"))
-)])[2] == """
+""", v1deps)[2] == """
 Sys.BINDIR + 2
 """
 
@@ -1271,13 +1265,13 @@ module Foo
     end
     parse("Hello")
 end
-""")
+""", v1deps)
 
 @test edit_text("""
 module Foo
     parse("Hello")
 end
-""")[2] == """
+""", v1deps)[2] == """
 module Foo
     Meta.parse("Hello")
 end
@@ -1291,7 +1285,7 @@ module Foo
         { "Hello": "World" }
     \"\"\")
 end
-""")[2] == """
+""", v1deps)[2] == """
 module Foo
     import JSON
     Meta.parse("Hello")
@@ -1303,7 +1297,7 @@ end
 
 files = joinpath.((joinpath(@__DIR__, "regressionfiles"),), ["top_define.jl", "parse.jl"])
 let analysis = Deprecations.process_all(files)
-    @test edit_text(readstring(files[2]);
+    @test edit_text(readstring(files[2]), v1deps;
         analysis=(analysis[1], analysis[2][files[2]]))[2] == """
     parse(\"\"\"
         { "Hello": "World" }
@@ -1318,11 +1312,11 @@ module Foo
         { "Hello": "World" }
     \"\"\")
 end
-""")
+""", v1deps)
 
 files = joinpath.((joinpath(@__DIR__, "regressionfiles"),), ["top_include.jl", "using_json.jl", "parse.jl"])
 let analysis = Deprecations.process_all(files)
-    @test edit_text(readstring(files[end]);
+    @test edit_text(readstring(files[end]), v1deps;
         analysis=(analysis[1], analysis[2][files[end]]))[2] == """
     parse(\"\"\"
         { "Hello": "World" }
@@ -1332,7 +1326,7 @@ end
 
 files = joinpath.((joinpath(@__DIR__, "regressionfiles"),), ["top_not_include.jl", "using_json.jl", "parse.jl"])
 let analysis = Deprecations.process_all(files)
-    @test edit_text(readstring(files[end]);
+    @test edit_text(readstring(files[end]), v1deps;
         analysis=(analysis[1], analysis[2][files[end]]))[2] == """
     Meta.parse(\"\"\"
         { "Hello": "World" }
@@ -1340,9 +1334,9 @@ let analysis = Deprecations.process_all(files)
     """
 end
 
-@test edit_text("@test eval(parse(x)) == 1")[2] == "@test eval(Meta.parse(x)) == 1"
+@test edit_text("@test eval(parse(x)) == 1", v1deps)[2] == "@test eval(Meta.parse(x)) == 1"
 
-@test text_not_edited("foo(parse = true)")
+@test text_not_edited("foo(parse = true)", v1deps)
 
 @test edit_text("using Compat.Test", v1deps)[2] == "using Test"
 
