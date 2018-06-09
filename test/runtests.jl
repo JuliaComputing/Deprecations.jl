@@ -1359,4 +1359,6 @@ end
 @test edit_text("cp(\"a\", \"b\"; remove_destination=true)", v1deps)[2] ==
     "cp(\"a\", \"b\"; force=true)"
 
+@test edit_text("import Compat.Markdown", v1deps)[2] == "import Markdown"
+
 end # testset
