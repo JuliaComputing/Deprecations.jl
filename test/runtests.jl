@@ -1348,4 +1348,15 @@ end
 
 @test edit_text("findin(collect(1:3:15), collect(2:4:10))")[2] ==
     "findall(in(collect(2:4:10)), collect(1:3:15))"
+
+# Issue #42
+@test text_not_edited("""
+foo() do
+    nothing
+end
+""")
+
+@test edit_text("cp(\"a\", \"b\"; remove_destination=true)", v1deps)[2] ==
+    "cp(\"a\", \"b\"; force=true)"
+
 end # testset

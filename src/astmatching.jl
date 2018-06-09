@@ -63,6 +63,9 @@ function match_parameters(template, match, result)
                 break
             end
         end
+        if j > length(children(match))
+            return false
+        end
         y = children(match)[j]
         ret, sym, slurp = is_template_expr(x)
         if !ret && matches_template(x, y)

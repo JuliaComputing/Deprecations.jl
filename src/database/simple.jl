@@ -525,3 +525,42 @@ begin
         "hasmethod(\$f, \$t)"
     )
 end
+
+struct RenamedKeyword
+    min_ver::VersionNumber
+end
+RenamedKeyword() = RenamedKeyword(v"0.6.0")
+function dep_for_vers(::Type{RenamedKeyword}, vers)
+    RenamedKeyword(minimum(map(interval->interval.lower, vers["julia"].intervals)))
+end
+register(RenamedKeyword, Deprecation(
+    "a number of keyword arguments were renamed",
+    "julia",
+    v"0.7.0-DEV.1", v"0.7.0-DEV.1", typemax(VersionNumber)
+))
+
+function process_renamed_keyword(x)
+    dep, expr, resolutions, context, analysis = x
+    for rename in keyword_renames
+        if rename[1] <= dep.min_ver && is_identifier(expr, rename[3][1])
+            # Check if we're in keyword context
+            p = parent(expr)
+            isexpr(p, CSTParser.Kw) || return
+            # Check if the call we're in is on the list
+            pp = parent(p)
+            isexpr(pp, CSTParser.Parameters) && (pp = parent(pp))
+            isexpr(pp, CSTParser.Call) || return
+            call_id = children(pp)[1]
+            any(name->is_identifier(call_id, name), rename[2]) || return
+            push!(resolutions, TextReplacement(dep, expr.span, rename[3][2]))
+        end
+    end
+end
+
+match(RenamedKeyword, CSTParser.IDENTIFIER) do x
+    process_renamed_keyword(x)
+end
+
+const keyword_renames = [
+    (v"0.7.0-DEV.3995", ["cp", "mv", "cptree"], "remove_destination"=>"force")
+]
