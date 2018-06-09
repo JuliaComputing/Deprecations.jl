@@ -1361,4 +1361,6 @@ end
 
 @test edit_text("import Compat.Markdown", v1deps)[2] == "import Markdown"
 
+@test text_not_edited("@foo select", v1deps)
+
 end # testset

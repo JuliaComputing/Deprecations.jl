@@ -328,6 +328,7 @@ end
 
 match(SimpleRename, CSTParser.IDENTIFIER) do x
     dep, expr, resolutions, context, analysis = x
+    context.in_macrocall && return
     for rename in renames
         if rename[1] <= dep.min_ver && is_identifier(expr, rename[2][1])
             filter_base_id(analysis, expr) || return
@@ -541,6 +542,7 @@ register(RenamedKeyword, Deprecation(
 
 function process_renamed_keyword(x)
     dep, expr, resolutions, context, analysis = x
+    context.in_macrocall && return
     for rename in keyword_renames
         if rename[1] <= dep.min_ver && is_identifier(expr, rename[3][1])
             # Check if we're in keyword context
