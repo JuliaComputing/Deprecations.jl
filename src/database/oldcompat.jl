@@ -136,17 +136,17 @@ begin
         end
     end
 
-    struct ObsoleteCompatGetfield
+    struct ObsoleteModuleRef
         min_ver::VersionNumber
     end
-    register(ObsoleteCompatGetfield, Deprecation(
-        "This compat getfield is no longer required",
+    register(ObsoleteModuleRef, Deprecation(
+        "This reference to a module that used to be in Base (or Compat) can now be directly referenced.",
         "julia",
         v"0.5.0", v"0.5.0", typemax(VersionNumber)
     ))
-    ObsoleteCompatGetfield() = ObsoleteCompatGetfield(v"0.6.0")
-    function dep_for_vers(::Type{ObsoleteCompatGetfield}, vers)
-        ObsoleteCompatGetfield(minimum(map(interval->interval.lower, vers["julia"].intervals)))
+    ObsoleteModuleRef() = ObsoleteModuleRef(v"0.6.0")
+    function dep_for_vers(::Type{ObsoleteModuleRef}, vers)
+        ObsoleteModuleRef(minimum(map(interval->interval.lower, vers["julia"].intervals)))
     end
 
     function should_replace(dep, refed)
@@ -164,12 +164,13 @@ begin
         return true
     end
 
-    function process_compat_getfield(x)
+    function process_module_getfield(x)
         dep, expr, resolutions, context = x
 
         isexpr(children(expr)[2], OPERATOR, Tokens.DOT) || return
 
-        is_identifier(children(expr)[1], "Compat") || return
+        (is_identifier(children(expr)[1], "Compat") ||
+         is_identifier(children(expr)[1], "Base")) || return
 
         refed = children(expr)[3]
         should_replace(dep, refed) || return
@@ -179,13 +180,13 @@ begin
         push!(resolutions, TextReplacement(dep, expr.span, String(take!(buf))))
     end
 
-    function process_compat_using(x)
+    function process_module_using(x)
         dep, expr, resolutions, context = x
         i = 2
         while i < length(children(expr))
             id = children(expr)[i]
             i += 1
-            if is_identifier(id, "Compat")
+            if is_identifier(id, "Compat") || is_identifier(id, "Base")
                 if !isexpr(children(expr)[i], PUNCTUATION, Tokens.DOT)
                     i += 1
                     continue
@@ -206,15 +207,15 @@ begin
         end
     end
 
-    match(ObsoleteCompatGetfield, CSTParser.BinarySyntaxOpCall) do x
-        process_compat_getfield(x)
+    match(ObsoleteModuleRef, CSTParser.BinarySyntaxOpCall) do x
+        process_module_getfield(x)
     end
 
-    match(ObsoleteCompatGetfield, CSTParser.Using) do x
-        process_compat_using(x)
+    match(ObsoleteModuleRef, CSTParser.Using) do x
+        process_module_using(x)
     end
 
-    match(ObsoleteCompatGetfield, CSTParser.Import) do x
-        process_compat_using(x)
+    match(ObsoleteModuleRef, CSTParser.Import) do x
+        process_module_using(x)
     end
 end

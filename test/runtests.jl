@@ -1363,4 +1363,6 @@ end
 
 @test text_not_edited("@foo select", v1deps)
 
+@test edit_text("using Base.Test", v1deps)[2] == "using Test"
+
 end # testset

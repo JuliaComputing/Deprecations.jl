@@ -393,6 +393,7 @@ const renames = [
     @add_rename iteratorsize   IteratorSize     v"0.7.0-DEV.3309"
     @add_rename iteratoreltype IteratorEltype   v"0.7.0-DEV.3309"
     @add_rename nb_available   bytesavailable   v"0.7.0-DEV.3477"
+    @add_rename broadcast_indices broadcast_axes  v"0.7.0-DEV.4936"
 ]
 
 struct KeywordsUnlocked; end
