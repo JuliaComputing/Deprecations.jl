@@ -1219,6 +1219,18 @@ b = pushfirst!(a)
 """
 
 @test edit_text("""
+b = Compat.pushfirst!(a)
+""", v1deps)[2] == """
+b = pushfirst!(a)
+"""
+
+@test edit_text("""
+a = Compat.Sys.BINDIR
+""", v1deps)[2] == """
+a = Sys.BINDIR
+"""
+
+@test edit_text("""
 JULIA_HOME + 2
 """, v1deps)[2] == """
 Sys.BINDIR + 2

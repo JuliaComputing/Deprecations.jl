@@ -322,8 +322,8 @@ register(SimpleRename, Deprecation(
     v"0.7.0-DEV.1", v"0.7.0-DEV.1", typemax(VersionNumber)
 ))
 
-macro add_rename(pattern, replacement, ver)
-    :(($ver, $(string(pattern))=>$(string(replacement)) ))
+macro add_rename(pattern, replacement, ver, hascompat = false)
+    :(($ver, $(string(pattern))=>$(string(replacement)), $hascompat))
 end
 
 match(SimpleRename, CSTParser.IDENTIFIER) do x
@@ -338,63 +338,69 @@ match(SimpleRename, CSTParser.IDENTIFIER) do x
 end
 
 const renames = [
-    @add_rename ipermute!      invpermute!      v"0.7.0-DEV.3173"
-    @add_rename unshift!       pushfirst!       v"0.7.0-DEV.3155"
-    @add_rename JULIA_HOME     Sys.BINDIR       v"0.7.0-DEV.3073"
-    @add_rename CartesianRange CartesianIndices v"0.7.0-DEV.3025"
-    @add_rename sub2ind        CartesianIndices v"0.7.0-DEV.3025"
-    @add_rename ind2sub        LinearIndices    v"0.7.0-DEV.3025"
-    @add_rename Display        AbstractDisplay  v"0.7.0-DEV.2695"
-    @add_rename strwidth       textwidth        v"0.7.0-DEV.1930"
-    @add_rename charwidth      textwidth        v"0.7.0-DEV.1930"
+    @add_rename ipermute!      invpermute!      v"0.7.0-DEV.3173" true
+    @add_rename unshift!       pushfirst!       v"0.7.0-DEV.3155" true
+    @add_rename JULIA_HOME     Sys.BINDIR       v"0.7.0-DEV.3073" true
+    @add_rename CartesianRange CartesianIndices v"0.7.0-DEV.3025" true
+    @add_rename sub2ind        CartesianIndices v"0.7.0-DEV.3025" true
+    @add_rename ind2sub        LinearIndices    v"0.7.0-DEV.3025" true
+    @add_rename Display        AbstractDisplay  v"0.7.0-DEV.2695" true
+    @add_rename strwidth       textwidth        v"0.7.0-DEV.1930" true
+    @add_rename charwidth      textwidth        v"0.7.0-DEV.1930" true
     @add_rename sqrtm          sqrt             v"0.7.0-DEV.1599"
     @add_rename logm           log              v"0.7.0-DEV.1597"
     @add_rename expm           exp              v"0.7.0-DEV.1486"
-    @add_rename Complex32      ComplexF16       v"0.7.0-DEV.2919"
-    @add_rename Complex64      ComplexF32       v"0.7.0-DEV.2919"
-    @add_rename Complex128     ComplexF64       v"0.7.0-DEV.2919"
+    @add_rename Complex32      ComplexF16       v"0.7.0-DEV.2919" true
+    @add_rename Complex64      ComplexF32       v"0.7.0-DEV.2919" true
+    @add_rename Complex128     ComplexF64       v"0.7.0-DEV.2919" true
     @add_rename EnvHash        EnvDict          v"0.7.0-DEV.2265"
-    @add_rename ctranspose     adjoint          v"0.7.0-DEV.1415"
-    @add_rename ctranspose!    adjoint!         v"0.7.0-DEV.1415"
+    @add_rename ctranspose     adjoint          v"0.7.0-DEV.1415" true
+    @add_rename ctranspose!    adjoint!         v"0.7.0-DEV.1415" true
     @add_rename writecsv       writedlm         v"0.7.0-DEV.1737"
     @add_rename readcsv        readdlm          v"0.7.0-DEV.1740"
-    @add_rename is_linux       Sys.islinux      v"0.7.0-DEV.914"
-    @add_rename is_bsd         Sys.isbsd        v"0.7.0-DEV.914"
-    @add_rename is_apple       Sys.isapple      v"0.7.0-DEV.914"
-    @add_rename is_unix        Sys.isunix       v"0.7.0-DEV.914"
-    @add_rename is_windows     Sys.iswindows    v"0.7.0-DEV.914"
+    @add_rename is_linux       Sys.islinux      v"0.7.0-DEV.914" true
+    @add_rename is_bsd         Sys.isbsd        v"0.7.0-DEV.914" true
+    @add_rename is_apple       Sys.isapple      v"0.7.0-DEV.914" true
+    @add_rename is_unix        Sys.isunix       v"0.7.0-DEV.914" true
+    @add_rename is_windows     Sys.iswindows    v"0.7.0-DEV.914" true
     @add_rename AbstractIOBuffer GenericIOBuffer v"0.7.0-DEV.961"
-    @add_rename select         partialsort      v"0.7.0-DEV.1535"
-    @add_rename select!        partialsort!     v"0.7.0-DEV.1535"
-    @add_rename selectperm     partialsortperm  v"0.7.0-DEV.1535"
-    @add_rename selectperm!    partialsortperm! v"0.7.0-DEV.1535"
-    @add_rename Range          AbstractRange    v"0.7.0-DEV.1721"
-    @add_rename isleaftype     isconcretetype   v"0.7.0-DEV.1775"
-    @add_rename isnumber       isnumeric        v"0.7.0-DEV.1775"
-    @add_rename Associative    AbstractDict     v"0.7.0-DEV.2951"
-    @add_rename find           findall          v"0.7.0-DEV.3415"
-    @add_rename module_parent   parentmodule    v"0.7.0-DEV.3460"
-    @add_rename datatype_module parentmodule    v"0.7.0-DEV.3460"
-    @add_rename function_module parentmodule    v"0.7.0-DEV.3460"
-    @add_rename indmin         argmin           v"0.7.0-DEV.3516"
-    @add_rename indmax         argmax           v"0.7.0-DEV.3516"
-    @add_rename module_name    nameof           v"0.7.0-DEV.3539"
-    @add_rename function_name  nameof           v"0.7.0-DEV.3539"
-    @add_rename datatype_name  nameof           v"0.7.0-DEV.3539"
-    @add_rename method_exist   hasmethod        v"0.7.0-DEV.3455"
-    @add_rename object_id      objectid         v"0.7.0-DEV.3455"
-    @add_rename DevNull        devnull          v"0.7.0-DEV.4068"
-    @add_rename STDIN          stdin            v"0.7.0-DEV.4068"
-    @add_rename STDOUT         stdout           v"0.7.0-DEV.4068"
-    @add_rename STDERR         stderr           v"0.7.0-DEV.4068"
+    @add_rename select         partialsort      v"0.7.0-DEV.1535" true
+    @add_rename select!        partialsort!     v"0.7.0-DEV.1535" true
+    @add_rename selectperm     partialsortperm  v"0.7.0-DEV.1535" true
+    @add_rename selectperm!    partialsortperm! v"0.7.0-DEV.1535" true
+    @add_rename Range          AbstractRange    v"0.7.0-DEV.1721" true
+    @add_rename isleaftype     isconcretetype   v"0.7.0-DEV.1775" true
+    @add_rename isnumber       isnumeric        v"0.7.0-DEV.1775" true
+    @add_rename Associative    AbstractDict     v"0.7.0-DEV.2951" true
+    @add_rename find           findall          v"0.7.0-DEV.3415" true
+    @add_rename module_parent   parentmodule    v"0.7.0-DEV.3460" true
+    @add_rename datatype_module parentmodule    v"0.7.0-DEV.3460" true
+    @add_rename function_module parentmodule    v"0.7.0-DEV.3460" true
+    @add_rename indmin         argmin           v"0.7.0-DEV.3516" true
+    @add_rename indmax         argmax           v"0.7.0-DEV.3516" true
+    @add_rename module_name    nameof           v"0.7.0-DEV.3539" true
+    @add_rename function_name  nameof           v"0.7.0-DEV.3539" true
+    @add_rename datatype_name  nameof           v"0.7.0-DEV.3539" true
+    @add_rename method_exist   hasmethod        v"0.7.0-DEV.3455" true
+    @add_rename object_id      objectid         v"0.7.0-DEV.3455" true
+    @add_rename DevNull        devnull          v"0.7.0-DEV.4068" true
+    @add_rename STDIN          stdin            v"0.7.0-DEV.4068" true
+    @add_rename STDOUT         stdout           v"0.7.0-DEV.4068" true
+    @add_rename STDERR         stderr           v"0.7.0-DEV.4068" true
     @add_rename reprmime       repr             v"0.7.0-DEV.4010"
     @add_rename parse          Meta.parse       v"0.7.0-DEV.2437"
-    @add_rename isabstract     isabstracttype   v"0.7.0-DEV.1775"
-    @add_rename iteratorsize   IteratorSize     v"0.7.0-DEV.3309"
-    @add_rename iteratoreltype IteratorEltype   v"0.7.0-DEV.3309"
-    @add_rename nb_available   bytesavailable   v"0.7.0-DEV.3477"
+    @add_rename isabstract     isabstracttype   v"0.7.0-DEV.1775" true
+    @add_rename iteratorsize   IteratorSize     v"0.7.0-DEV.3309" true
+    @add_rename iteratoreltype IteratorEltype   v"0.7.0-DEV.3309" true
+    @add_rename nb_available   bytesavailable   v"0.7.0-DEV.3477" true
     @add_rename broadcast_indices broadcast_axes  v"0.7.0-DEV.4936"
 ]
+
+for (ver, repl, hascompat) in renames
+    if hascompat
+        match(SimpleRename, "Compat.$(repl.second)", repl.second)
+    end
+end
 
 struct KeywordsUnlocked; end
 begin
