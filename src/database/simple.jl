@@ -402,6 +402,14 @@ for (ver, repl, hascompat) in renames
     end
 end
 
+function filter_no_kw_already(S, dep, tree, matches)
+    @assert isexpr(tree, CSTParser.Call)
+    for c in children(tree)
+        isexpr(c, CSTParser.Kw) && return false
+    end
+    return true
+end
+
 struct KeywordsUnlocked; end
 begin
     register(KeywordsUnlocked, Deprecation(
@@ -411,105 +419,130 @@ begin
     ))
     match(KeywordsUnlocked,
         "Timer(\$timeout, \$repeat)",
-        "Timer(\$timeout, interval=\$repeat!)"
+        "Timer(\$timeout, interval=\$repeat!)",
+        filter = filter_no_kw_already
     )
     match(KeywordsUnlocked,
         "Timer(\$callback, \$delay, \$repeat)",
-        "Timer(\$callback, \$delay!, interval=\$repeat!)"
+        "Timer(\$callback, \$delay!, interval=\$repeat!)",
+        filter = filter_no_kw_already
     )
     match(KeywordsUnlocked,
         "names(\$m, \$all)",
-        "names(\$m, all=\$all!)"
+        "names(\$m, all=\$all!)",
+        filter = filter_no_kw_already
     )
     match(KeywordsUnlocked,
         "names(\$m, \$all, \$imported)",
-        "names(\$m, all=\$all!, imported=\$imported!)"
+        "names(\$m, all=\$all!, imported=\$imported!)",
+        filter = filter_no_kw_already
     )
     match(KeywordsUnlocked,
         "code_native(\$io, \$f, \$types, \$syntax)",
-        "code_native(\$io, \$f!, \$types!, syntax=\$syntax!)"
-        )
+        "code_native(\$io, \$f!, \$types!, syntax=\$syntax!)",
+        filter = filter_no_kw_already
+    )
     match(KeywordsUnlocked,
         "code_native(\$f, \$types, \$syntax)",
-        "code_native(\$f, \$types!, syntax=\$syntax!)"
-        )
+        "code_native(\$f, \$types!, syntax=\$syntax!)",
+        filter = filter_no_kw_already
+    )
     match(KeywordsUnlocked,
         "eachmatch(\$re, \$str, \$overlap)",
-        "eachmatch(\$re, \$str!, overlap=\$overlap!)"
-        )
+        "eachmatch(\$re, \$str!, overlap=\$overlap!)",
+        filter = filter_no_kw_already
+    )
     match(KeywordsUnlocked,
         "matchall(\$re, \$str, \$overlap)",
-        "matchall(\$re, \$str!, overlap=\$overlap!)"
-        )
+        "matchall(\$re, \$str!, overlap=\$overlap!)",
+        filter = filter_no_kw_already
+    )
     match(KeywordsUnlocked,
         "chop(\$s, \$head)",
-        "chop(\$s, head=\$head!)"
-        )
+        "chop(\$s, head=\$head!)",
+        filter = filter_no_kw_already
+    )
     match(KeywordsUnlocked,
         "chop(\$s, \$head, \$tail)",
-        "chop(\$s, head=\$head!, tail=\$tail!)"
-        )
+        "chop(\$s, head=\$head!, tail=\$tail!)",
+        filter = filter_no_kw_already
+    )
     match(KeywordsUnlocked,
         "tryparse(\$T, \$s, \$base)",
-        "tryparse(\$T, \$s!, base=\$base!)"
-        )
+        "tryparse(\$T, \$s!, base=\$base!)",
+        filter = filter_no_kw_already
+    )
     match(KeywordsUnlocked,
         "mkdir(\$path, \$mode)",
-        "mkdir(\$path, mode=\$mode!)"
-        )
+        "mkdir(\$path, mode=\$mode!)",
+        filter = filter_no_kw_already
+    )
     match(KeywordsUnlocked,
         "mkpath(\$path, \$mode)",
-        "mkpath(\$path, mode=\$mode!)"
-        )
+        "mkpath(\$path, mode=\$mode!)",
+        filter = filter_no_kw_already
+    )
     match(KeywordsUnlocked,
         "countlines(\$x, \$eol)",
-        "countlines(\$x, eol=\$eol!)"
-        )
+        "countlines(\$x, eol=\$eol!)",
+        filter = filter_no_kw_already
+    )
     match(KeywordsUnlocked,
         "PipeBuffer(\$data, \$maxsize)",
-        "PipeBuffer(\$data, maxsize=\$maxsize!)"
-        )
+        "PipeBuffer(\$data, maxsize=\$maxsize!)",
+        filter = filter_no_kw_already
+    )
     match(KeywordsUnlocked,
         "unsafe_wrap(\$T, \$pointer, \$dims, \$own)",
-        "unsafe_wrap(\$T, \$pointer!, \$dims!, own=\$own!)"
-        )
+        "unsafe_wrap(\$T, \$pointer!, \$dims!, own=\$own!)",
+        filter = filter_no_kw_already
+    )
     match(KeywordsUnlocked,
         "linspace(\$start, \$stop)",
-        "range(\$start, stop=\$stop, length=50)"
+        "range(\$start, stop=\$stop, length=50)",
+        filter = filter_no_kw_already
     )
     match(KeywordsUnlocked,
         "logspace(\$start, \$stop)",
-        "exp10.(range(\$start!, stop=\$stop!, length=50))"
+        "exp10.(range(\$start!, stop=\$stop!, length=50))",
+        filter = filter_no_kw_already
     )
     match(KeywordsUnlocked,
         "linspace(\$start, \$stop, \$length)",
-        "range(\$start!, stop=\$stop!, length=\$length)"
+        "range(\$start!, stop=\$stop!, length=\$length)",
+        filter = filter_no_kw_already
     )
     match(KeywordsUnlocked,
         "logspace(\$start, \$stop, \$length)",
-        "exp10.(range(\$start, stop=\$stop, length=\$length))"
+        "exp10.(range(\$start, stop=\$stop, length=\$length))",
+        filter = filter_no_kw_already
     )
     for f in ("trunc", "floor", "ceil", "round")
         match(KeywordsUnlocked,
             "$f(\$x, \$digits)",
-            "$f(\$x!, digits=\$digits!)"
+            "$f(\$x!, digits=\$digits!)",
+            filter = filter_no_kw_already
         )
         match(KeywordsUnlocked,
             "$f(\$x, \$digits, \$base)",
-            "$f(\$x!, digits=\$digits!, base=\$base!)"
+            "$f(\$x!, digits=\$digits!, base=\$base!)",
+            filter = filter_no_kw_already
         )
     end
     match(KeywordsUnlocked,
         "signif(\$x, \$digits)",
-        "round(\$x!, sigdigits=\$digits!)"
+        "round(\$x!, sigdigits=\$digits!)",
+        filter = filter_no_kw_already
     )
     match(KeywordsUnlocked,
         "signif(\$x, \$digits, \$base)",
-        "round(\$x!, sigdigits=\$digits!, base=\$base!)"
+        "round(\$x!, sigdigits=\$digits!, base=\$base!)",
+        filter = filter_no_kw_already
     )
     match(KeywordsUnlocked,
         "method_exists(\$f, \$t, \$world)",
-        "hasmethod(\$f, \$t, world=\$world)"
+        "hasmethod(\$f, \$t, world=\$world)",
+        filter = filter_no_kw_already
     )
 end
 

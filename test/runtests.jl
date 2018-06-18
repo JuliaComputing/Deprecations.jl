@@ -1409,4 +1409,6 @@ try println(io, "  Uptime: \$(Sys.uptime()) sec"); end
 try println(io, "  Uptime: \$(Sys.uptime()) sec"); catch; end
 """
 
+@test text_not_edited("ceil(Integer, digits=log2(n))+1")
+
 end # testset
