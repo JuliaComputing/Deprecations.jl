@@ -33,3 +33,5 @@ include("database/simple.jl")
 include("database/ccallampersand.jl")
 # Removes calls to isdefined(Base, :symbol) when these are always true or false
 include("database/isdefined_base.jl")
+# Adds `catch` blocks to `try; end` blocks
+include("database/trycatch.jl")

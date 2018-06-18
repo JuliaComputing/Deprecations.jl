@@ -1377,4 +1377,36 @@ end
 
 @test edit_text("using Base.Test", v1deps)[2] == "using Test"
 
+@test edit_text("""
+try
+    return Const(f(argvals...))
+end
+""")[2] == """
+try
+    return Const(f(argvals...))
+catch
+end
+"""
+
+@test edit_text("""
+if foo()
+    try
+        return Const(f(argvals...))
+    end
+end
+""")[2] == """
+if foo()
+    try
+        return Const(f(argvals...))
+    catch
+    end
+end
+"""
+
+@test edit_text("""
+try println(io, "  Uptime: \$(Sys.uptime()) sec"); end
+""")[2] == """
+try println(io, "  Uptime: \$(Sys.uptime()) sec"); catch; end
+"""
+
 end # testset

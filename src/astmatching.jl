@@ -116,10 +116,16 @@ leaf_is_template_expr(x::OverlayNode) = leaf_is_template_expr(x.expr)
 using AbstractTrees: prevsibling, nextsibling
 
 function prev_node_ws(node)
+    ws = ""
     while true
         sib = prevsibling(node)
-        sib != nothing && return trailing_ws(sib)
-        node.parent == nothing && return ""
+        if sib != nothing
+            ws = string(trailing_ws(sib), ws)
+            !isempty(sib.span) && return ws
+            node = sib
+            continue
+        end
+        node.parent == nothing && return ws
         node = node.parent
     end
 end
