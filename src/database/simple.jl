@@ -388,7 +388,6 @@ const renames = [
     @add_rename STDOUT         stdout           v"0.7.0-DEV.4068" true
     @add_rename STDERR         stderr           v"0.7.0-DEV.4068" true
     @add_rename reprmime       repr             v"0.7.0-DEV.4010"
-    @add_rename parse          Meta.parse       v"0.7.0-DEV.2437"
     @add_rename isabstract     isabstracttype   v"0.7.0-DEV.1775" true
     @add_rename iteratorsize   IteratorSize     v"0.7.0-DEV.3309" true
     @add_rename iteratoreltype IteratorEltype   v"0.7.0-DEV.3309" true
@@ -546,6 +545,12 @@ begin
     )
 end
 
+function filter_func_base_id(analysis, dep, tree, matches)
+    @assert isexpr(tree, CSTParser.Call)
+    id = first(children(tree))
+    return filter_base_id(analysis, id)
+end
+
 struct Misc07; end
 begin
     register(Misc07, Deprecation(
@@ -564,6 +569,11 @@ begin
     match(Misc07,
         "method_exists(\$f, \$t)",
         "hasmethod(\$f, \$t)"
+    )
+    match(Misc07,
+        "parse(\$s)",
+        "Meta.parse(\$s)",
+        filter = filter_func_base_id
     )
 end
 
