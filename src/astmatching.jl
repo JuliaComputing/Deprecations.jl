@@ -59,7 +59,7 @@ function match_parameters(template, match, result)
         if j > length(children(match)) && i == length(children(template))
             ret, sym, slurp = is_template_expr(x)
             if ret
-                result[sym] = (false, (EmptyMatch(match),))
+                result[sym] = (("", "", ""), (EmptyMatch(match),))
                 break
             end
         end
