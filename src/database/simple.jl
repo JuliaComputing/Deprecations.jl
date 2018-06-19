@@ -401,10 +401,44 @@ for (ver, repl, hascompat) in renames
     end
 end
 
+
 function filter_no_kw_already(S, dep, tree, matches)
     @assert isexpr(tree, CSTParser.Call)
     for c in children(tree)
         isexpr(c, CSTParser.Kw) && return false
+    end
+    return true
+end
+
+function filter_not_def(S, dep, tree, matches)
+    CSTParser.defines_function(parent(tree)) && return false
+    return true
+end
+
+const BaseCoreNumberTypes = [
+    # Core
+    :AbstractFloat, :Bool, :Float16, :Float32, :Float64, :Int, :Int128,
+    :Int16, :Int32, :Int64, :Int8, :Integer, :Number, :Real, :Signed,
+    :UInt, :UInt128, :UInt16, :UInt32, :UInt64, :UInt8, :Unsigned,
+    # Base
+    :BigFloat, :BigInt, :Cchar, :Cdouble, :Cfloat, :Cint, :Cintmax_t,
+    :Clong, :Clonglong, :Complex, :Complex128, :Complex32, :Complex64,
+    :Cptrdiff_t, :Cshort, :Csize_t, :Cssize_t, :Cuchar, :Cuint, :Cuintmax_t,
+    :Culong, :Culonglong, :Cushort, :Cwchar_t, :Irrational, :Rational
+]
+
+# Ideally we'd do the opposite and find things that are likely ::Number, but
+# that's harder
+function filter_not_likely_type(analysis, dep, tree, matches)
+    @assert isexpr(tree, CSTParser.Call)
+    S, file_scope = analysis
+    id = children(tree)[3]
+    isexpr(id, CSTParser.IDENTIFIER) || return true
+    binding = CSTAnalyzer.resolve(S, file_scope, id)
+    if binding.t == "BaseCore"
+        if Symbol(id.expr.val) in BaseCoreNumberTypes
+            return false
+        end
     end
     return true
 end
@@ -520,12 +554,16 @@ begin
         match(KeywordsUnlocked,
             "$f(\$x, \$digits)",
             "$f(\$x!, digits=\$digits!)",
-            filter = filter_no_kw_already
+            filter = (args...)->filter_no_kw_already(args...) &&
+                                filter_not_likely_type(args...) &&
+                                filter_not_def(args...)
         )
         match(KeywordsUnlocked,
             "$f(\$x, \$digits, \$base)",
             "$f(\$x!, digits=\$digits!, base=\$base!)",
-            filter = filter_no_kw_already
+            filter = (args...)->filter_no_kw_already(args...) &&
+                                filter_not_likely_type(args...) &&
+                                filter_not_def(args...)
         )
     end
     match(KeywordsUnlocked,

@@ -1413,4 +1413,9 @@ try println(io, "  Uptime: \$(Sys.uptime()) sec"); catch; end
 
 @test text_not_edited("parse(Int, \"1\")", v1deps)
 
+@test text_not_edited("round(Int, 1.555)")
+@test edit_text("round(1.555, 2)")[2] == "round(1.555, digits=2)"
+
+@test text_not_edited("round(a, b) = foo(a, b)")
+
 end # testset
