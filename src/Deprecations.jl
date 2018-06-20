@@ -293,6 +293,7 @@ module Deprecations
             CSTAnalyzer.trav(walker, p, s, S)
         end
         for (scope, incl) in walker.include_map
+            haskey(file_scopes, incl) || continue
             scope_include!(scope, file_scopes[incl])
         end
         S, file_scopes
