@@ -234,6 +234,10 @@ begin
         length(children(expr)) == 3     || return false  # 3 = '(' + ')' + 1 arg
         isexpr(children(expr)[2], UnarySyntaxOpCall) || return false
         CSTParser.has_sig(parent(expr)) && return false
+        if isexpr(CSTParser.parent(expr), CSTParser.UnarySyntaxOpCall) &&
+            isexpr(children(CSTParser.parent(expr))[1], CSTParser.OPERATOR, Tokens.EX_OR)
+            return false
+        end
         return true
     end
 

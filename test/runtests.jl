@@ -1418,4 +1418,13 @@ try println(io, "  Uptime: \$(Sys.uptime()) sec"); catch; end
 
 @test text_not_edited("round(a, b) = foo(a, b)")
 
+@test text_not_edited("""
+@eval begin
+    function _showcompact(io::IO, c::Colorant{T,\$N}) where T
+        print(io, colorant_string(typeof(c)), "{", T, "}(")
+        \$(printargs[:]...)
+    end
+end
+""")
+
 end # testset
