@@ -1427,4 +1427,6 @@ try println(io, "  Uptime: \$(Sys.uptime()) sec"); catch; end
 end
 """)
 
+@test edit_text("ismatch(r\"lo\", \"hello\")")[2] == "occursin(r\"lo\", \"hello\")"
+
 end # testset
