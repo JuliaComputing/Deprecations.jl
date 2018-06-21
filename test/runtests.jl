@@ -1219,6 +1219,12 @@ b = pushfirst!(a)
 """
 
 @test edit_text("""
+b = shift!(a)
+""", v1deps)[2] == """
+b = popfirst!(a)
+"""
+
+@test edit_text("""
 b = Compat.pushfirst!(a)
 """, v1deps)[2] == """
 b = pushfirst!(a)

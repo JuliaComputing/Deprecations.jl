@@ -344,6 +344,7 @@ end
 const renames = [
     @add_rename ipermute!      invpermute!      v"0.7.0-DEV.3173" true
     @add_rename unshift!       pushfirst!       v"0.7.0-DEV.3155" true
+    @add_rename shift!         popfirst!        v"0.7.0-DEV.3155" true
     @add_rename JULIA_HOME     Sys.BINDIR       v"0.7.0-DEV.3073" true
     @add_rename CartesianRange CartesianIndices v"0.7.0-DEV.3025" true
     @add_rename sub2ind        CartesianIndices v"0.7.0-DEV.3025" true
