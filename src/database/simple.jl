@@ -598,7 +598,7 @@ begin
     ))
     match(Misc07,
         "ismatch(\$r, \$s)",
-        "occursin(\$s, \$r)"
+        "occursin(\$r, \$s)"
     )
     match(Misc07,
         "findin(\$a, \$b)",
