@@ -138,6 +138,14 @@ begin
         sp = get_struct_parent(expr)
         # If there's already a where expr, this is new syntax
         call = isexpr(expr, FunctionDef) ? children(expr)[2] : children(expr)[1]
+        had_rt_annotation = false
+        call_or_rt_expr = call
+        if isexpr(call, BinarySyntaxOpCall) && isexpr(children(call)[2],
+                CSTParser.OPERATOR, Tokens.DECLARATION)
+            call_or_rt_expr = rt_expr = call
+            call = children(call)[1]
+            had_rt_annotation = true
+        end
         is_where_expr(call) && return
         length(children(call)) == 0 && return
         had_curly = isexpr(children(call)[1], Curly)
@@ -176,11 +184,18 @@ begin
         replace_lit = CSTParser.LITERAL(0, 0:1, "", Tokens.ERROR)
         new_where = TriviaReplacementNode(new_tree, ChildReplacementNode(new_tree,
             [ReplacementNode("where"," "," "), tparams...], CSTParser.BinarySyntaxOpCall(replace_lit, replace_op, replace_lit)),
-            "", trailing_ws(call))
+            "", trailing_ws(call_or_rt_expr))
         unshift!(children(new_tree), new_where)
+        call_parent = new_where
         isexpr(expr, FunctionDef) && unshift!(children(new_tree), children(expr)[1])
+        if had_rt_annotation
+            annotation = children(rt_expr)[end]
+            call_parent = ChildReplacementNode(new_tree, [children(rt_expr)[2]], rt_expr)
+            push!(children(call_parent), TriviaReplacementNode(call_parent, annotation, leading_ws(annotation), ""))
+            unshift!(children(new_where), call_parent)
+        end
         new_call = TriviaReplacementNode(new_where, ChildReplacementNode(new_where, children(call)[2:end], call), "", "")
-        unshift!(children(new_where), new_call)
+        unshift!(children(call_parent), new_call)
         if needs_new_curly
             new_curly = TriviaReplacementNode(new_call, ChildReplacementNode(new_call, [fname, new_curlies...], had_curly ? Curly : EXPR{Curly}(Expr[], 0, 0:1)),"","")
             unshift!(children(new_call), new_curly)

@@ -1429,4 +1429,14 @@ end
 
 @test edit_text("ismatch(r\"lo\", \"hello\")")[2] == "occursin(r\"lo\", \"hello\")"
 
+edit_text("""
+function foo{T}(::T)::Array{T}
+    return T[]
+end
+""")[2] == """
+function foo(::T)::Array{T} where T
+    return T[]
+end
+"""
+
 end # testset
