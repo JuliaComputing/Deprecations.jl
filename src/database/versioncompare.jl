@@ -44,26 +44,19 @@ begin
     iscomparison(x::CSTParser.OPERATOR) = CSTParser.precedence(x) == 6
     iscomparison(x::OverlayNode) = iscomparison(x.expr)
 
-    function process_comparison(comparison, expr, dep, context)
+    function process_comparison(comparison, dep, context)
         isexpr(comparison, CSTParser.BinaryOpCall) || return nothing
         iscomparison(children(comparison)[2]) || return nothing
         comparison = comparison.expr
         opc = opcode(children(comparison)[2])
         haskey(comparisons, opc) || return nothing
-        replace_expr = expr
-        # Also applies in @static context, but not necessarily in other macro contexts
-        if context.in_macrocall
-            context.top_macrocall == parent(expr) || return nothing
-            is_macroname(context.top_macrocall, "static") || return nothing
-            replace_expr = context.top_macrocall
-        end
         r1 = detect_ver_arguments(children(comparison)[1], children(comparison)[3])
         if r1 !== nothing
             f = comparisons[opc]
             alwaystrue = all(interval->(f(interval.lower, r1) && f(interval.upper, r1)), dep.vers.intervals)
             alwaysfalse = all(interval->(!f(interval.lower, r1) && !f(interval.upper, r1)), dep.vers.intervals)
             @assert !(alwaystrue && alwaysfalse)
-            return (replace_expr, alwaystrue, alwaysfalse)
+            return (alwaystrue, alwaysfalse)
         end
         r2 = detect_ver_arguments(children(comparison)[3], children(comparison)[1])
         if r2 !== nothing
@@ -71,37 +64,88 @@ begin
             alwaystrue = all(interval->(f(interval.lower, r2) && f(interval.upper, r2)), dep.vers.intervals)
             alwaysfalse = all(interval->(!f(interval.lower, r2) && !f(interval.upper, r2)), dep.vers.intervals)
             @assert !(alwaystrue && alwaysfalse)
-            return (replace_expr, alwaystrue, alwaysfalse)
+            return (alwaystrue, alwaysfalse)
         end
         return nothing
     end
 
-    match(ObsoleteVersionCheck, CSTParser.If) do x
-        dep, expr, resolutions, context = x
-        replace_expr = expr
-        comparison = children(expr)[2]
-        result = process_comparison(comparison, expr, dep, context)
-        result === nothing && return
-        (replace_expr, alwaystrue, alwaysfalse) = result
-        alwaystrue && resolve_inline_body(dep, resolutions, expr, replace_expr)
-        alwaysfalse && resolve_delete_expr(dep,resolutions, expr, replace_expr)
+    function in_statement_position(expr)
+        p = parent(expr)
+        if !isexpr(p, CSTParser.Begin) && !isexpr(p, CSTParser.Block)
+            # Could still be in value position if we're the last value in the
+            # block and the block itself is in value position
+            nextsibling(expr) === nothing && return true
+            return in_statement_position(p)
+        end
+        return false
     end
 
-    match(ObsoleteVersionCheck, CSTParser.BinarySyntaxOpCall) do x
-        dep, expr, resolutions, context = x
-        is_and = isexpr(children(expr)[2], OPERATOR, Tokens.LAZY_AND)
-        (isexpr(children(expr)[2], OPERATOR, Tokens.LAZY_OR) ||
-         is_and) || return
-        comparison = children(expr)[1]
-        result = process_comparison(comparison, expr, dep, context)
-        result === nothing && return
-        (replace_expr, alwaystrue, alwaysfalse) = result
-        if is_and ? alwaystrue : alwaysfalse
+    # Could be implemented in the future
+    is_statically_effect_free(expr) = false
+
+    function resolve_boolean(dep, resolutions, context, expr, alwaystruefalse)
+        p = parent(expr)
+        if isexpr(p, CSTParser.BinarySyntaxOpCall)
+            context.in_macrocall && return
+            is_and = isexpr(children(p)[2], OPERATOR, Tokens.LAZY_AND)
+            is_or = isexpr(children(p)[2], OPERATOR, Tokens.LAZY_OR)
+            (is_and || is_or) || @goto out
+            if expr == children(p)[1]
+                if is_and ? alwaystruefalse : !alwaystruefalse
+                    push!(resolutions,
+                        TextReplacement(dep,
+                        first(p.span):(first(children(p)[3].span)-1), ""))
+                    return
+                elseif is_and ? !alwaystruefalse : alwaystruefalse
+                    resolve_boolean(dep, resolutions, context, p, is_and ? false : true)
+                end
+            else
+                @assert expr == children(p)[3]
+                if is_and ? alwaystruefalse : !alwaystruefalse
+                    push!(resolutions,
+                        TextReplacement(dep),
+                        first(children(p)[2].span):last(children(p)[3].span),
+                        "")
+                elseif is_and ? !alwaystruefalse : alwaystruefalse
+                    if is_statically_effect_free(children(p)[1])
+                        resolve_boolean(dep, resolutions, context, p, is_and ? false : true)
+                    else
+                        @goto out
+                    end
+                end
+            end
+            return
+        elseif isexpr(p, CSTParser.If)
+            replace_expr = p
+            if context.in_macrocall
+                context.top_macrocall == parent(p) || return nothing
+                is_macroname(context.top_macrocall, "static") || return nothing
+                replace_expr = context.top_macrocall
+            end
+            if alwaystruefalse
+                resolve_inline_body(dep, resolutions, p, replace_expr)
+            else
+                resolve_delete_expr(dep, resolutions, p, replace_expr)
+            end
+            return
+        end
+        
+        @label out
+        if in_statement_position(expr)
+            resolve_delete_expr(dep, resolutions, expr, expr)
+        else
             push!(resolutions,
                 TextReplacement(dep,
-                first(replace_expr.span):(first(children(expr)[3].span)-1), ""))
-        elseif is_and ? alwaysfalse : alwaystrue
-            resolve_delete_expr(dep, resolutions, expr, replace_expr)
+                expr.span, alwaystruefalse ? "true" : "false"))
         end
+    end
+
+    match(ObsoleteVersionCheck, CSTParser.BinaryOpCall) do x
+        dep, expr, resolutions, context = x
+        result = process_comparison(expr, dep, context)
+        result === nothing && return
+        (alwaystrue, alwaysfalse) = result
+        (alwaysfalse || alwaystrue) || return
+        resolve_boolean(dep, resolutions, context, expr, alwaystrue)
     end
 end

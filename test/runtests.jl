@@ -1449,4 +1449,29 @@ end
 
 @test text_not_edited("f.(x...)", v1deps)
 
+@test edit_text("""
+if VERSION < v"0.1" && foo()
+    bar()
+else
+    baz()
+end
+""")[2] == """
+baz()
+"""
+
+@test edit_text("""
+if VERSION < v"0.1" || foo()
+    bar()
+else
+    baz()
+end
+""")[2] == """
+if foo()
+    bar()
+else
+    baz()
+end
+"""
+
+
 end # testset
