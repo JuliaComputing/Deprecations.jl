@@ -235,12 +235,17 @@ begin
         v"0.7.0-DEV.2559", v"1.0", typemax(VersionNumber)
     ))
 
-    function filter_funcdef_and_multiarg(S, dep, expr, matches)
+    function filter_funcdef_broadcast_multiarg(S, dep, expr, matches)
         length(children(expr)) == 3     || return false  # 3 = '(' + ')' + 1 arg
         isexpr(children(expr)[2], UnarySyntaxOpCall) || return false
         CSTParser.has_sig(parent(expr)) && return false
+        # AST Interpolation $(x...)
         if isexpr(CSTParser.parent(expr), CSTParser.UnarySyntaxOpCall) &&
             isexpr(children(CSTParser.parent(expr))[1], CSTParser.OPERATOR, Tokens.EX_OR)
+            return false
+        # Broadcasting
+        elseif isexpr(CSTParser.parent(expr), CSTParser.BinarySyntaxOpCall) &&
+            isexpr(children(CSTParser.parent(expr))[2], CSTParser.OPERATOR, Tokens.DOT)
             return false
         end
         return true
@@ -249,7 +254,7 @@ begin
     match(TupleSplat,
           "(\$ID...)",
           "(\$ID...,)",
-          filter = filter_funcdef_and_multiarg
+          filter = filter_funcdef_broadcast_multiarg
     )
 end
 

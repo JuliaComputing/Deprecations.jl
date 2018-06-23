@@ -1447,4 +1447,6 @@ end
 
 @test text_not_edited("(::Type{<: JLArray{T}})(x::AbstractArray) where T = JLArray(convert(Array{T}, x), size(x))")
 
+@test text_not_edited("f.(x...)", v1deps)
+
 end # testset
