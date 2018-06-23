@@ -92,7 +92,7 @@ begin
     end
     function filter_non_where_curly(S, dep, tree, matches)
         dep.non_where_curly && return true
-        isexpr(parent(tree), BinarySyntaxOpCall) || isexpr(parent(tree), CSTParser.WhereOpCall) || return false
+        (isexpr(parent(tree), BinarySyntaxOpCall) || isexpr(parent(tree), CSTParser.WhereOpCall)) || return false
         isexpr(children(parent(tree))[2], OPERATOR, Tokens.WHERE) || return false
         return true
     end
@@ -110,6 +110,11 @@ begin
         # Handled by the above
         name = first(matches[:NAME][2])
         isexpr(name, Curly) && return false
+        # Filter out (::Type{<:Foo})
+        if isexpr(name, CSTParser.UnarySyntaxOpCall) &&
+            isexpr(children(name)[1], CSTParser.OPERATOR, Tokens.ISSUBTYPE)
+            return false
+        end
         p = parent(tree)
         isexpr(p, BinarySyntaxOpCall)  || isexpr(p, CSTParser.WhereOpCall)  || return true
         isexpr(children(p)[2], OPERATOR, Tokens.WHERE) || return true

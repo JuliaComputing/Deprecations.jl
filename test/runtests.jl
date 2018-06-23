@@ -1445,4 +1445,6 @@ function foo(::T)::Array{T} where T
 end
 """
 
+@test text_not_edited("(::Type{<: JLArray{T}})(x::AbstractArray) where T = JLArray(convert(Array{T}, x), size(x))")
+
 end # testset
