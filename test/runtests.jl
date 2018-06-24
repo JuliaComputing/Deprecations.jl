@@ -1435,7 +1435,7 @@ end
 
 @test edit_text("ismatch(r\"lo\", \"hello\")")[2] == "occursin(r\"lo\", \"hello\")"
 
-edit_text("""
+@test edit_text("""
 function foo{T}(::T)::Array{T}
     return T[]
 end
@@ -1472,6 +1472,58 @@ else
     baz()
 end
 """
+
+# Issue #59
+@test edit_text("""
+if foo() && VERSION < v"0.7.0-DEV.986" #22763
+    import Base: airyai, airyaix, airyaiprime, airyaiprimex
+end
+""", v1deps)[2] == "foo()"
+
+@test edit_text("""
+if foo() && VERSION < v"0.7.0-DEV.986" #22763
+    import Base: airyai, airyaix, airyaiprime, airyaiprimex
+else
+    bar()
+end
+""", v1deps)[2] == "foo()\nbar()\n"
+
+@test edit_text("""
+let
+    if foo() && VERSION < v"0.7.0-DEV.986" #22763
+        import Base: airyai, airyaix, airyaiprime, airyaiprimex
+    else
+        bar()
+    end
+end
+""", v1deps)[2] == """
+let
+    foo()
+    bar()
+end
+"""
+
+@test edit_text("""
+let
+    if foo() && baz() && VERSION < v"0.7.0-DEV.986" #22763
+        import Base: airyai, airyaix, airyaiprime, airyaiprimex
+    else
+        bar()
+    end
+end
+""", v1deps)[2] == """
+let
+    foo() && baz()
+    bar()
+end
+"""
+
+
+@test edit_text("""
+if isdefined(Base, :airyai) && VERSION < v"0.7.0-DEV.986" #22763
+    import Base: airyai, airyaix, airyaiprime, airyaiprimex
+end
+""", v1deps)[2] == ""
 
 
 end # testset

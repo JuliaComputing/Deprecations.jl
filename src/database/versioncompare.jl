@@ -71,73 +71,13 @@ begin
 
     function in_statement_position(expr)
         p = parent(expr)
-        if !isexpr(p, CSTParser.Begin) && !isexpr(p, CSTParser.Block)
+        if isexpr(p, CSTParser.Begin) || isexpr(p, CSTParser.Block)
             # Could still be in value position if we're the last value in the
             # block and the block itself is in value position
             nextsibling(expr) === nothing && return true
             return in_statement_position(p)
         end
         return false
-    end
-
-    # Could be implemented in the future
-    is_statically_effect_free(expr) = false
-
-    function resolve_boolean(dep, resolutions, context, expr, alwaystruefalse)
-        p = parent(expr)
-        if isexpr(p, CSTParser.BinarySyntaxOpCall)
-            context.in_macrocall && return
-            is_and = isexpr(children(p)[2], OPERATOR, Tokens.LAZY_AND)
-            is_or = isexpr(children(p)[2], OPERATOR, Tokens.LAZY_OR)
-            (is_and || is_or) || @goto out
-            if expr == children(p)[1]
-                if is_and ? alwaystruefalse : !alwaystruefalse
-                    push!(resolutions,
-                        TextReplacement(dep,
-                        first(p.span):(first(children(p)[3].span)-1), ""))
-                    return
-                elseif is_and ? !alwaystruefalse : alwaystruefalse
-                    resolve_boolean(dep, resolutions, context, p, is_and ? false : true)
-                end
-            else
-                @assert expr == children(p)[3]
-                if is_and ? alwaystruefalse : !alwaystruefalse
-                    push!(resolutions,
-                        TextReplacement(dep),
-                        first(children(p)[2].span):last(children(p)[3].span),
-                        "")
-                elseif is_and ? !alwaystruefalse : alwaystruefalse
-                    if is_statically_effect_free(children(p)[1])
-                        resolve_boolean(dep, resolutions, context, p, is_and ? false : true)
-                    else
-                        @goto out
-                    end
-                end
-            end
-            return
-        elseif isexpr(p, CSTParser.If)
-            replace_expr = p
-            if context.in_macrocall
-                context.top_macrocall == parent(p) || return nothing
-                is_macroname(context.top_macrocall, "static") || return nothing
-                replace_expr = context.top_macrocall
-            end
-            if alwaystruefalse
-                resolve_inline_body(dep, resolutions, p, replace_expr)
-            else
-                resolve_delete_expr(dep, resolutions, p, replace_expr)
-            end
-            return
-        end
-        
-        @label out
-        if in_statement_position(expr)
-            resolve_delete_expr(dep, resolutions, expr, expr)
-        else
-            push!(resolutions,
-                TextReplacement(dep,
-                expr.span, alwaystruefalse ? "true" : "false"))
-        end
     end
 
     match(ObsoleteVersionCheck, CSTParser.BinaryOpCall) do x
