@@ -1525,5 +1525,21 @@ if isdefined(Base, :airyai) && VERSION < v"0.7.0-DEV.986" #22763
 end
 """, v1deps)[2] == ""
 
+@test edit_text("""
+function foo()
+    const x = 1
+end
+""", v1deps)[2] == """
+function foo()
+    x = 1
+end
+"""
+
+@test text_not_edited("const x = 1")
+@test text_not_edited("""
+module foo
+    const x = 1
+end
+""")
 
 end # testset

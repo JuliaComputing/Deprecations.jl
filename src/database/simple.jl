@@ -669,3 +669,23 @@ end
 const keyword_renames = [
     (v"0.7.0-DEV.3995", ["cp", "mv", "cptree"], "remove_destination"=>"force")
 ]
+
+struct LocalConst; end
+register(LocalConst, Deprecation(
+    "The `const` keyword in local scope has been deprecated (it never worked anyway)",
+    "julia",
+    v"0.1.0", v"0.7.0-DEV.1", typemax(VersionNumber)
+))
+
+match(LocalConst, CSTParser.Const) do x
+    dep, expr, resolutions, context, analysis = x
+    context.in_macrocall && return
+    S, file_scope = analysis
+    scope = CSTAnalyzer.find_scope(file_scope, expr.span)
+    if !(scope.t in ("__toplevel__", "Module"))
+        buf = IOBuffer()
+        print_replacement(buf, children(expr)[2], false, false)
+        push!(resolutions, TextReplacement(dep, expr.span, String(take!(buf))))
+    end
+    return
+end
