@@ -1545,4 +1545,20 @@ end
 @test edit_text("Array{Float64}()", v1deps)[2] == "Array{Float64}(undef)"
 @test edit_text("Array{Float64}(1, 2)", v1deps)[2] == "Array{Float64}(undef, 1, 2)"
 
+@test edit_text("""
+function faem{T<:AbstractFloat}(S::DenseMatrix{T}, mv::Vector{T}, n::Int;
+             maxoutdim::Int=size(X,1)-1,
+             tol::Real=1.0e-6,   # convergence tolerance
+             tot::Integer=1000)  # maximum number of iterations
+    return nothing
+end
+""")[2] == """
+function faem(S::DenseMatrix{T}, mv::Vector{T}, n::Int;
+             maxoutdim::Int=size(X,1)-1,
+             tol::Real=1.0e-6,   # convergence tolerance
+             tot::Integer=1000) where T<:AbstractFloat  # maximum number of iterations
+    return nothing
+end
+"""
+
 end # testset

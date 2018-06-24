@@ -1,5 +1,5 @@
 # Special purpose formatter to unindent multi-line arglists
-function format_arglist!(wheren, nchars_moved, lcurly_pos = 0)
+function format_arglist!(wheren, nchars_moved, lcurly_pos = 0, body_indent = 4)
     # We replace the call argument
     ocall = children(wheren)[1]
     (length(children(ocall)) == 2) && return
@@ -14,6 +14,12 @@ function format_arglist!(wheren, nchars_moved, lcurly_pos = 0)
     if lcurly_pos != 0
         indents = countindent_body(ocall)
         if !isempty(indents) && (indents[1] < lcurly_pos)
+            return
+        end
+        # Heuristic: If this formatting would the argument list past the indent
+        # of the body (or 4 spaces if there is no body provided), don't perform
+        # the unindent
+        if any(x->(x + nchars_moved) < body_indent, indents)
             return
         end
     end
@@ -205,7 +211,7 @@ begin
         nchars_moved = (needs_new_curly ? sum(expr->sum(charwidth, fullspan_text(expr)), children(new_curly)[2:end]) : 0) -
                        (had_curly ? line_pos(call, first(children(call)[2].span)) - (line_pos(curly, first(children(curly)[2].span))) : 0)
         heuristic_pos = had_curly ? line_pos(curly, first(children(curly)[2].span)) : line_pos(call, first(children(call)[2].span)-1)
-        format_arglist!(new_where, nchars_moved, heuristic_pos)
+        format_arglist!(new_where, nchars_moved, heuristic_pos, isexpr(expr, FunctionDef) ? 4 : 0)
         # If the parameter list is multi-line, it might need to be indented as well
         if had_curly
             new_lbrace_pos = compute_new_line_pos(new_where, children(new_where)[3])

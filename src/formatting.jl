@@ -129,13 +129,14 @@ function setindent_ws(ws, nchars)
     String(take!(buf))
 end
 
-function countindent_body(expr, indents = Int[])
-    for c in children(expr)
+function countindent_body(expr, indents = Int[], countlast = false)
+    cs = children(expr)
+    for (i, c) in enumerate(cs)
         # For leaves, count indent
-        if isempty(children(c))
+        if isempty(children(c)) && (countlast || i != length(cs))
             countindent_ws(trailing_ws(c), indents)
         else
-            countindent_body(c, indents)
+            countindent_body(c, indents, countlast || i != length(cs))
         end
     end
     indents
