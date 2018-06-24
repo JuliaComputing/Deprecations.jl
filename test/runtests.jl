@@ -1542,4 +1542,7 @@ module foo
 end
 """)
 
+@test edit_text("Array{Float64}()", v1deps)[2] == "Array{Float64}(undef)"
+@test edit_text("Array{Float64}(1, 2)", v1deps)[2] == "Array{Float64}(undef, 1, 2)"
+
 end # testset

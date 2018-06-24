@@ -670,6 +670,7 @@ const keyword_renames = [
     (v"0.7.0-DEV.3995", ["cp", "mv", "cptree"], "remove_destination"=>"force")
 ]
 
+# =======================
 struct LocalConst; end
 register(LocalConst, Deprecation(
     "The `const` keyword in local scope has been deprecated (it never worked anyway)",
@@ -688,4 +689,37 @@ match(LocalConst, CSTParser.Const) do x
         push!(resolutions, TextReplacement(dep, expr.span, String(take!(buf))))
     end
     return
+end
+
+# =======================
+struct ArrayUndef; end
+register(ArrayUndef, Deprecation(
+    "Arrays now require an explicit `undef` initializer",
+    "julia",
+    v"0.7.0-alpha", v"0.7.0-DEV.1", typemax(VersionNumber)
+))
+
+match(ArrayUndef, CSTParser.Call) do x
+    dep, expr, resolutions, context, analysis = x
+    context.in_macrocall && return
+    curly = children(expr)[1]
+    isexpr(curly, CSTParser.Curly) || return
+    is_identifier(children(curly)[1], "Array") || return
+    args = children(expr)[3:end-1]
+    if all(args) do arg
+                isexpr(arg, CSTParser.PUNCTUATION, Tokens.COMMA) && return true
+                isexpr(arg, CSTParser.LITERAL) || return false
+                isa(Expr(arg.expr), Integer) || return false
+                return true
+            end
+        repl = ChildReplacementNode(nothing, [
+            children(expr)[1:2]...,
+            ReplacementNode("undef", "", ""),
+            (isempty(args) ? () : (ReplacementNode(",","", " "),))...,
+            children(expr)[3:end]...
+        ], expr)
+        buf = IOBuffer()
+        print_replacement(buf, repl, false, false)
+        push!(resolutions, TextReplacement(dep, expr.span, String(take!(buf))))
+    end
 end
