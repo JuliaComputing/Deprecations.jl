@@ -11,9 +11,9 @@ function edit_text_converge(t)
     end
 end
 
-text_not_edited(t)        = edit_text(t)[2] == t
+text_not_edited(t; kwargs...)        = edit_text(t; kwargs...)[2] == t
 markdown_not_edited(t)    = edit_markdown(t)[2] == t
-text_not_edited(t, d)     = edit_text(t, d)[2] == t
+text_not_edited(t, d; kwargs...)     = edit_text(t, d; kwargs...)[2] == t
 markdown_not_edited(t, d) = edit_markdown(t, d)[2] == t
 
 include("unittests.jl")
@@ -1560,5 +1560,11 @@ function faem(S::DenseMatrix{T}, mv::Vector{T}, n::Int;
     return nothing
 end
 """
+
+files = joinpath.((joinpath(@__DIR__, "regressionfiles"),), ["const_a.jl", "const_b.jl"])
+let analysis = Deprecations.process_all(files)
+    @test text_not_edited(readstring(files[1]), v1deps;
+        analysis=(analysis[1], analysis[2][files[1]]))
+end
 
 end # testset

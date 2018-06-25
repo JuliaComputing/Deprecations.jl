@@ -273,7 +273,7 @@ function find_scope(s::Scope, range::UnitRange)
         error("")
     end
     for child in children(s)
-        if range in child.range
+        if range in child.range && child.loc.path == s.loc.path
             return find_scope(child, range)
         end
     end
