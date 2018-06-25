@@ -290,6 +290,7 @@ module Deprecations
             s = file_scopes[file]
             s.loc = Location(file, 0)
             S.current_scope = s
+            S.loc = s.loc
             CSTAnalyzer.trav(walker, p, s, S)
         end
         for (scope, incl) in walker.include_map
