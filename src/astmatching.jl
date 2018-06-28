@@ -73,7 +73,7 @@ function match_parameters(template, match, result)
             ok || return ok
             j += 1
         else
-            ws = is_last_leaf(x), string(prev_node_ws(x), leading_ws(x)), string(trailing_ws(x), next_node_ws(x))
+            ws = is_last_leaf(x), string(prev_node_ws(x), leading_trivia(x)), string(trailing_trivia(x), next_node_ws(x))
             if ret
                 if !slurp
                     result[sym] =  (ws, (y,))
@@ -120,7 +120,7 @@ function prev_node_ws(node)
     while true
         sib = prevsibling(node)
         if sib != nothing
-            ws = string(trailing_ws(sib), ws)
+            ws = string(trailing_trivia(sib), ws)
             !isempty(sib.span) && return ws
             node = sib
             continue
@@ -133,7 +133,7 @@ end
 function next_node_ws(node)
     while true
         sib = nextsibling(node)
-        sib != nothing && return leading_ws(sib)
+        sib != nothing && return leading_trivia(sib)
         node.parent == nothing && return ""
         node = node.parent
     end
@@ -160,8 +160,8 @@ end
 function reassemble(out::IO, replacement, matches)
     if isempty(children(replacement))
         ret, sym, _ = next_is_template(replacement)
-        skip_trailing_ws = ret && endswith(String(sym), "!")
-        rt = text(replacement, true, !skip_trailing_ws)
+        skip_trailing_trivia = ret && endswith(String(sym), "!")
+        rt = text(replacement, true, !skip_trailing_trivia)
         write(out, rt)
     end
     i = 1
@@ -234,7 +234,7 @@ function reassemble_tree(replacement, matches, parent = nothing)
     # ties in favor of always processing leading ws (i.e. we skip trailing whitespace)
     if isempty(children(replacement))
         return skip_next_ws(replacement) ?
-            TriviaReplacementNode(parent, replacement, leading_ws(replacement), "") :
+            TriviaReplacementNode(parent, replacement, leading_trivia(replacement), "") :
             replacement
     end
     ret = ChildReplacementNode(parent, Any[], replacement)
@@ -243,35 +243,35 @@ function reassemble_tree(replacement, matches, parent = nothing)
         if !istemp
             push!(ret.children, reassemble_tree(x, matches, ret))
         else
-            use_template_trailing_ws = true
+            use_template_trailing_trivia = true
             if endswith(String(sym), "!")
-                use_template_trailing_ws = false
+                use_template_trailing_trivia = false
                 sym = Symbol(String(sym)[1:end-1])
             end
-            (no_trailing_ws, template_leading_ws, template_trailing_ws), exprs = matches[sym]
+            (no_trailing_trivia, template_leading_trivia, template_trailing_trivia), exprs = matches[sym]
             expr = first(exprs)
             if typeof(expr) == EmptyMatch
                 push!(ret.children, TriviaInsertionNode(prev_node_ws(expr.parent)))
                 continue
             end
-            lws = process_whitespace(template_leading_ws,
-                string(prev_node_ws(x), leading_ws(x)),
-                string(prev_node_ws(expr), leading_ws(expr)),
+            lws = process_whitespace(template_leading_trivia,
+                string(prev_node_ws(x), leading_trivia(x)),
+                string(prev_node_ws(expr), leading_trivia(expr)),
             )
-            tws = process_whitespace(template_trailing_ws,
-                string(next_node_ws(x), trailing_ws(x)),
-                string(next_node_ws(last(exprs)), trailing_ws(last(exprs))),
+            tws = process_whitespace(template_trailing_trivia,
+                string(next_node_ws(x), trailing_trivia(x)),
+                string(next_node_ws(last(exprs)), trailing_trivia(last(exprs))),
             )
             if length(exprs) == 1
                 push!(ret.children, TriviaReplacementNode(ret, expr,
                     lws, skip_next_ws(x) ? "" : tws))
             else
                 push!(ret.children, TriviaReplacementNode(ret, expr,
-                    lws, trailing_ws(expr)))
+                    lws, trailing_trivia(expr)))
                 append!(ret.children, exprs[2:end-1])
                 lexpr = last(exprs)
                 push!(ret.children, TriviaReplacementNode(ret, lexpr,
-                    leading_ws(lexpr), skip_next_ws(x) ? "" : tws))
+                    leading_trivia(lexpr), skip_next_ws(x) ? "" : tws))
             end
         end
     end

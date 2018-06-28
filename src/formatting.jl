@@ -3,7 +3,7 @@ struct ReplacementNode
     leading_trivia::String
     trailing_trivia::String
 end
-ReplacementNode(text::String, orig::OverlayNode{T}) where {T} = ReplacementNode(text, leading_ws(orig), trailing_ws(orig))
+ReplacementNode(text::String, orig::OverlayNode{T}) where {T} = ReplacementNode(text, leading_trivia(orig), trailing_trivia(orig))
 fullspan_text(r::ReplacementNode) = string(r.leading_trivia, r.text, r.trailing_trivia)
 
 struct ChildReplacementNode
@@ -134,7 +134,7 @@ function countindent_body(expr, indents = Int[], countlast = false)
     for (i, c) in enumerate(cs)
         # For leaves, count indent
         if isempty(children(c)) && (countlast || i != length(cs))
-            countindent_ws(trailing_ws(c), indents)
+            countindent_ws(trailing_trivia(c), indents)
         else
             countindent_body(c, indents, countlast || i != length(cs))
         end
@@ -146,8 +146,8 @@ function _format_addindent_body(expr, nexpr, nindent)
     for c in children(expr)
         # For leaves, try to unindent
         if isempty(children(c))
-            push!(nexpr.children, TriviaReplacementNode(next, c, leading_ws(c),
-                addindent_ws(trailing_ws(c), nindent)))
+            push!(nexpr.children, TriviaReplacementNode(next, c, leading_trivia(c),
+                addindent_ws(trailing_trivia(c), nindent)))
         else
             push!(nexpr.children, format_addindent_body(c, nindent, nexpr))
         end
@@ -158,8 +158,8 @@ function _format_setindent_body(expr, nexpr, nindent)
     for c in children(expr)
         # For leaves, try to unindent
         if isempty(children(c))
-            push!(nexpr.children, TriviaReplacementNode(next, c, leading_ws(c),
-                setindent_ws(trailing_ws(c), nindent)))
+            push!(nexpr.children, TriviaReplacementNode(next, c, leading_trivia(c),
+                setindent_ws(trailing_trivia(c), nindent)))
         else
             push!(nexpr.children, format_setindent_body(c, nindent, nexpr))
         end
@@ -172,12 +172,12 @@ function format_addindent_body(expr, nindent, parent = nothing, trailing=true)
         nexpr = ChildReplacementNode(parent, Any[], expr)
         _format_addindent_body(expr, nexpr, nindent)
     end
-    TriviaReplacementNode(parent, nexpr, leading_ws(expr), trailing ? addindent_ws(trailing_ws(expr), nindent) : trailing_ws(expr))
+    TriviaReplacementNode(parent, nexpr, addindent_ws(leading_trivia(expr), nindent), trailing ? addindent_ws(trailing_trivia(expr), nindent) : trailing_trivia(expr))
 end
 function format_addindent_body(expr::TriviaReplacementNode, nindent, parent = nothing, trailing=true)
     nexpr = ChildReplacementNode(nothing, Any[], expr.onode)
     _format_addindent_body(expr, nexpr, nindent)
-    TriviaReplacementNode(parent, nexpr, leading_ws(expr), trailing ? addindent_ws(trailing_ws(expr), nindent) : trailing_ws(expr))
+    TriviaReplacementNode(parent, nexpr, addindent_ws(leading_trivia(expr), nindent), trailing ? addindent_ws(trailing_trivia(expr), nindent) : trailing_trivia(expr))
 end
 
 function format_setindent_body(expr, nindent, parent = nothing)
@@ -188,7 +188,7 @@ end
 function format_setindent_body(expr::TriviaReplacementNode, nindent, parent = nothing)
     nexpr = ChildReplacementNode(nothing, Any[], expr.onode)
     _format_setindent_body(expr, nexpr, nindent)
-    TriviaReplacementNode(parent, nexpr, leading_ws(expr), setindent_ws(trailing_ws(expr), nindent))
+    TriviaReplacementNode(parent, nexpr, leading_trivia(expr), setindent_ws(trailing_trivia(expr), nindent))
 end
 
 CSTUtils.isexpr(x::ChildReplacementNode, ::Type{S}) where {S} = isexpr(x.onode, S)
@@ -197,15 +197,15 @@ CSTUtils.isexpr(x::TriviaReplacementNode, ::Type{S}) where {S} = isexpr(x.onode,
 AbstractTrees.children(x::ChildReplacementNode) = x.children
 AbstractTrees.children(x::TriviaReplacementNode) = children(x.onode)
 
-trailing_ws(x::ChildReplacementNode) = trailing_ws(last(x.children))
-trailing_ws(x::TriviaReplacementNode) = x.trailing_trivia
-trailing_ws(x::ReplacementNode) = x.trailing_trivia
-trailing_ws(x::TriviaInsertionNode) = x.trivia
+trailing_trivia(x::ChildReplacementNode) = trailing_trivia(last(x.children))
+trailing_trivia(x::TriviaReplacementNode) = x.trailing_trivia
+trailing_trivia(x::ReplacementNode) = x.trailing_trivia
+trailing_trivia(x::TriviaInsertionNode) = x.trivia
 
-leading_ws(x::ChildReplacementNode) = leading_ws(last(x.children))
-leading_ws(x::TriviaReplacementNode) = x.leading_trivia
-leading_ws(x::ReplacementNode) = x.leading_trivia
-leading_ws(x::TriviaInsertionNode) = ""
+leading_trivia(x::ChildReplacementNode) = leading_trivia(last(x.children))
+leading_trivia(x::TriviaReplacementNode) = x.leading_trivia
+leading_trivia(x::ReplacementNode) = x.leading_trivia
+leading_trivia(x::TriviaInsertionNode) = ""
 
 print_replacement(io::IO, node::OverlayNode, leading_trivia, trailing_trivia) = print(io, text(node, leading_trivia, trailing_trivia))
 function print_replacement(io::IO, node::ChildReplacementNode, leading_trivia, trailing_trivia)

@@ -1571,4 +1571,28 @@ end
 @test text_not_edited("round(Base.BigInt, x)")
 @test text_not_edited("round(x, RoundUp)")
 
+@test edit_text("""
+if VERSION < v"0.1.0"
+    foo() = 1
+else
+    # comment
+    foo() = 2
+end
+""")[2] == """
+# comment
+foo() = 2
+"""
+
+@test edit_text("""
+if VERSION > v"0.1.0"
+    # comment
+    foo() = 1
+else
+    foo() = 2
+end
+""")[2] == """
+# comment
+foo() = 1
+"""
+
 end # testset

@@ -5,7 +5,7 @@ function format_arglist!(wheren, nchars_moved, lcurly_pos = 0, body_indent = 4)
     (length(children(ocall)) == 2) && return
     firstarg = children(ocall)[3]
     # Heuristic: If the first argument is on a new line, don't try to change the indentation
-    if ('\n' in leading_ws(firstarg))
+    if ('\n' in leading_trivia(firstarg))
         return
     end
     # Heuristic: If the arugment indents (more spefically the first indented line), is further
@@ -59,7 +59,7 @@ CSTParser.get_id(x::OverlayNode{Curly}) = CSTParser.get_id(children(x)[1])
 function compute_new_line_pos(tree, node, offset = 0, consider_trailing=true)
     if isempty(children(tree))
         if consider_trailing
-            ws = trailing_ws(tree)
+            ws = trailing_trivia(tree)
             if '\n' in ws
                 return length(last_line(ws))
             end
@@ -75,7 +75,7 @@ function compute_new_line_pos(tree, node, offset = 0, consider_trailing=true)
         offset = compute_new_line_pos(c, node, offset, !isa(c, TriviaReplacementNode) &&
             !(is_last && !consider_trailing))
         if isa(c, TriviaReplacementNode) && !(!consider_trailing && is_last)
-            ws = trailing_ws(c)
+            ws = trailing_trivia(c)
             if '\n' in ws
                 offset = length(last_line(ws))
             end
@@ -134,7 +134,7 @@ begin
                 id = Symbol(string(id,"_"))
             end
             id == orig_id && return expr
-            return replace_node(expr, id_expr, ReplacementNode(String(id), leading_ws(id_expr), trailing_ws(id_expr)))
+            return replace_node(expr, id_expr, ReplacementNode(String(id), leading_trivia(id_expr), trailing_trivia(id_expr)))
         end
         new_exprs
     end
@@ -190,14 +190,14 @@ begin
         replace_lit = CSTParser.LITERAL(0, 0:1, "", Tokens.ERROR)
         new_where = TriviaReplacementNode(new_tree, ChildReplacementNode(new_tree,
             [ReplacementNode("where"," "," "), tparams...], CSTParser.BinarySyntaxOpCall(replace_lit, replace_op, replace_lit)),
-            "", trailing_ws(call_or_rt_expr))
+            "", trailing_trivia(call_or_rt_expr))
         unshift!(children(new_tree), new_where)
         call_parent = new_where
         isexpr(expr, FunctionDef) && unshift!(children(new_tree), children(expr)[1])
         if had_rt_annotation
             annotation = children(rt_expr)[end]
             call_parent = ChildReplacementNode(new_tree, [children(rt_expr)[2]], rt_expr)
-            push!(children(call_parent), TriviaReplacementNode(call_parent, annotation, leading_ws(annotation), ""))
+            push!(children(call_parent), TriviaReplacementNode(call_parent, annotation, leading_trivia(annotation), ""))
             unshift!(children(new_where), call_parent)
         end
         new_call = TriviaReplacementNode(new_where, ChildReplacementNode(new_where, children(call)[2:end], call), "", "")

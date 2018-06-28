@@ -1,12 +1,12 @@
 using CSTParser: KEYWORD
 
 "Strip a trailing line of purely whitespace (if present)."
-function maybe_strip_trailing_ws_line(body)
-    ws = trailing_ws(body)
+function maybe_strip_trailing_trivia_line(body)
+    ws = trailing_trivia(body)
     idx = findlast(c->c=='\n', ws)
     idx == 0 && return body
     any(c->!isspace(c), ws[idx:end]) && return body
-    TriviaReplacementNode(nothing, body, "", ws[1:prevind(ws, idx)])
+    TriviaReplacementNode(nothing, body, leading_trivia(body), ws[1:prevind(ws, idx)])
 end
 
 function last_line(ws)
@@ -21,18 +21,30 @@ function except_first_line(ws)
     ws[idx+1:end]
 end
 
-function compute_resolve_inline_body(expr, replace_expr)
-    _last_line = last_line(trailing_ws(children(expr)[2]))
+function except_leading_ws(ws)
+    idx = findfirst(!isspace, ws)
+    idx == 0 && return ""
+    ws[idx:end]
+end
+
+function compute_resolve_inline_body(expr, inline_body, replace_expr)
+    # Inline else body
+    _last_line = last_line(trailing_trivia(children(expr)[2]))
     indent = (isempty(_last_line) ? 0 : sum(charwidth, _last_line)) - line_pos(replace_expr, first(replace_expr.span))
-    body = format_addindent_body(children(expr)[3], -indent)
-    body = maybe_strip_trailing_ws_line(body)
+    # Keep any trivia before the first statement of the body
+    ws = string(prev_node_ws(inline_body), leading_trivia(inline_body))
+    body = format_addindent_body(TriviaReplacementNode(nothing, inline_body,
+        ws, trailing_trivia(inline_body)), -indent)
+    body = maybe_strip_trailing_trivia_line(body)
+    # Strip the first line (the content after the if/else)
+    body = TriviaReplacementNode(nothing, body, except_leading_ws(except_first_line(leading_trivia(body))), trailing_trivia(body))
     buf = IOBuffer()
     print_replacement(buf, body, true, true)
     String(take!(buf))
 end
 
 function resolve_inline_body(dep, resolutions, expr, replace_expr)
-    push!(resolutions, TextReplacement(dep, replace_expr.span, compute_resolve_inline_body(expr, replace_expr)))
+    push!(resolutions, TextReplacement(dep, replace_expr.span, compute_resolve_inline_body(expr, children(expr)[3], replace_expr)))
 end
 
 function resolve_delete_expr(dep, resolutions, expr, replace_expr, prefix="")
@@ -56,23 +68,18 @@ function resolve_delete_expr(dep, resolutions, expr, replace_expr, prefix="")
             end
         end
         push!(resolutions, TextReplacement(dep, prev:last(replace_expr.fullspan),
-                                           string(prefix, except_first_line(trailing_ws(replace_expr)))))
+                                           string(prefix, except_first_line(trailing_trivia(replace_expr)))))
     elseif isexpr(children(expr)[4], KEYWORD, Tokens.ELSE)
         # Inline else body
-        _last_line = last_line(trailing_ws(children(expr)[2]))
-        indent = (isempty(_last_line) ? 0 : sum(charwidth, _last_line)) - line_pos(replace_expr, first(replace_expr.span))
-        body = format_addindent_body(children(expr)[5], -indent)
-        body = maybe_strip_trailing_ws_line(body)
-        buf = IOBuffer()
-        print_replacement(buf, body, true, true)
-        push!(resolutions, TextReplacement(dep, replace_expr.span, string(prefix, String(take!(buf)))))
+        push!(resolutions, TextReplacement(dep, replace_expr.span, string(prefix,
+            compute_resolve_inline_body(expr, children(expr)[5], replace_expr))))
     else
         # elseif -> if
-        indent = sum(charwidth, trailing_ws(children(expr)[2]))
+        indent = sum(charwidth, trailing_trivia(children(expr)[2]))
         repl = ChildReplacementNode(nothing, Any[], expr)
         eif = children(expr)[4]
         @assert isexpr(eif, KEYWORD, Tokens.ELSEIF)
-        push!(repl.children, ReplacementNode("if", leading_ws(eif), trailing_ws(eif)))
+        push!(repl.children, ReplacementNode("if", leading_trivia(eif), trailing_trivia(eif)))
         append!(repl.children, children(expr)[5:end])
         buf = IOBuffer()
         print_replacement(buf, repl, false, true)
@@ -131,7 +138,7 @@ end
                             pushfirst!(effects, TriviaReplacementNode(
                                 nothing,
                                 fcond,
-                                leading_ws(fcond), ""))
+                                leading_trivia(fcond), ""))
                         end
                     end
                     resolve_boolean(dep, resolutions, context, p, is_and ? false : true, effects)
@@ -156,14 +163,14 @@ end
                 end
             end
             if alwaystruefalse
-                repl = compute_resolve_inline_body(p, replace_expr)
+                repl = compute_resolve_inline_body(p, children(p)[3], replace_expr)
                 push!(resolutions, TextReplacement(dep, replace_expr.span, string(String(take!(buf)), repl)))
             else
                 resolve_delete_expr(dep, resolutions, p, replace_expr, String(take!(buf)))
             end
             return
         end
-        
+
         @label out
         if in_statement_position(expr)
             resolve_delete_expr(dep, resolutions, expr, expr)
@@ -189,11 +196,11 @@ function replace_node(tree, node, replacement, current=tree, parent=nothing)
 end
 
 function indentation(tree)
-    leading_trivia = string(prev_node_ws(tree), leading_ws(tree))
+    all_leading_trivia = string(prev_node_ws(tree), leading_trivia(tree))
     # Find the amount the number characters from the last newline to the start
     # expr's span.
-    lastn = rsearch(leading_trivia, '\n')
-    leading_trivia[lastn+1:end]
+    lastn = rsearch(all_leading_trivia, '\n')
+    all_leading_trivia[lastn+1:end]
 end
 
 """

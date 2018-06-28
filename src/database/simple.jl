@@ -174,14 +174,14 @@ begin
     function add_ws_lead_trail!(ret, idx, exprs)
         any = false
         expr = exprs[2]
-        allws = string(trailing_ws(exprs[1]), leading_ws(expr))
+        allws = string(trailing_trivia(exprs[1]), leading_trivia(expr))
         if isempty(allws) || !isspace(allws[end])
-            expr = children(ret)[idx] = TriviaReplacementNode(ret, expr, string(leading_ws(expr), " "), trailing_ws(expr))
+            expr = children(ret)[idx] = TriviaReplacementNode(ret, expr, string(leading_trivia(expr), " "), trailing_trivia(expr))
             any = true
         end
-        allws = string(trailing_ws(expr), leading_ws(exprs[3]))
+        allws = string(trailing_trivia(expr), leading_trivia(exprs[3]))
         if isempty(allws) || !isspace(allws[end])
-            expr = children(ret)[idx] = TriviaReplacementNode(ret, expr, leading_ws(expr), string(" ", trailing_ws(expr)))
+            expr = children(ret)[idx] = TriviaReplacementNode(ret, expr, leading_trivia(expr), string(" ", trailing_trivia(expr)))
             any = true
         end
         any
@@ -212,9 +212,9 @@ begin
         dep, expr, resolutions, context = x
         ret = ChildReplacementNode(nothing, collect(children(expr)), expr)
         body, fornode, iterand = children(expr)
-        allws = string(trailing_ws(body), leading_ws(fornode))
+        allws = string(trailing_trivia(body), leading_trivia(fornode))
         if isempty(allws) || !isspace(allws[end])
-            children(ret)[2] = TriviaReplacementNode(ret, fornode, string(leading_ws(fornode), " "), trailing_ws(fornode))
+            children(ret)[2] = TriviaReplacementNode(ret, fornode, string(leading_trivia(fornode), " "), trailing_trivia(fornode))
             buf = IOBuffer()
             print_replacement(buf, ret, false, false)
             repl = String(take!(buf))

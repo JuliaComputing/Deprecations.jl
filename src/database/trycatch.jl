@@ -18,18 +18,18 @@ match(TryCatch, CSTParser.Try) do x
 
     # Look for trivia between the END keyword and the preceeding node
     end_kw = children(expr)[end]
-    ws_in_between = string(prev_node_ws(end_kw), leading_ws(end_kw))
+    ws_in_between = string(prev_node_ws(end_kw), leading_trivia(end_kw))
     rn = ChildReplacementNode(nothing, children(expr)[1:end-1], expr)
     if !('\n' in ws_in_between)
         # Add the `catch; ` right before the end
-        push!(children(rn), ReplacementNode("catch", leading_ws(end_kw),"; "))
-        push!(children(rn), TriviaReplacementNode(rn, end_kw, "", trailing_ws(end_kw)))
+        push!(children(rn), ReplacementNode("catch", leading_trivia(end_kw),"; "))
+        push!(children(rn), TriviaReplacementNode(rn, end_kw, "", trailing_trivia(end_kw)))
     else
         # Add `catch\n` on the line before the end with the same indent
         idx = findlast(ws_in_between, '\n')
         indent = ws_in_between[idx:end]
-        push!(children(rn), ReplacementNode("catch", leading_ws(end_kw),""))
-        push!(children(rn), TriviaReplacementNode(rn, end_kw, indent, trailing_ws(end_kw)))
+        push!(children(rn), ReplacementNode("catch", leading_trivia(end_kw),""))
+        push!(children(rn), TriviaReplacementNode(rn, end_kw, indent, trailing_trivia(end_kw)))
     end
     buf = IOBuffer()
     print_replacement(buf, rn, false, false)

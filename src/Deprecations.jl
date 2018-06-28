@@ -19,7 +19,7 @@ module Deprecations
 
     include("CSTUtils/CSTUtils.jl")
     using .CSTUtils
-    import .CSTUtils: span_text, fullspan_text, leading_ws, trailing_ws
+    import .CSTUtils: span_text, fullspan_text, leading_trivia, trailing_trivia
     include("CSTAnalyzer/CSTAnalyzer.jl")
     using .CSTAnalyzer
     using .CSTAnalyzer: State, FileSystem, Scope, Location, File

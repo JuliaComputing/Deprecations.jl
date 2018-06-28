@@ -1,6 +1,6 @@
 module CSTUtils
     export OverlayNode
-    export function_def_call, isexpr, text, trailing_ws, leading_ws,
+    export function_def_call, isexpr, text, trailing_trivia, leading_trivia,
         span_text, fullspan_text
 
     include("treewalking.jl")
@@ -9,11 +9,11 @@ module CSTUtils
         o.buffer[((leading_trivia ? first(o.fullspan) : first(o.span)):(trailing_trivia ? last(o.fullspan) : last(o.span)))]
     end
 
-    function trailing_ws(o::OverlayNode)
+    function trailing_trivia(o::OverlayNode)
         o.buffer[(1+last(o.span):last(o.fullspan))]
     end
 
-    function leading_ws(o::OverlayNode)
+    function leading_trivia(o::OverlayNode)
         o.buffer[(first(o.fullspan):first(o.fullspan)-1)]
     end
 
