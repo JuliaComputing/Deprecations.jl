@@ -14,6 +14,9 @@ function is_macroname(x::OverlayNode{MacroCall}, name)
     return is_identifier(children(c)[2], name)
 end
 
+id_name(x::CSTParser.IDENTIFIER) = x.val
+id_name(x::OverlayNode) = id_name(x.expr)
+
 is_identifier(x, id) = false
 function is_identifier(x::CSTParser.IDENTIFIER, id)
     x.val == id

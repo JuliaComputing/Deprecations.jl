@@ -1567,4 +1567,8 @@ let analysis = Deprecations.process_all(files)
         analysis=(analysis[1], analysis[2][files[1]]))
 end
 
+@test text_not_edited("floor(::Type{Int128}, x::DoubleFloat{T}) where {T<:AbstractFloat} = Int128(floor(x))")
+@test text_not_edited("round(Base.BigInt, x)")
+@test text_not_edited("round(x, RoundUp)")
+
 end # testset

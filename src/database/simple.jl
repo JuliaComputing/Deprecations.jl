@@ -426,8 +426,26 @@ function filter_no_kw_already(S, dep, tree, matches)
 end
 
 function filter_not_def(S, dep, tree, matches)
-    CSTParser.defines_function(parent(tree)) && return false
+    p = parent(tree)
+    isexpr(p, CSTParser.WhereOpCall) && (p = parent(p))
+    CSTParser.defines_function(p) && return false
     return true
+end
+
+function resolve_qualified_expr(id, analysis)
+    S, file_scope = analysis
+    if isexpr(id, CSTParser.BinarySyntaxOpCall) && isexpr(children(id)[2], CSTParser.OPERATOR, Tokens.DOT)
+        isexpr(children(id)[3], CSTParser.Quotenode) || return nothing
+        cid = children(children(id)[3])[1]
+        isexpr(cid, CSTParser.IDENTIFIER) || return nothing
+        return (is_identifier(children(id)[1], "Base") ||
+                is_identifier(children(id)[1], "Core")) ? (cid, "BaseCore") : nothing
+    else
+        isexpr(id, CSTParser.IDENTIFIER) || return nothing
+        binding = CSTAnalyzer.resolve(S, file_scope, id)
+        isa(binding, CSTAnalyzer.MissingBinding) && return nothing
+        return (id, binding.t)
+    end
 end
 
 const BaseCoreNumberTypes = [
@@ -446,15 +464,26 @@ const BaseCoreNumberTypes = [
 # that's harder
 function filter_not_likely_type(analysis, dep, tree, matches)
     @assert isexpr(tree, CSTParser.Call)
-    S, file_scope = analysis
-    id = children(tree)[3]
-    isexpr(id, CSTParser.IDENTIFIER) || return true
-    binding = CSTAnalyzer.resolve(S, file_scope, id)
-    if binding.t == "BaseCore"
-        if Symbol(id.expr.val) in BaseCoreNumberTypes
-            return false
-        end
-    end
+    x = resolve_qualified_expr(children(tree)[3], analysis)
+    x === nothing && return true
+    (id, t) = x
+    t == "BaseCore" || return true
+    (Symbol(id_name(id)) in BaseCoreNumberTypes) && return false
+    return true
+end
+
+const RoundingMode = [
+    :RoundNearest, :RoundToZero, :RoundUp, :RoundDown,
+    :RoundFromZero, :RoundNearestTiesAway, :RoundNearestTiesUp
+]
+
+function filter_not_rounding_mode(analysis, dep, tree, matches)
+    @assert isexpr(tree, CSTParser.Call)
+    x = resolve_qualified_expr(children(tree)[end - 1], analysis)
+    x === nothing && return true
+    (id, t) = x
+    t == "BaseCore" || return true
+    (Symbol(id_name(id)) in RoundingMode) && return false
     return true
 end
 
@@ -571,14 +600,16 @@ begin
             "$f(\$x!, digits=\$digits!)",
             filter = (args...)->filter_no_kw_already(args...) &&
                                 filter_not_likely_type(args...) &&
-                                filter_not_def(args...)
+                                filter_not_def(args...) &&
+                                filter_not_rounding_mode(args...)
         )
         match(KeywordsUnlocked,
             "$f(\$x, \$digits, \$base)",
             "$f(\$x!, digits=\$digits!, base=\$base!)",
             filter = (args...)->filter_no_kw_already(args...) &&
                                 filter_not_likely_type(args...) &&
-                                filter_not_def(args...)
+                                filter_not_def(args...) &&
+                                filter_not_rounding_mode(args...)
         )
     end
     match(KeywordsUnlocked,
