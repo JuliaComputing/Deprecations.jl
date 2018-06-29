@@ -1626,4 +1626,7 @@ function foo(r::Rational{T}, x) where T
 end
 """)
 
+@test edit_text("warn(\"Hello\")")[2] == "@warn(\"Hello\")"
+@test edit_text("info(\"Hello\")")[2] == "@info(\"Hello\")"
+
 end # testset

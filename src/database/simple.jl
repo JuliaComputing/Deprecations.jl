@@ -320,6 +320,7 @@ function filter_base_id(analysis, expr)
         expr == children(parent(expr))[1] && return false
     end
     binding = CSTAnalyzer.resolve(S, file_scope, expr)
+    !isa(binding, CSTAnalyzer.Binding) && return false
     return binding.t == "BaseCore"
 end
 
@@ -444,7 +445,7 @@ function resolve_qualified_expr(id, analysis)
     else
         isexpr(id, CSTParser.IDENTIFIER) || return nothing
         binding = CSTAnalyzer.resolve(S, file_scope, id)
-        isa(binding, CSTAnalyzer.MissingBinding) && return nothing
+        !isa(binding, CSTAnalyzer.Binding) && return nothing
         return (id, binding.t)
     end
 end
@@ -779,4 +780,30 @@ match(ArrayUndef, CSTParser.Call) do x
         print_replacement(buf, repl, false, false)
         push!(resolutions, TextReplacement(dep, expr.span, String(take!(buf))))
     end
+end
+
+# =======================
+struct LoggingMacros; end
+register(LoggingMacros, Deprecation(
+    "Several logging functions became macros",
+    "julia",
+    v"0.7.0-DEV.2979", v"0.7.0-DEV.1", typemax(VersionNumber)
+))
+
+match(LoggingMacros, CSTParser.Call) do x
+    dep, expr, resolutions, context, analysis = x
+    context.in_macrocall && return
+    fname = children(expr[1])
+    (is_identifier(fname, "warn") || is_identifier(fname, "info")) || return
+    filter_base_id(analysis, fname) || return
+    # For now, only support a single string argument
+    length(children(expr)) == 4 || return
+    isexpr(children(expr)[3], CSTParser.LITERAL) || return
+    repl = ChildReplacementNode(nothing, [
+        ReplacementNode(string("@",id_name(fname)), leading_trivia(fname), trailing_trivia(fname)),
+        children(expr)[2:end]...
+    ], expr)
+    buf = IOBuffer()
+    print_replacement(buf, repl, false, false)
+    push!(resolutions, TextReplacement(dep, expr.span, String(take!(buf))))
 end
