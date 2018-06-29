@@ -1614,4 +1614,10 @@ function __init__()
 end
 """)
 
+@test text_not_edited("""
+macro round(ex1, ex2)
+    :(\$ex1 + \$ex2)
+end
+""")
+
 end # testset
