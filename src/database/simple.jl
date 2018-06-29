@@ -735,8 +735,29 @@ match(ArrayUndef, CSTParser.Call) do x
     context.in_macrocall && return
     curly = children(expr)[1]
     isexpr(curly, CSTParser.Curly) || return
-    is_identifier(children(curly)[1], "Array") || return
+    isexpr(children(curly)[1], CSTParser.IDENTIFIER) || return
+    id = Symbol(id_name(children(curly)[1]))
+    (id == :Array || id == :Vector) || return
     args = children(expr)[3:end-1]
+    # Vector{T}(0) -> Vector{T}()
+    if id == :Vector
+        if length(args) == 1
+            arg = args[1]
+            if isexpr(arg, CSTParser.LITERAL) && Expr(arg.expr) == 0
+                repl = ChildReplacementNode(nothing, [
+                    children(expr)[1:2]...,
+                    children(expr)[4:end]...
+                ], expr)
+                buf = IOBuffer()
+                print_replacement(buf, repl, false, false)
+                push!(resolutions, TextReplacement(dep, expr.span, String(take!(buf))))
+                return
+            end
+        elseif length(args) == 0
+            # This is ok
+            return
+        end
+    end
     if all(args) do arg
                 isexpr(arg, CSTParser.PUNCTUATION, Tokens.COMMA) && return true
                 isexpr(arg, CSTParser.LITERAL) || return false

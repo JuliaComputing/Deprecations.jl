@@ -3,9 +3,9 @@ using Deprecations: overlay_parse, apply_formatter, changed_text
 using Base.Test
 using TestSetExtensions
 
-function edit_text_converge(t)
+function edit_text_converge(t, deps...)
     while true
-        new_t = edit_text(t)[2]
+        new_t = edit_text(t, deps...)[2]
         t == new_t && return new_t
         t = new_t
     end
@@ -1594,5 +1594,8 @@ end
 # comment
 foo() = 1
 """
+
+@test edit_text_converge("Vector{Int64}(0)", v1deps) == "Vector{Int64}()"
+@test edit_text_converge("Vector{Int64}(1)", v1deps) == "Vector{Int64}(undef, 1)"
 
 end # testset
