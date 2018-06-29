@@ -123,6 +123,8 @@ function create_scope(x, s, S::State)
         end
     elseif x isa CSTParser.EXPR{CSTParser.Let}
         add_scope(x, s, S, "Let")
+    elseif x isa CSTParser.EXPR{CSTParser.Quote}
+        add_scope(x, s, S, "Quote")
     elseif x isa CSTParser.EXPR{CSTParser.Do}
         add_scope(x, s, S, "Do")
         for arg in CSTParser.get_args(x)

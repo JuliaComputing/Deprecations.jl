@@ -59,6 +59,7 @@ function enter_scope(x, s, S)
     x isa CSTParser.EXPR{CSTParser.Try} ||
     x isa CSTParser.WhereOpCall ||
     x isa CSTParser.EXPR{CSTParser.Generator} ||
+    x isa CSTParser.EXPR{CSTParser.Quote} ||
     CSTParser.defines_anon_function(x) ||
     CSTParser.is_assignment(x) && x.arg1 isa CSTParser.EXPR{CSTParser.Curly}
 

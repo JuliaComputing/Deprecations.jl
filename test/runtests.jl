@@ -1598,4 +1598,20 @@ foo() = 1
 @test edit_text_converge("Vector{Int64}(0)", v1deps) == "Vector{Int64}()"
 @test edit_text_converge("Vector{Int64}(1)", v1deps) == "Vector{Int64}(undef, 1)"
 
+@test text_not_edited("let\nCore.eval(mod, :(const \$(TEMP_SYM) = \$(Dict{Symbol, Vector}())))\nend")
+@test text_not_edited("""
+let
+    Core.eval(mod, quote
+        const \$(TEMP_SYM) = \$(Dict{Symbol, Vector}())))
+    end)
+end
+""")
+
+# This is deprecated but the straightforward change is not correct
+@test text_not_edited("""
+function __init__()
+    global const nettle_major_version = get_libnettle_version()
+end
+""")
+
 end # testset
