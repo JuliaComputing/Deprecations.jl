@@ -1620,4 +1620,10 @@ macro round(ex1, ex2)
 end
 """)
 
+@test text_not_edited("""
+function foo(r::Rational{T}, x) where T
+    round(T, x)
+end
+""")
+
 end # testset

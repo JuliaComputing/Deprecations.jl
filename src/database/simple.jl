@@ -468,6 +468,7 @@ function filter_not_likely_type(analysis, dep, tree, matches)
     x = resolve_qualified_expr(children(tree)[3], analysis)
     x === nothing && return true
     (id, t) = x
+    t == :DataType && return false
     t == "BaseCore" || return true
     (Symbol(id_name(id)) in BaseCoreNumberTypes) && return false
     return true
