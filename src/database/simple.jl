@@ -745,8 +745,13 @@ match(ArrayUndef, CSTParser.Call) do x
     id = Symbol(id_name(children(curly)[1]))
     (id == :Array || id == :Vector) || return
     args = children(expr)[3:end-1]
+    is_vector = id == :Vector || (
+        length(children(curly)) == 6 &&
+        isexpr(children(curly)[5], CSTParser.LITERAL) &&
+        Expr(children(curly)[5]) == 1
+    )
     # Vector{T}(0) -> Vector{T}()
-    if id == :Vector
+    if is_vector
         if length(args) == 1
             arg = args[1]
             if isexpr(arg, CSTParser.LITERAL) && Expr(arg.expr) == 0

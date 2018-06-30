@@ -1629,4 +1629,6 @@ end
 @test edit_text("warn(\"Hello\")")[2] == "@warn(\"Hello\")"
 @test edit_text("info(\"Hello\")")[2] == "@info(\"Hello\")"
 
+@test text_not_edited("Array{Expr, 1}()")
+
 end # testset
