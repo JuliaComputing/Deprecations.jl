@@ -1,7 +1,7 @@
 module CSTUtils
     export OverlayNode
     export function_def_call, isexpr, text, trailing_trivia, leading_trivia,
-        span_text, fullspan_text
+        span_text, fullspan_text, id_name
 
     include("treewalking.jl")
 
@@ -43,4 +43,7 @@ module CSTUtils
     isexpr(x::OverlayNode, ::Type{CSTParser.LITERAL}, kind::Tokens.Kind) = isexpr(x.expr, CSTParser.LITERAL, kind)
     isexpr(x::OverlayNode, ::Type{CSTParser.PUNCTUATION}, kind::Tokens.Kind) = isexpr(x.expr, CSTParser.PUNCTUATION, kind)
     isexpr(x::OverlayNode, ::Type{S}) where {S} = isexpr(x.expr, S)
+
+    id_name(x::CSTParser.IDENTIFIER) = x.val
+    id_name(x::OverlayNode) = id_name(x.expr)
 end

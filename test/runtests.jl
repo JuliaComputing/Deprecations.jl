@@ -1631,4 +1631,10 @@ end
 
 @test text_not_edited("Array{Expr, 1}()")
 
+@test text_not_edited("""
+for (x, v) in zip((:x,), (1,))
+    @eval const \$x = \$v
+end
+""")
+
 end # testset

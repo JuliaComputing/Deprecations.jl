@@ -720,7 +720,7 @@ match(LocalConst, CSTParser.Const) do x
     S, file_scope = analysis
     isexpr(parent(expr), CSTParser.Global) && return
     scope = CSTAnalyzer.find_scope(file_scope, expr.span)
-    if !(scope.t in ("__toplevel__", "Module")) && scope.t != "Quote"
+    if !(scope.t in ("__toplevel__", "Module")) && !(scope.t in ("Quote", "@eval"))
         buf = IOBuffer()
         print_replacement(buf, children(expr)[2], false, false)
         push!(resolutions, TextReplacement(dep, expr.span, String(take!(buf))))

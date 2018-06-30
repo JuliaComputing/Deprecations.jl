@@ -177,6 +177,11 @@ function create_scope(x, s, S::State)
         for param in CSTParser.get_curly_params(x.arg1)
             add_binding(x, param, :Any, S, S.loc.offset + x.span)
         end
+    elseif isexpr(x, CSTParser.MacroCall)
+        if isexpr(children(x)[1], CSTParser.MacroName) && length(children(children(x)[1])) == 2 &&
+                id_name(x.args[1].args[2]) == "eval"
+            add_scope(x, s, S, "@eval")
+        end
     end
 end
 
