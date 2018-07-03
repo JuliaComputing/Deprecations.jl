@@ -358,8 +358,6 @@ const renames = [
     @add_rename shift!         popfirst!        v"0.7.0-DEV.3155" true
     @add_rename JULIA_HOME     Sys.BINDIR       v"0.7.0-DEV.3073" true
     @add_rename CartesianRange CartesianIndices v"0.7.0-DEV.3025" true
-    @add_rename sub2ind        CartesianIndices v"0.7.0-DEV.3025" true
-    @add_rename ind2sub        LinearIndices    v"0.7.0-DEV.3025" true
     @add_rename Display        AbstractDisplay  v"0.7.0-DEV.2695" true
     @add_rename strwidth       textwidth        v"0.7.0-DEV.1930" true
     @add_rename charwidth      textwidth        v"0.7.0-DEV.1930" true
