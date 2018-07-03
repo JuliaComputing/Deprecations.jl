@@ -409,6 +409,7 @@ const renames = [
     @add_rename iteratoreltype IteratorEltype   v"0.7.0-DEV.3309" true
     @add_rename nb_available   bytesavailable   v"0.7.0-DEV.3477" true
     @add_rename broadcast_indices broadcast_axes  v"0.7.0-DEV.4936"
+    @add_rename atan2          atan             v"0.7.0-alpha.44"
 ]
 
 for (ver, repl, hascompat) in renames
