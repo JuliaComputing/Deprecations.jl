@@ -158,6 +158,7 @@ begin
         elseif is_identifier(refed, "Libdl") && dep.min_ver > v"0.7.0-DEV.3382"
         elseif is_identifier(refed, "Printf") && dep.min_ver > v"0.7.0-DEV.3052"
         elseif is_identifier(refed, "Markdown") && dep.min_ver > v"0.7.0-DEV.3589"
+        elseif is_identifier(refed, "Random") && dep.min_ver > v"0.7.0-DEV.3406"
         else
             return false
         end
