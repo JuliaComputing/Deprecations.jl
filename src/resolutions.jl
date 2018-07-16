@@ -145,6 +145,21 @@ end
                 end
             end
             return
+        elseif isexpr(p, CSTParser.ConditionalOpCall)
+                        is_ternary = isexpr(children(p)[2], OPERATOR, Tokens.CONDITIONAL)
+            if alwaystruefalse
+                push!(resolutions,
+                    TextReplacement(dep,
+                    first(p.span):(first(children(p)[3].span)-1), ""))
+                push!(resolutions,
+                    TextReplacement(dep,
+                    (last(children(p)[3].span)+1):last(p.span), ""))
+            else
+                push!(resolutions,
+                    TextReplacement(dep,
+                    first(p.span):(first(children(p)[end].span)-1), ""))
+            end
+            return
         elseif isexpr(p, CSTParser.If)
             replace_expr = p
             if context.in_macrocall

@@ -1637,4 +1637,10 @@ for (x, v) in zip((:x,), (1,))
 end
 """)
 
+@test edit_text("""
+lower(mod, arg) = VERSION < v"0.7-" ? expand(arg) : Meta.lower(mod, arg)
+""", v1deps)[2] == """
+lower(mod, arg) = Meta.lower(mod, arg)
+"""
+
 end # testset
