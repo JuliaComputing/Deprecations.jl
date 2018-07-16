@@ -724,6 +724,7 @@ match(LocalConst, CSTParser.Const) do x
     context.in_macrocall && return
     S, file_scope = analysis
     isexpr(parent(expr), CSTParser.Global) && return
+    isexpr(children(expr)[2], CSTParser.Global) && return
     scope = CSTAnalyzer.find_scope(file_scope, expr.span)
     if !(scope.t in ("__toplevel__", "Module")) && !(scope.t in ("Quote", "@eval"))
         buf = IOBuffer()

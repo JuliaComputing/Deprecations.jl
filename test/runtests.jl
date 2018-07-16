@@ -1615,6 +1615,13 @@ end
 """)
 
 @test text_not_edited("""
+function __init__()
+    const global nettle_major_version = get_libnettle_version()
+end
+""")
+
+
+@test text_not_edited("""
 macro round(ex1, ex2)
     :(\$ex1 + \$ex2)
 end
