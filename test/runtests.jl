@@ -1643,4 +1643,10 @@ lower(mod, arg) = VERSION < v"0.7-" ? expand(arg) : Meta.lower(mod, arg)
 lower(mod, arg) = Meta.lower(mod, arg)
 """
 
+@test edit_text("split(text, '\\n', keep=true)", v1deps)[2] ==
+    "split(text, '\\n', keepempty=true)"
+
+@test edit_text("print_with_color(:red, stdout, 'a')", v1deps)[2] ==
+    "printstyled(stdout, 'a', color=:red)"
+
 end # testset

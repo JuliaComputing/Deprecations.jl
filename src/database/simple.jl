@@ -631,6 +631,11 @@ begin
         "hasmethod(\$f, \$t, world=\$world)",
         filter = keyword_default_filter
     )
+    match(KeywordsUnlocked,
+        "print_with_color(\$color, \$args...)",
+        "printstyled(\$args!..., color=\$color)",
+        filter = keyword_default_filter
+    )
 end
 
 function filter_func_base_id(analysis, dep, tree, matches)
@@ -703,6 +708,7 @@ end
 
 const keyword_renames = [
     (v"0.7.0-DEV.3995", ["cp", "mv", "cptree"], "remove_destination"=>"force")
+    (v"0.7.0-DEV.4724", ["split", "rsplit"], "keep"=>"keepempty")
 ]
 
 # =======================
