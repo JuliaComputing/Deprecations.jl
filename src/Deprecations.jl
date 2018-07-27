@@ -189,7 +189,7 @@ module Deprecations
                     nquotes = doc[1:3] == "\"\"\"" ? 3 : 1
                     doc = doc[(1+nquotes):(end-nquotes)]
                     if !isa(doc, Expr)
-                        changed, new_doc = edit_markdown(doc)
+                        changed, new_doc = edit_markdown(doc, deps)
                         if changed
                             # TODO: More fine grained deprecation messages inside
                             # doc strings
