@@ -1656,4 +1656,11 @@ lower(mod, arg) = Meta.lower(mod, arg)
 @test edit_text("print_with_color(:red, stdout, 'a')", v1deps)[2] ==
     "printstyled(stdout, 'a', color=:red)"
 
+@test text_not_edited("""
+\"\"\"
+Hello
+\"\"\"
+foo(select::AbstractVector{BlasInt})
+""")
+
 end # testset
