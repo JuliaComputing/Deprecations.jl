@@ -73,8 +73,8 @@ function match_parameters(template, match, result)
             ok || return ok
             j += 1
         else
-            ws = is_last_leaf(x), string(prev_node_ws(x), leading_trivia(x)), string(trailing_trivia(x), next_node_ws(x))
             if ret
+                ws = is_last_leaf(x), string(prev_node_ws(x), leading_trivia(x)), string(trailing_trivia(x), next_node_ws(x))
                 if !slurp
                     result[sym] =  (ws, (y,))
                     j += 1

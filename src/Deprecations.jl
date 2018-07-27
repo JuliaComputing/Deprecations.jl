@@ -118,6 +118,20 @@ module Deprecations
         (length(resolutions) != 0, String(take!(buf)))
     end
 
+    struct ParsedReplacement
+        dep
+        t::CSTUtils.OverlayNode
+        r::CSTUtils.OverlayNode
+        formatter
+        filter
+    end
+
+    struct CustomReplacement
+        dep
+        matchT::Type
+        f
+    end
+
     function text_replacements(text, deps; analysis = nothing)
         match = overlay_parse(text)
         # Re-construct analysis by assuming top-level
@@ -133,25 +147,28 @@ module Deprecations
         customs = Any[]
         for dep in deps
             haskey(templates, typeof(dep)) && append!(replacements, collect(Iterators.product((dep,), templates[typeof(dep)])))
-            haskey(custom_resolutions, typeof(dep)) && append!(customs, collect(Iterators.product((dep,), custom_resolutions[typeof(dep)])))
+            haskey(custom_resolutions, typeof(dep)) && append!(customs,
+                map(x->CustomReplacement(x[1], x[2]...),
+                    collect(Iterators.product((dep,), custom_resolutions[typeof(dep)])))
+            )
         end
-        parsed_replacementes = map(x->(x[1],(overlay_parse(x[2][1],false),overlay_parse(x[2][2],false),x[2][3:end]...)), replacements)
+        parsed_replacementes::Vector{ParsedReplacement} = map(x->ParsedReplacement(x[1], overlay_parse(x[2][1],false),overlay_parse(x[2][2],false),x[2][3:end]...), replacements)
         function find_replacements(x, results, context=Context(false, nothing))
-            for (i,(dep, (t, r, formatter, filter))) in enumerate(parsed_replacementes)
-                if matches_template2(x, t)
-                    (!context.in_macrocall || applies_in_macrocall(dep, context)) || continue
+            for (i, pr) in enumerate(parsed_replacementes)
+                if matches_template2(x, pr.t)
+                    (!context.in_macrocall || applies_in_macrocall(pr.dep, context)) || continue
                     result = Dict{Any,Any}()
-                    match_parameters(t, x, result)[1] || continue
-                    filter((S, Scop), dep, x, result) || continue
-                    rtree = reassemble_tree(r, result)
+                    match_parameters(pr.t, x, result)[1] || continue
+                    pr.filter((S, Scop), pr.dep, x, result) || continue
+                    rtree = reassemble_tree(pr.r, result)
                     buf = IOBuffer()
-                    print_replacement(buf, formatter(x, rtree, result))
-                    push!(results, TextReplacement(dep, x.span, String(take!(buf))))
+                    print_replacement(buf, pr.formatter(x, rtree, result))
+                    push!(results, TextReplacement(pr.dep, x.span, String(take!(buf))))
                 end
             end
-            for (i,(dep, (k, f))) in enumerate(customs)
-                if isexpr(x, k)
-                    f((dep, x, results, context, (S, Scop)))
+            for (i, custom) in enumerate(customs)
+                if isexpr(x, custom.matchT)
+                    custom.f((custom.dep, x, results, context, (S, Scop)))
                 end
             end
             if isexpr(x, MacroCall) && !context.in_macrocall
