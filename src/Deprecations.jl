@@ -177,7 +177,9 @@ module Deprecations
                 if !isexpr(children(x)[1], CSTParser.GlobalRefDoc)
                     macroname = children(children(x)[1])[2]
                     if !(isexpr(macroname, IDENTIFIER) && Expr(macroname) in (
-                           Symbol("eval"), Symbol("inline"), Symbol("views"), Symbol("test")
+                           Symbol("eval"), Symbol("inline"), Symbol("views"), Symbol("test"),
+                           Symbol("testset"), Symbol("pure"), Symbol("test_throws"),
+                           Symbol("inferred")
                             ))
                         context = Context(true, x)
                     end

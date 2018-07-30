@@ -1661,6 +1661,13 @@ lower(mod, arg) = Meta.lower(mod, arg)
 Hello
 \"\"\"
 foo(select::AbstractVector{BlasInt})
+""", v1deps)
+
+@test text_not_edited("""
+\"\"\"
+    trsen!(compq, job, select, T, Q) -> (T, Q, w, s, sep)
+\"\"\"
+trsen!(compq::AbstractChar, job::AbstractChar, select::AbstractVector{BlasInt}, T::AbstractMatrix, Q::AbstractMatrix)
 """)
 
 end # testset

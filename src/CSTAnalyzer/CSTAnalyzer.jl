@@ -186,9 +186,10 @@ function create_scope(x, s, S::State)
             # If the doc'ed expr is a call, it is treated as a signature.
             # The argument names should have argument scope
             if isexpr(doced_expr, CSTParser.Call)
-                add_scope(doced_expr, s, S, "docsig")
+                offset1 = S.loc.offset + children(x)[2].fullspan
+                add_scope(x, s, S, "docsig")
                 for arg in CSTParser.get_args(doced_expr)
-                    add_binding(arg, CSTParser.str_value(arg), :Any, S, S.loc.offset + doced_expr.span)
+                    add_binding(arg, CSTParser.str_value(arg), :Any, S, offset1 + doced_expr.span)
                 end
             end
         end
