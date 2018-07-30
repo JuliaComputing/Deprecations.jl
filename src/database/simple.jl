@@ -311,6 +311,16 @@ begin
     )
 end
 
+function is_scope_Base(scope)
+    while scope !== nothing
+        if scope.t == "Module" && scope.namespace == "Base"
+            return true
+        end
+        scope = scope.parent
+    end
+    return false
+end
+
 function filter_base_id(analysis, expr)
     S, file_scope = analysis
     @assert isa(expr, OverlayNode{CSTParser.IDENTIFIER})
@@ -319,9 +329,10 @@ function filter_base_id(analysis, expr)
     if isexpr(parent(expr), CSTParser.Kw)
         expr == children(parent(expr))[1] && return false
     end
-    binding = CSTAnalyzer.resolve(S, file_scope, expr)
+    scope = CSTAnalyzer.find_scope(file_scope, expr.span)
+    binding = CSTAnalyzer.find_ref(span_text(expr), scope, S)
     !isa(binding, CSTAnalyzer.Binding) && return false
-    return binding.t == "BaseCore"
+    return binding.t == "BaseCore" || is_scope_Base(scope)
 end
 
 struct SimpleRename
