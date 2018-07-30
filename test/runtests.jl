@@ -1668,6 +1668,6 @@ foo(select::AbstractVector{BlasInt})
     trsen!(compq, job, select, T, Q) -> (T, Q, w, s, sep)
 \"\"\"
 trsen!(compq::AbstractChar, job::AbstractChar, select::AbstractVector{BlasInt}, T::AbstractMatrix, Q::AbstractMatrix)
-""")
+""", v1deps)
 
 end # testset
