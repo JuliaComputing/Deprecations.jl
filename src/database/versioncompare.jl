@@ -71,10 +71,11 @@ begin
 
     function in_statement_position(expr)
         p = parent(expr)
+        p === nothing && return true
         if isexpr(p, CSTParser.Begin) || isexpr(p, CSTParser.Block)
             # Could still be in value position if we're the last value in the
             # block and the block itself is in value position
-            nextsibling(expr) === nothing && return true
+            nextsibling(expr) !== nothing && return true
             return in_statement_position(p)
         end
         return false

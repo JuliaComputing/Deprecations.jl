@@ -1674,4 +1674,19 @@ trsen!(compq::AbstractChar, job::AbstractChar, select::AbstractVector{BlasInt}, 
 @test edit_text("sortrows(by=norm, x)", v1deps)[2] == "sortslices(by=norm, dims=1, x)"
 @test edit_text("sortrows(x, by=norm)", v1deps)[2] == "sortslices(x, dims=1, by=norm)"
 
+@test edit_text_converge("""
+@testset begin
+    VERSION < v"0.7.0-DEV" && include("./transformations/ecef_to_ecef.jl")
+    VERSION < v"0.7.0-DEV" && include("./transformations/ecef_to_eci.jl")
+    VERSION < v"0.7.0-DEV" && include("./transformations/eci_to_ecef.jl")
+    VERSION < v"0.7.0-DEV" && include("./transformations/eci_to_eci.jl")
+    VERSION < v"0.7.0-DEV" && include("./transformations/orbit_elements.jl")
+    cd("../")
+end
+""", v1deps) == """
+@testset begin
+    cd("../")
+end
+"""
+
 end # testset
