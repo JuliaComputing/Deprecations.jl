@@ -1670,4 +1670,8 @@ foo(select::AbstractVector{BlasInt})
 trsen!(compq::AbstractChar, job::AbstractChar, select::AbstractVector{BlasInt}, T::AbstractMatrix, Q::AbstractMatrix)
 """, v1deps)
 
+@test edit_text("sortrows(x)", v1deps)[2] == "sortslices(x, dims=1)"
+@test edit_text("sortrows(by=norm, x)", v1deps)[2] == "sortslices(by=norm, dims=1, x)"
+@test edit_text("sortrows(x, by=norm)", v1deps)[2] == "sortslices(x, dims=1, by=norm)"
+
 end # testset

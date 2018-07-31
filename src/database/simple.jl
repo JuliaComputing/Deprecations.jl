@@ -419,6 +419,9 @@ const renames = [
     @add_rename nb_available   bytesavailable   v"0.7.0-DEV.3477" true
     @add_rename broadcast_indices broadcast_axes  v"0.7.0-DEV.4936"
     @add_rename atan2          atan             v"0.7.0-alpha.44"
+    @add_rename srand          Random.seed      v"0.7.0-beta2.171"
+    @add_rename realmin        floatmin         v"0.7.0-beta2.169"
+    @add_rename realmax        floatmax         v"0.7.0-beta2.169"
 ]
 
 for (ver, repl, hascompat) in renames
@@ -679,6 +682,14 @@ begin
         "Meta.parse(\$s)",
         filter = filter_func_base_id
     )
+    match(Misc07,
+        "prevpow2(\$x)",
+        "prevpow(2, \$x)"
+    )
+    match(Misc07,
+        "nextpow2(\$x)",
+        "nextpow(2, \$x)"
+    )
 end
 
 struct RenamedKeyword
@@ -824,6 +835,31 @@ match(LoggingMacros, CSTParser.Call) do x
     repl = ChildReplacementNode(nothing, [
         ReplacementNode(string("@",id_name(fname)), leading_trivia(fname), trailing_trivia(fname)),
         children(expr)[2:end]...
+    ], expr)
+    buf = IOBuffer()
+    print_replacement(buf, repl, false, false)
+    push!(resolutions, TextReplacement(dep, expr.span, String(take!(buf))))
+end
+
+# =======================
+struct SortSlices; end
+register(SortSlices, Deprecation(
+    "sortrows/sortcols have been deprecated in favor of sortslices",
+    "julia",
+    v"0.7.0-beta2.193", v"0.7.0-beta2.193", typemax(VersionNumber)
+))
+
+match(SortSlices, CSTParser.Call) do x
+    dep, expr, resolutions, context, analysis = x
+    context.in_macrocall && return
+    fname = children(expr[1])
+    (is_identifier(fname, "sortrows") || is_identifier(fname, "sortcols")) || return
+    isrows = is_identifier(fname, "sortrows")
+    repl = ChildReplacementNode(nothing, [
+        ReplacementNode("sortslices", leading_trivia(fname), trailing_trivia(fname)),
+        children(expr)[2:3]...,
+        ReplacementNode(string(", dims=", isrows ? 1 : 2), "", ""),
+        children(expr)[4:end]...
     ], expr)
     buf = IOBuffer()
     print_replacement(buf, repl, false, false)
