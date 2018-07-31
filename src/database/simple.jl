@@ -865,3 +865,27 @@ match(SortSlices, CSTParser.Call) do x
     print_replacement(buf, repl, false, false)
     push!(resolutions, TextReplacement(dep, expr.span, String(take!(buf))))
 end
+
+
+# =======================
+struct Precompile; end
+register(Precompile, Deprecation(
+    "__precompile__([true]) is now the default",
+    "julia",
+    v"0.7.0-beta2.199", v"0.7.0-beta2.199", typemax(VersionNumber)
+))
+
+match(Precompile, CSTParser.Call) do x
+    dep, expr, resolutions, context, analysis = x
+    context.in_macrocall && return
+    fname = children(expr[1])
+    (is_identifier(fname, "__precompile__")) || return
+    if length(children(expr)) == 4
+        arg = children(expr)[3]
+        if !isexpr(arg, CSTParser.LITERAL) || Expr(arg) !== true
+            return
+        end
+    end
+    push!(resolutions, TextReplacement(dep, expr.fullspan, in_statement_position(expr) ? "" : "nothing"))
+end
+

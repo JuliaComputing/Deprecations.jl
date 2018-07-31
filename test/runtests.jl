@@ -1358,8 +1358,8 @@ end
 
 @test edit_text("using Compat.Test", v1deps)[2] == "using Test"
 
-@test edit_text("VERSION >= v\"0.4.0-dev+6641\" && __precompile__()")[2] ==
-    "__precompile__()"
+@test edit_text("VERSION >= v\"0.4.0-dev+6641\" && __precompile__(false)")[2] ==
+    "__precompile__(false)"
 
 @test edit_text("round(convert(Float64,x), ceil(Int,f/_log2_10))", v1deps)[2] ==
     "round(convert(Float64,x), digits=ceil(Int,f/_log2_10))"
@@ -1688,5 +1688,20 @@ end
     cd("../")
 end
 """
+
+@test edit_text("""
+__precompile__(true)
+module Foo
+end
+""")[2] == """
+module Foo
+end
+"""
+
+@test text_not_edited("""
+__precompile__(false)
+module Foo
+end
+""")
 
 end # testset
