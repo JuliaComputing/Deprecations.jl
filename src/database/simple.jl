@@ -419,7 +419,7 @@ const renames = [
     @add_rename nb_available   bytesavailable   v"0.7.0-DEV.3477" true
     @add_rename broadcast_indices broadcast_axes  v"0.7.0-DEV.4936"
     @add_rename atan2          atan             v"0.7.0-alpha.44"
-    @add_rename srand          Random.seed      v"0.7.0-beta2.171"
+    @add_rename srand          Random.seed!     v"0.7.0-beta2.171"
     @add_rename realmin        floatmin         v"0.7.0-beta2.169"
     @add_rename realmax        floatmax         v"0.7.0-beta2.169"
 ]
