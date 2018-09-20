@@ -666,6 +666,10 @@ begin
         v"0.7.0-DEV.1", v"1.0", typemax(VersionNumber)
     ))
     match(Misc07,
+        "contains(\$r, \$s)",
+        "occursin(\$s, \$r)"
+    )
+    match(Misc07,
         "ismatch(\$r, \$s)",
         "occursin(\$r, \$s)"
     )
