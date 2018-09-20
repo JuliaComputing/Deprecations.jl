@@ -646,6 +646,16 @@ begin
         filter = keyword_default_filter
     )
     match(KeywordsUnlocked,
+        "replace(\$s, \$p, \$r, \$c)",
+        "replace(\$s, \$p => \$r, count=\$c)",
+        filter = keyword_default_filter
+    )
+    match(KeywordsUnlocked,
+        "replace(\$s, \$p, \$r)",
+        "replace(\$s, \$p => \$r)",
+        filter = keyword_default_filter
+    )
+    match(KeywordsUnlocked,
         "print_with_color(\$color, \$args...)",
         "printstyled(\$args!..., color=\$color)",
         filter = keyword_default_filter
