@@ -2,14 +2,18 @@
 language: julia
 os:
   - linux
+  - macos
 julia:
-  - 0.6
+  - 1.0
+  - nightly
+matrix:
+  allow_failures:
+    - julia: nightly
+  fast_finish: true
 notifications:
   email: false
-# uncomment the following lines to override the default test script
-script:
-  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia -e 'Pkg.clone(pwd()); Pkg.checkout("AbstractTrees", "kf/for06"); Pkg.build("Deprecations"); Pkg.test("Deprecations"; coverage=true)'
+
 after_success:
   # push coverage results to Codecov
-  - julia -e 'cd(Pkg.dir("Deprecations")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+  - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+
