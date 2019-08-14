@@ -260,12 +260,14 @@ module Deprecations
                 text = x.code[(startidx+7):curidx]
                 try
                     new_code = replace(new_code, text, edit_text(text, deps)[2])
+                catch
                 end
             end
             if !any_matches
                 # Parse the whole thing
                 try
                     new_code = edit_text(new_code, deps)[2]
+                catch
                 end
             end
             if x.code != new_code
