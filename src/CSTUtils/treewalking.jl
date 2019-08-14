@@ -5,7 +5,7 @@ using CSTParser: FunctionDef, BinarySyntaxOpCall, EXPR
 using Tokenize: Tokens
 
 struct OverlayNode{T}
-    parent::Union{OverlayNode, Void}
+    parent::Union{OverlayNode, Nothing}
     buffer::String
     expr::Union{EXPR{T}, T}
     fullspan::UnitRange{Int}
@@ -46,7 +46,7 @@ function Base.getindex(node::OverlayNode, idx::Integer)
     expr = children(node.expr)[idx]
     OverlayNode(node, node.buffer, expr, offset:(offset+expr.fullspan-1), offset - 1 + expr.span)
 end
-function Base.getindex(node::OverlayNode, range::Range)
+function Base.getindex(node::OverlayNode, range::AbstractRange)
     map(x->node[x], range)
 end
 

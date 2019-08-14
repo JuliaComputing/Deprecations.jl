@@ -30,7 +30,7 @@ end
 function compute_resolve_inline_body(expr, inline_body, replace_expr)
     # Inline else body
     _last_line = last_line(trailing_trivia(children(expr)[2]))
-    indent = (isempty(_last_line) ? 0 : sum(charwidth, _last_line)) - line_pos(replace_expr, first(replace_expr.span))
+    indent = (isempty(_last_line) ? 0 : sum(textwidth, _last_line)) - line_pos(replace_expr, first(replace_expr.span))
     # Keep any trivia before the first statement of the body
     ws = string(prev_node_ws(inline_body), leading_trivia(inline_body))
     body = format_addindent_body(TriviaReplacementNode(nothing, inline_body,
@@ -75,7 +75,7 @@ function resolve_delete_expr(dep, resolutions, expr, replace_expr, prefix="")
             compute_resolve_inline_body(expr, children(expr)[5], replace_expr))))
     else
         # elseif -> if
-        indent = sum(charwidth, trailing_trivia(children(expr)[2]))
+        indent = sum(textwidth, trailing_trivia(children(expr)[2]))
         repl = ChildReplacementNode(nothing, Any[], expr)
         eif = children(expr)[4]
         @assert isexpr(eif, KEYWORD, Tokens.ELSEIF)
@@ -225,8 +225,8 @@ function format_align_arguments(tree)
 
     call = function_def_call(tree)
     lparen = children(call)[2]
-    nindent = mapreduce(charwidth, +, 0, tree.buffer[1 + (first(tree.span):first(lparen.span))]) +
-              mapreduce(charwidth, +, 0, indentation(tree))
+    nindent = mapreduce(textwidth, +, 0, tree.buffer[1 + (first(tree.span):first(lparen.span))]) +
+              mapreduce(textwidth, +, 0, indentation(tree))
     ftree = format_setindent_body(call, nindent)
     rtree = replace_node(tree, call, ftree)
 end

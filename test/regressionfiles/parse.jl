@@ -1,3 +1,3 @@
-parse("""
+Meta.parse("""
     { "Hello": "World" }
 """)

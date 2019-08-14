@@ -214,7 +214,7 @@ module Deprecations
     end
 
     function edit_file(fname, deps = map(x->x(), keys(all_deprecations)), edit=edit_text; kwargs...)
-        text = readstring(fname)
+        text = read(fname, String)
         any_changed, new_text = edit(text, deps; kwargs...)
         if any_changed
             open(fname, "w") do io
@@ -230,7 +230,7 @@ module Deprecations
         new_text = text
         map(content.content) do x
             isa(x, Base.Markdown.Code) || return
-            if !(x.language =="julia" || ismatch(r"jldoctest[ ]?(.*)$", x.language))
+            if !(x.language =="julia" || occursin(r"jldoctest[ ]?(.*)$", x.language))
                 return
             end
             any_matches = false
@@ -303,7 +303,7 @@ module Deprecations
     # Given a set of files in a package, process all of them
     # using CSTAnalyzer
     function process_all(files)
-        parsed = [ file=>overlay_parse(readstring(file)) for file in files ]
+        parsed = [ file=>overlay_parse(read(file, String)) for file in files ]
         S = State{FileSystem}(Scope(), Location("top", 0), "", [], [], 0:0, false, Dict(), FileSystem())
         walker = IncludeWalker()
         file_scopes = Dict(file => Scope() for file in files)

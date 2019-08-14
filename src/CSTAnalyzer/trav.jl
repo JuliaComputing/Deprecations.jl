@@ -40,7 +40,7 @@ end
 
 function trav(w::Walker, path::String)
     S = State{FileSystem}(Scope(), Location(path, 0), "", [], [], 0:0, false, Dict(path => File(path, nothing, [])), FileSystem())
-    x = CSTParser.parse(readstring(path), true)
+    x = CSTParser.parse(read(path, String), true)
     trav(w, x, S.current_scope, S)
     find_bad_refs(S)
     return S

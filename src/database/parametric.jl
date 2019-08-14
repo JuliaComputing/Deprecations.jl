@@ -38,7 +38,7 @@ function format_shortfunc_body!(tree, funcdef, nchars_moved)
     end
     eq_sign_offset = line_pos(funcdef, first(children(funcdef)[2].span))
     if length(indents) != 0 && all(indents .> eq_sign_offset)
-        new_body = format_addindent_body(body, strwidth(" where "), parent(body))
+        new_body = format_addindent_body(body, textwidth(" where "), parent(body))
         children(tree)[3] = new_body
     end
     nothing
@@ -191,24 +191,24 @@ begin
         new_where = TriviaReplacementNode(new_tree, ChildReplacementNode(new_tree,
             [ReplacementNode("where"," "," "), tparams...], CSTParser.BinarySyntaxOpCall(replace_lit, replace_op, replace_lit)),
             "", trailing_trivia(call_or_rt_expr))
-        unshift!(children(new_tree), new_where)
+        pushfirst!(children(new_tree), new_where)
         call_parent = new_where
-        isexpr(expr, FunctionDef) && unshift!(children(new_tree), children(expr)[1])
+        isexpr(expr, FunctionDef) && pushfirst!(children(new_tree), children(expr)[1])
         if had_rt_annotation
             annotation = children(rt_expr)[end]
             call_parent = ChildReplacementNode(new_tree, [children(rt_expr)[2]], rt_expr)
             push!(children(call_parent), TriviaReplacementNode(call_parent, annotation, leading_trivia(annotation), ""))
-            unshift!(children(new_where), call_parent)
+            pushfirst!(children(new_where), call_parent)
         end
         new_call = TriviaReplacementNode(new_where, ChildReplacementNode(new_where, children(call)[2:end], call), "", "")
-        unshift!(children(call_parent), new_call)
+        pushfirst!(children(call_parent), new_call)
         if needs_new_curly
             new_curly = TriviaReplacementNode(new_call, ChildReplacementNode(new_call, [fname, new_curlies...], had_curly ? Curly : EXPR{Curly}(Expr[], 0, 0:1)),"","")
-            unshift!(children(new_call), new_curly)
+            pushfirst!(children(new_call), new_curly)
         else
-            unshift!(children(new_call), fname)
+            pushfirst!(children(new_call), fname)
         end
-        nchars_moved = (needs_new_curly ? sum(expr->sum(charwidth, fullspan_text(expr)), children(new_curly)[2:end]) : 0) -
+        nchars_moved = (needs_new_curly ? sum(expr->sum(textwidth, fullspan_text(expr)), children(new_curly)[2:end]) : 0) -
                        (had_curly ? line_pos(call, first(children(call)[2].span)) - (line_pos(curly, first(children(curly)[2].span))) : 0)
         heuristic_pos = had_curly ? line_pos(curly, first(children(curly)[2].span)) : line_pos(call, first(children(call)[2].span)-1)
         format_arglist!(new_where, nchars_moved, heuristic_pos, isexpr(expr, FunctionDef) ? 4 : 0)

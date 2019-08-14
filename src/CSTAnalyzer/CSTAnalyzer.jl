@@ -10,7 +10,7 @@ abstract type Walker; end
 
 mutable struct File
     path::String
-    parent::Union{Void,Tuple{File,UnitRange{Int}}}
+    parent::Union{Nothing,Tuple{File,UnitRange{Int}}}
     children::Vector{File}
 end
 
@@ -28,7 +28,7 @@ end
 mutable struct Scope
     t::String
     namespace::String
-    parent::Union{Void,Scope}
+    parent::Union{Nothing,Scope}
     children::Vector{Scope}
     names::Dict{String,Vector{Binding}}
     range::UnitRange{Int64}

@@ -1,4 +1,4 @@
 julia 1.0
-CSTParser 0.3.5 0.3.5+
-Tokenize 0.4.2 0.4.2+
+CSTParser 0.6.2
+Tokenize 0.5.6
 AbstractTrees
