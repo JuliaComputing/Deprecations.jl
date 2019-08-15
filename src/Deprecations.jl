@@ -246,7 +246,7 @@ module Deprecations
                     i = 1
                     while i <= 7
                         idx = nextind(x.code, idx)
-                        idx > endof(x.code) && break
+                        idx > lastindex(x.code) && break
                         if !isspace(x.code[idx])
                             is_continuation = false
                             break
@@ -256,7 +256,7 @@ module Deprecations
                     is_continuation || break
                     curidx = nextind(x.code, curidx)
                 end
-                curidx == 0 && (curidx = endof(x.code))
+                curidx == 0 && (curidx = lastindex(x.code))
                 text = x.code[(startidx+7):curidx]
                 try
                     new_code = replace(new_code, text, edit_text(text, deps)[2])

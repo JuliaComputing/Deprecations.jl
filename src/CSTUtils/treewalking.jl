@@ -23,7 +23,7 @@ AbstractTrees.printnode(io::IO, o::OverlayNode{T}) where {T} = print(io, sprint(
 Base.show(io::IO, o::OverlayNode) = AbstractTrees.print_tree(io, o)
 
 Base.length(o::OverlayNode) = length(children(o.expr))
-Base.endof(o::OverlayNode)  = endof(children(o.expr))
+Base.lastindex(o::OverlayNode)  = lastindex(children(o.expr))
 
 Base.length(::CSTParser.LITERAL) = 0
 Base.length(::CSTParser.OPERATOR) = 0
@@ -71,4 +71,3 @@ function function_def_call(expr)
     end
     return expr
 end
-
