@@ -280,9 +280,9 @@ end
 
 function inspect_matches(result, text)
     for (sym, ((pre_ws, offset), expr)) in result
-        print(STDOUT, sym, ": ")
+        print(stdout, sym, ": ")
         span = isa(expr, Array) ? (first(first(expr).fullspan):last(last(expr).fullspan)) : expr.fullspan
-        show(STDOUT, text[1 + span])
-        println(STDOUT)
+        show(stdout, text[1 + span])
+        println(stdout)
     end
 end

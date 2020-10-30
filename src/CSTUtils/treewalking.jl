@@ -5,7 +5,7 @@ using CSTParser: FunctionDef, BinarySyntaxOpCall, EXPR
 using Tokenize: Tokens
 
 struct OverlayNode{T}
-    parent::Union{OverlayNode, Void}
+    parent::Union{OverlayNode, Nothing}
     buffer::String
     expr::Union{EXPR{T}, T}
     fullspan::UnitRange{Int}
@@ -23,7 +23,7 @@ AbstractTrees.printnode(io::IO, o::OverlayNode{T}) where {T} = print(io, sprint(
 Base.show(io::IO, o::OverlayNode) = AbstractTrees.print_tree(io, o)
 
 Base.length(o::OverlayNode) = length(children(o.expr))
-Base.endof(o::OverlayNode)  = endof(children(o.expr))
+Base.lastindex(o::OverlayNode)  = lastindex(children(o.expr))
 
 Base.length(::CSTParser.LITERAL) = 0
 Base.length(::CSTParser.OPERATOR) = 0
@@ -46,7 +46,7 @@ function Base.getindex(node::OverlayNode, idx::Integer)
     expr = children(node.expr)[idx]
     OverlayNode(node, node.buffer, expr, offset:(offset+expr.fullspan-1), offset - 1 + expr.span)
 end
-function Base.getindex(node::OverlayNode, range::Range)
+function Base.getindex(node::OverlayNode, range::AbstractRange)
     map(x->node[x], range)
 end
 
@@ -71,4 +71,3 @@ function function_def_call(expr)
     end
     return expr
 end
-

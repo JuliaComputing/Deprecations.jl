@@ -67,7 +67,7 @@ end
 
 function mod_names(m::Module, d = Dict{String,Tuple{Set{Symbol},Set{Symbol}}}())
     ext = names(m)
-    int = names(m, true, true)
+    int = names(m, all=true, imported=true)
     d[string(m)] = (Set(ext), Set(int))
     for n in int
         if isdefined(m, n) && getfield(m, n) isa Module && !(string(getfield(m, n)) in keys(d))

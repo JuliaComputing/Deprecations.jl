@@ -1,6 +1,6 @@
 using Deprecations
 using Deprecations: overlay_parse, apply_formatter, changed_text
-using Base.Test
+using Test
 using TestSetExtensions
 
 function edit_text_converge(t, deps...)
@@ -1274,7 +1274,7 @@ for (old, new) in (("Timer(a, b)", "Timer(a, interval=b)"),
 end
 
 # Test that fixing the following does not error:
-edit_text(readstring(joinpath(@__DIR__, "regressionfiles", "LightGraphs_1.jl")))
+edit_text(read(joinpath(@__DIR__, "regressionfiles", "LightGraphs_1.jl"), String))
 
 @test text_not_edited("""
 module Foo
@@ -1315,7 +1315,7 @@ end
 
 files = joinpath.((joinpath(@__DIR__, "regressionfiles"),), ["top_define.jl", "parse.jl"])
 let analysis = Deprecations.process_all(files)
-    @test edit_text(readstring(files[2]), v1deps;
+    @test edit_text(read(files[2], String), v1deps;
         analysis=(analysis[1], analysis[2][files[2]]))[2] == """
     parse(\"\"\"
         { "Hello": "World" }
@@ -1334,7 +1334,7 @@ end
 
 files = joinpath.((joinpath(@__DIR__, "regressionfiles"),), ["top_include.jl", "using_json.jl", "parse.jl"])
 let analysis = Deprecations.process_all(files)
-    @test edit_text(readstring(files[end]), v1deps;
+    @test edit_text(read(files[end], String), v1deps;
         analysis=(analysis[1], analysis[2][files[end]]))[2] == """
     parse(\"\"\"
         { "Hello": "World" }
@@ -1344,7 +1344,7 @@ end
 
 files = joinpath.((joinpath(@__DIR__, "regressionfiles"),), ["top_not_include.jl", "using_json.jl", "parse.jl"])
 let analysis = Deprecations.process_all(files)
-    @test edit_text(readstring(files[end]), v1deps;
+    @test edit_text(read(files[end], String), v1deps;
         analysis=(analysis[1], analysis[2][files[end]]))[2] == """
     Meta.parse(\"\"\"
         { "Hello": "World" }
@@ -1563,7 +1563,7 @@ end
 
 files = joinpath.((joinpath(@__DIR__, "regressionfiles"),), ["const_a.jl", "const_b.jl"])
 let analysis = Deprecations.process_all(files)
-    @test text_not_edited(readstring(files[1]), v1deps;
+    @test text_not_edited(read(files[1], String), v1deps;
         analysis=(analysis[1], analysis[2][files[1]]))
 end
 

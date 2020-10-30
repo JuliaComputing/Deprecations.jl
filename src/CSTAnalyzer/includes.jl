@@ -47,7 +47,7 @@ function follow_include(x, s, S::State{FileSystem})
     push!(parent.children, f)
     S.includes[path] = f
 
-    x1 = CSTParser.parse(readstring(path), true)
+    x1 = CSTParser.parse(read(path, String), true)
     old_Sloc = S.loc
     S.loc = Location(path, 0)
     trav(x1, s, S)

@@ -1,4 +1,4 @@
-using Base.Test
+using Test
 import Deprecations
 import Tokenize.Tokens
 import CSTParser: KEYWORD, OPERATOR, LITERAL
